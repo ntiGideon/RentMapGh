@@ -1,0 +1,22 @@
+# Live reload for the Go server. templ and Tailwind run their own watchers
+# (see Taskfile `dev`); static files are served from disk in dev, so CSS/JS
+# edits don't need a rebuild.
+root = "."
+tmp_dir = "tmp"
+
+[build]
+  cmd = "go build -o ./tmp/web.exe ./cmd/web" # .exe works on every OS
+  entrypoint = ["./tmp/web.exe"]
+  include_ext = ["go"]
+  exclude_dir = ["tmp", "bin", "web/static", "deploy", "e2e", "node_modules", ".git", ".idea"]
+  exclude_regex = ["_test\\.go$"]
+  delay = 200
+  kill_delay = "2s"
+  send_interrupt = true
+  stop_on_error = true
+
+[log]
+  main_only = true
+
+[misc]
+  clean_on_exit = true

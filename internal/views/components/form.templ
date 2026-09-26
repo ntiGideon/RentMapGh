@@ -1,0 +1,197 @@
+package components
+
+import "strconv"
+
+// Inputs are 16 px on phones (stops iOS zoom-on-focus) and 15 px from sm up.
+const inputBase = "block h-11 w-full rounded-lg border bg-surface-raised px-3 text-md text-fg placeholder:text-fg-subtle sm:text-base " +
+	"shadow-xs transition-[border-color,box-shadow] duration-150 outline-none " +
+	"hover:border-line-strong focus:border-graphite-900 focus:ring-3 focus:ring-mint-200/80 " +
+	"dark:bg-white/[0.03] dark:focus:border-mint-200/70 dark:focus:ring-mint-200/15 " +
+	"aria-invalid:border-danger aria-invalid:focus:ring-danger/15"
+
+func inputBorder(err string) string {
+	if err != "" {
+		return "border-danger"
+	}
+	return "border-line"
+}
+
+const labelClass = "block text-sm font-medium text-fg"
+
+type FieldProps struct {
+	ID          string
+	Name        string
+	Label       string
+	Type        string
+	Value       string
+	Placeholder string
+	Hint        string
+	Error       string
+	Required    bool
+	Prefix      string // e.g. "+233"
+	Attrs       templ.Attributes
+}
+
+templ Field(p FieldProps) {
+	<div class="space-y-1.5">
+		<label for={ p.ID } class={ labelClass }>
+			{ p.Label }
+			if !p.Required {
+				<span class="font-normal text-fg-subtle">· optional</span>
+			}
+		</label>
+		<div class="relative">
+			if p.Prefix != "" {
+				<span class="pointer-events-none absolute inset-y-1.5 left-0 flex items-center border-r border-line pl-3 pr-2.5 text-md tabular-nums text-fg-muted sm:text-base">{ p.Prefix }</span>
+			}
+			<input
+				id={ p.ID }
+				name={ p.Name }
+				type={ orDefault(p.Type, "text") }
+				value={ p.Value }
+				placeholder={ p.Placeholder }
+				required?={ p.Required }
+				aria-invalid?={ p.Error != "" }
+				if p.Error != "" || p.Hint != "" {
+					aria-describedby={ p.ID + "-desc" }
+				}
+				class={ inputBase, inputBorder(p.Error), templ.KV("pl-[4.25rem] tabular-nums", p.Prefix != "") }
+				{ p.Attrs... }
+			/>
+		</div>
+		@fieldDesc(p.ID, p.Hint, p.Error)
+	</div>
+}
+
+type Option struct {
+	Value string
+	Label string
+}
+
+type SelectProps struct {
+	ID       string
+	Name     string
+	Label    string
+	Value    string
+	Options  []Option
+	Prompt   string
+	Hint     string
+	Error    string
+	Required bool
+}
+
+templ Select(p SelectProps) {
+	<div class="space-y-1.5">
+		<label for={ p.ID } class={ labelClass }>{ p.Label }</label>
+		<div class="relative">
+			<select
+				id={ p.ID }
+				name={ p.Name }
+				required?={ p.Required }
+				aria-invalid?={ p.Error != "" }
+				if p.Error != "" || p.Hint != "" {
+					aria-describedby={ p.ID + "-desc" }
+				}
+				class={ inputBase, inputBorder(p.Error), "appearance-none pr-10 dark:[color-scheme:dark]" }
+			>
+				if p.Prompt != "" {
+					<option value="" disabled selected?={ p.Value == "" }>{ p.Prompt }</option>
+				}
+				for _, o := range p.Options {
+					<option value={ o.Value } selected?={ o.Value == p.Value }>{ o.Label }</option>
+				}
+			</select>
+			<svg class="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-fg-subtle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg>
+		</div>
+		@fieldDesc(p.ID, p.Hint, p.Error)
+	</div>
+}
+
+// Choice is one option of a ChoiceGroup (large, tappable radio cards).
+type Choice struct {
+	Value string
+	Label string
+	Icon  string
+}
+
+templ ChoiceGroup(name, legend, value string, choices []Choice) {
+	<fieldset class="space-y-1.5">
+		<legend class={ labelClass + " mb-1.5" }>{ legend }</legend>
+		<div class="grid grid-cols-3 gap-1.5">
+			for _, c := range choices {
+				<label class="group relative flex min-h-16 cursor-pointer flex-col items-start justify-between gap-2 rounded-lg border border-line bg-surface-raised p-2.5 text-sm font-medium leading-tight text-fg-muted shadow-xs transition-[border-color,box-shadow,color] duration-150 hover:border-line-strong hover:text-fg has-checked:border-graphite-900 has-checked:text-fg has-checked:ring-1 has-checked:ring-graphite-900 has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-focus dark:bg-white/[0.03] dark:has-checked:border-mint-200 dark:has-checked:ring-mint-200">
+					<input type="radio" name={ name } value={ c.Value } checked?={ c.Value == value } class="sr-only"/>
+					<span class="flex w-full items-center justify-between">
+						@Icon(c.Icon, "size-4")
+						<span class="grid size-3.5 place-items-center rounded-full border border-line-strong transition group-has-checked:border-graphite-900 group-has-checked:bg-graphite-900 dark:group-has-checked:border-mint-200 dark:group-has-checked:bg-mint-200">
+							<span class="size-1.5 rounded-full bg-white opacity-0 group-has-checked:opacity-100 dark:bg-graphite-900"></span>
+						</span>
+					</span>
+					<span>{ c.Label }</span>
+				</label>
+			}
+		</div>
+	</fieldset>
+}
+
+templ Checkbox(id, name, label, errMsg string, checked bool) {
+	<div class="space-y-1.5">
+		<label for={ id } class="flex cursor-pointer items-start gap-2.5 text-sm text-fg-muted">
+			<input
+				id={ id }
+				name={ name }
+				type="checkbox"
+				value="1"
+				checked?={ checked }
+				aria-invalid?={ errMsg != "" }
+				class="mt-0.5 size-4 shrink-0 cursor-pointer rounded accent-graphite-900 dark:accent-mint-200"
+			/>
+			<span>{ label }</span>
+		</label>
+		@fieldDesc(id, "", errMsg)
+	</div>
+}
+
+templ fieldDesc(id, hint, errMsg string) {
+	if errMsg != "" {
+		<p id={ id + "-desc" } class="flex items-center gap-1.5 text-sm text-danger dark:text-red-400">
+			@Icon("alert", "size-3.5")
+			{ errMsg }
+		</p>
+	} else if hint != "" {
+		<p id={ id + "-desc" } class="text-sm text-fg-muted">{ hint }</p>
+	}
+}
+
+type TextareaProps struct {
+	ID, Name, Label, Value, Placeholder, Hint, Error string
+	Rows                                             int
+	Required                                         bool
+	MaxLen                                           int
+}
+
+templ Textarea(p TextareaProps) {
+	<div class="space-y-1.5">
+		<label for={ p.ID } class={ labelClass }>
+			{ p.Label }
+			if !p.Required {
+				<span class="font-normal text-fg-subtle">· optional</span>
+			}
+		</label>
+		<textarea
+			id={ p.ID }
+			name={ p.Name }
+			rows={ strconv.Itoa(max(p.Rows, 3)) }
+			placeholder={ p.Placeholder }
+			if p.MaxLen > 0 {
+				maxlength={ strconv.Itoa(p.MaxLen) }
+			}
+			aria-invalid?={ p.Error != "" }
+			if p.Error != "" || p.Hint != "" {
+				aria-describedby={ p.ID + "-desc" }
+			}
+			class={ "block w-full rounded-lg border bg-surface-raised px-3 py-2.5 text-md text-fg shadow-xs outline-none transition-[border-color,box-shadow] placeholder:text-fg-subtle hover:border-line-strong focus:border-graphite-900 focus:ring-3 focus:ring-mint-200/80 sm:text-base dark:bg-white/[0.03] dark:focus:border-mint-200/70 dark:focus:ring-mint-200/15", inputBorder(p.Error) }
+		>{ p.Value }</textarea>
+		@fieldDesc(p.ID, p.Hint, p.Error)
+	</div>
+}

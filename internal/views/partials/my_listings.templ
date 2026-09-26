@@ -1,0 +1,202 @@
+package partials
+
+import (
+	"strconv"
+
+	c "rentmapgh/internal/views/components"
+)
+
+type ListingAction struct{ Event, Label string }
+
+type ListingCardView struct {
+	ID, Title, Subtitle, Status string
+	Rent, Per, MoveIn           string
+	Score                       int
+	EditURL, EditLabel          string
+	Actions                     []ListingAction
+	CanAddUnit                  bool
+	ReviewNote                  string
+	Updated                     string
+	CoverURL                    string
+	Photos                      int
+}
+
+type MyListingsView struct {
+	Items            []ListingCardView
+	Notice           string
+	IdentityVerified bool
+	Counts           map[string]int
+}
+
+func StatusLabel(s string) string {
+	switch s {
+	case "draft":
+		return "Draft"
+	case "pending_review":
+		return "In review"
+	case "active":
+		return "Live"
+	case "paused":
+		return "Paused"
+	case "rented":
+		return "Rented"
+	case "expired":
+		return "Expired"
+	}
+	return s
+}
+
+templ ListingStatus(s string) {
+	switch s {
+		case "active":
+			@c.Badge(c.Success) {
+				<span class="size-1.5 rounded-full bg-current"></span>
+				{ StatusLabel(s) }
+			}
+		case "pending_review":
+			@c.Badge(c.Warning) {
+				{ StatusLabel(s) }
+			}
+		case "rented":
+			@c.Badge(c.Verified) {
+				{ StatusLabel(s) }
+			}
+		default:
+			@c.Badge(c.Neutral) {
+				{ StatusLabel(s) }
+			}
+	}
+}
+
+templ MyListings(v MyListingsView) {
+	<div id="my-listings">
+		<div class="flex flex-wrap items-end justify-between gap-4">
+			<div>
+				<h1 class="text-2xl font-semibold text-fg sm:text-3xl">Your listings</h1>
+				<p class="mt-1 text-sm text-fg-muted">
+					{ strconv.Itoa(v.Counts["active"]) } live · { strconv.Itoa(v.Counts["draft"]) } drafts · { strconv.Itoa(v.Counts["pending_review"]) } in review
+				</p>
+			</div>
+			<form action="/listings/new" method="post">
+				@c.Button(c.ButtonProps{Type: "submit"}) {
+					@c.Icon("plus", "size-4")
+					New listing
+				}
+			</form>
+		</div>
+		if v.Notice != "" {
+			<div class="mt-6 flex items-start gap-2 rounded-lg border border-green-600/15 bg-green-50 p-3 text-sm text-success dark:border-green-400/20 dark:bg-green-400/10 dark:text-green-300" role="status">
+				@c.Icon("check", "mt-0.5 size-3.5")
+				{ v.Notice }
+			</div>
+		}
+		if !v.IdentityVerified {
+			<div class="mt-6 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-line bg-surface px-4 py-3">
+				<p class="text-sm text-fg-muted"><span class="font-medium text-fg">Verify your ID</span> to publish instantly and get the verified badge on every listing.</p>
+				@c.LinkButton("/verify/identity", c.Ghost, c.SM) {
+					Verify now
+				}
+			</div>
+		}
+		if len(v.Items) == 0 {
+			@c.Card("mt-6") {
+				@c.EmptyState("home", "List your first place", "It takes about ten minutes: drop a pin, describe the space, add photos and enter every fee.") {
+					<form action="/listings/new" method="post">
+						@c.Button(c.ButtonProps{Type: "submit"}) {
+							Start a listing
+						}
+					</form>
+				}
+			}
+		} else {
+			<ul class="mt-6 space-y-3">
+				for _, it := range v.Items {
+					<li>
+						@listingCard(it)
+					</li>
+				}
+			</ul>
+		}
+	</div>
+}
+
+templ listingCard(it ListingCardView) {
+	@c.Card("p-4 sm:p-5") {
+		<div class="flex gap-4">
+			if it.CoverURL != "" {
+				<img src={ it.CoverURL } alt="" width="80" height="80" loading="lazy" class="hidden size-20 shrink-0 rounded-lg object-cover sm:block"/>
+			} else {
+				<div class="hidden size-20 shrink-0 place-items-center rounded-lg bg-[linear-gradient(135deg,var(--color-mint-100),var(--color-graphite-100))] text-graphite-500 sm:grid dark:bg-[linear-gradient(135deg,rgb(184_247_228/0.12),rgb(255_255_255/0.03))] dark:text-graphite-400">
+					@c.Icon("bed", "size-6")
+				</div>
+			}
+			<div class="min-w-0 flex-1">
+				<div class="flex flex-wrap items-start justify-between gap-2">
+					<div class="min-w-0">
+						<div class="flex items-center gap-2">
+							@ListingStatus(it.Status)
+							<span class="text-xs text-fg-subtle">Updated { it.Updated }</span>
+						</div>
+						<h2 class="mt-1.5 truncate text-base font-semibold text-fg">{ it.Title }</h2>
+						<p class="truncate text-sm text-fg-muted">{ it.Subtitle }</p>
+					</div>
+					if it.Rent != "" {
+						<div class="text-right tabular-nums">
+							<p class="text-base font-semibold text-fg">{ it.Rent }<span class="text-sm font-normal text-fg-muted">/{ it.Per }</span></p>
+							if it.MoveIn != "" {
+								<p class="text-xs text-fg-muted">{ it.MoveIn } to move in</p>
+							}
+						</div>
+					}
+				</div>
+				if it.ReviewNote != "" {
+					<p class="mt-2 rounded-md bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:bg-amber-400/10 dark:text-amber-200">{ it.ReviewNote }</p>
+				}
+				<div class="mt-3 flex flex-wrap items-center justify-between gap-3 border-t border-line pt-3">
+					<div class="flex items-center gap-2 text-xs text-fg-muted">
+						<span class="h-1.5 w-20 overflow-hidden rounded-full bg-surface">
+							<span class={ "block h-full rounded-full bg-graphite-900 dark:bg-mint-200", scoreWidth(it.Score) }></span>
+						</span>
+						Quality { strconv.Itoa(it.Score) }
+					</div>
+					<div class="flex flex-wrap items-center gap-1.5">
+						for _, a := range it.Actions {
+							<form action={ templ.SafeURL("/listings/" + it.ID + "/actions/" + a.Event) } method="post">
+								@c.Button(c.ButtonProps{Type: "submit", Variant: c.Ghost, Size: c.SM}) {
+									{ a.Label }
+								}
+							</form>
+						}
+						if it.CanAddUnit {
+							<form action={ templ.SafeURL("/listings/" + it.ID + "/units") } method="post">
+								@c.Button(c.ButtonProps{Type: "submit", Variant: c.Ghost, Size: c.SM}) {
+									@c.Icon("plus", "size-3.5")
+									Add unit
+								}
+							</form>
+						}
+						@c.LinkButton(it.EditURL, c.Primary, c.SM) {
+							{ it.EditLabel }
+						}
+					</div>
+				</div>
+			</div>
+		</div>
+	}
+}
+
+func scoreWidth(score int) string {
+	switch {
+	case score >= 90:
+		return "w-full"
+	case score >= 75:
+		return "w-3/4"
+	case score >= 50:
+		return "w-1/2"
+	case score >= 25:
+		return "w-1/4"
+	case score > 0:
+		return "w-1/12"
+	}
+	return "w-0"
+}

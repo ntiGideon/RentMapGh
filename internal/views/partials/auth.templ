@@ -1,0 +1,142 @@
+package partials
+
+import (
+	"strconv"
+	"time"
+
+	c "rentmapgh/internal/views/components"
+)
+
+type PhoneForm struct {
+	Phone string
+	Next  string
+	Error string
+}
+
+type VerifyForm struct {
+	Phone       string // E.164 (never rendered)
+	PhoneMasked string
+	Next        string
+	Error       string
+	Notice      string
+	Burnt       bool      // code expired/locked: nudge towards "resend"
+	ResendAt    time.Time // zero → resend allowed now
+	DevInbox    string
+}
+
+// authStep wraps each step so htmx can swap one for the other in place.
+templ authStep() {
+	<div id="auth-step" class="animate-rise">
+		{ children... }
+	</div>
+}
+
+templ authHeading(icon, title string) {
+	<div class="mb-6">
+		<span class="grid size-10 place-items-center rounded-xl border border-line bg-surface-raised text-fg shadow-xs">
+			@c.Icon(icon, "size-5")
+		</span>
+		<h1 class="mt-5 text-2xl font-semibold text-fg">{ title }</h1>
+		{ children... }
+	</div>
+}
+
+templ LoginPhone(f PhoneForm) {
+	@authStep() {
+		@authHeading("message", "Sign in or create an account") {
+			<p class="mt-1.5 text-base text-fg-muted">Enter your phone number and we'll text you a 6-digit code. No password needed.</p>
+		}
+		<form action="/login" method="post" hx-post="/login" hx-target="#auth-step" hx-swap="outerHTML" hx-disabled-elt="find button[type=submit]" novalidate class="space-y-4">
+			<div class="hidden" aria-hidden="true">
+				<label>Website <input type="text" name="website" tabindex="-1" autocomplete="off"/></label>
+			</div>
+			<input type="hidden" name="next" value={ f.Next }/>
+			@c.Field(c.FieldProps{
+				ID: "login-phone", Name: "phone", Label: "Phone number", Type: "tel", Value: f.Phone,
+				Placeholder: "24 123 4567", Prefix: "+233", Required: true, Error: f.Error,
+				Hint:  "Ghana mobile numbers only for now.",
+				Attrs: templ.Attributes{"inputmode": "tel", "autocomplete": "tel-national", "maxlength": "16", "autofocus": true},
+			})
+			@c.Button(c.ButtonProps{Type: "submit", Full: true}) {
+				Send code
+				@c.Icon("arrow-right", "size-4 transition-transform group-hover/btn:translate-x-0.5")
+			}
+		</form>
+		<p class="mt-6 border-t border-line pt-5 text-sm text-fg-muted">
+			New to RentMap? The same code creates your account — you'll choose how you'll use it next.
+		</p>
+	}
+}
+
+templ LoginVerify(f VerifyForm) {
+	@authStep() {
+		@authHeading("shield-check", "Enter your code") {
+			<p class="mt-1.5 text-base text-fg-muted">
+				We sent a 6-digit code to <span class="font-medium tabular-nums text-fg">{ f.PhoneMasked }</span>.
+				<a href="/login?change=1" class="font-medium text-link underline-offset-4 hover:underline">Change number</a>
+			</p>
+		}
+		if f.DevInbox != "" {
+			<a href={ templ.SafeURL(f.DevInbox) } target="_blank" rel="noopener" class="mb-5 flex items-center gap-3 rounded-lg border border-dashed border-amber-500/40 bg-amber-50 px-3 py-2.5 text-sm text-amber-900 transition-colors hover:bg-amber-100 dark:bg-amber-400/10 dark:text-amber-200 dark:hover:bg-amber-400/15">
+				@c.Badge(c.Warning) {
+					Dev
+				}
+				<span class="flex-1">SMS are delivered to Mailpit. Open the inbox to read the code.</span>
+				@c.Icon("arrow-right", "size-4")
+			</a>
+		}
+		if f.Notice != "" {
+			<div class="mb-4 flex items-start gap-2 rounded-lg border border-green-600/15 bg-green-50 p-3 text-sm text-success dark:border-green-400/20 dark:bg-green-400/10 dark:text-green-300" role="status">
+				@c.Icon("check", "mt-0.5 size-3.5")
+				{ f.Notice }
+			</div>
+		}
+		<form action="/login/verify" method="post" hx-post="/login/verify" hx-target="#auth-step" hx-swap="outerHTML" hx-disabled-elt="find button[type=submit]" novalidate class="space-y-4">
+			<input type="hidden" name="next" value={ f.Next }/>
+			<div class="space-y-1.5">
+				<label for="login-code" class="block text-sm font-medium text-fg">6-digit code</label>
+				<input
+					id="login-code"
+					name="code"
+					type="text"
+					inputmode="numeric"
+					autocomplete="one-time-code"
+					pattern="[0-9 ]*"
+					maxlength="7"
+					placeholder="••••••"
+					required
+					autofocus
+					aria-invalid?={ f.Error != "" }
+					if f.Error != "" {
+						aria-describedby="login-code-desc"
+					}
+					data-otp-input
+					class={ "block h-14 w-full rounded-lg border bg-surface-raised px-4 text-center text-2xl font-semibold tabular-nums tracking-[0.5em] text-fg shadow-xs outline-none transition-[border-color,box-shadow] placeholder:text-fg-subtle/60 hover:border-line-strong focus:border-graphite-900 focus:ring-3 focus:ring-mint-200/80 dark:bg-white/[0.03] dark:focus:border-mint-200/70 dark:focus:ring-mint-200/15",
+						templ.KV("border-danger", f.Error != ""), templ.KV("border-line", f.Error == "") }
+				/>
+				if f.Error != "" {
+					<p id="login-code-desc" class="flex items-center gap-1.5 text-sm text-danger dark:text-red-400">
+						@c.Icon("alert", "size-3.5")
+						{ f.Error }
+					</p>
+				}
+			</div>
+			@c.Button(c.ButtonProps{Type: "submit", Full: true}) {
+				Verify and continue
+			}
+		</form>
+		<form action="/login/resend" method="post" hx-post="/login/resend" hx-target="#auth-step" hx-swap="outerHTML" class="mt-5 flex items-center justify-between gap-3 border-t border-line pt-5 text-sm text-fg-muted">
+			<input type="hidden" name="next" value={ f.Next }/>
+			<span>Didn't get it? Codes can take a minute.</span>
+			<button
+				type="submit"
+				class={ "shrink-0 rounded-md px-2 py-1 font-medium text-link transition hover:bg-surface disabled:cursor-not-allowed disabled:text-fg-subtle disabled:hover:bg-transparent", templ.KV("ring-1 ring-line-strong", f.Burnt) }
+				if !f.ResendAt.IsZero() {
+					data-countdown-until={ strconv.FormatInt(f.ResendAt.Unix(), 10) }
+				}
+			>
+				Resend code
+			</button>
+		</form>
+	}
+}

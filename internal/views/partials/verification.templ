@@ -1,0 +1,194 @@
+package partials
+
+import (
+	"strconv"
+
+	c "rentmapgh/internal/views/components"
+)
+
+type IdentityForm struct {
+	CardNumber string
+	Consent    bool
+	Errors     map[string]string
+	Reattach   bool   // files were sent but the form failed: browsers drop them
+	Pending    bool   // a review is open
+	Rejected   string // message from the last rejection
+	// RetentionDays is how long photos are kept after a decision.
+	RetentionDays int
+}
+
+type LicenseForm struct {
+	Number   string
+	Agency   string
+	Errors   map[string]string
+	Reattach bool
+	Pending  bool
+	Rejected string
+}
+
+// photoField is a large tappable upload tile with a live preview (app.js).
+templ photoField(name, label, hint, icon, errMsg string, optional bool) {
+	<div class="space-y-1.5">
+		<label
+			class={ "group relative flex min-h-36 cursor-pointer flex-col items-center justify-center gap-2 overflow-hidden rounded-lg border border-dashed bg-surface px-4 py-5 text-center transition-colors hover:border-line-strong hover:bg-surface-raised has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-focus",
+			templ.KV("border-danger", errMsg != ""), templ.KV("border-line-strong", errMsg == "") }
+		>
+			<input type="file" name={ name } accept="image/jpeg,image/png,image/webp" data-photo-input class="sr-only" aria-describedby={ name + "-desc" }/>
+			<img data-photo-preview alt="" class="absolute inset-0 hidden size-full bg-surface object-contain"/>
+			<span data-photo-empty class="flex flex-col items-center gap-2">
+				<span class="grid size-10 place-items-center rounded-lg border border-line bg-surface-raised text-fg-muted shadow-xs">
+					@c.Icon(icon, "size-5")
+				</span>
+				<span class="text-base font-medium text-fg">
+					{ label }
+					if optional {
+						<span class="font-normal text-fg-subtle">· optional</span>
+					}
+				</span>
+				<span class="text-sm text-fg-muted">{ hint }</span>
+			</span>
+			<span data-photo-change class="absolute bottom-2 right-2 hidden rounded-md bg-graphite-900/80 px-2 py-1 text-xs font-medium text-white backdrop-blur">Change photo</span>
+		</label>
+		if errMsg != "" {
+			<p id={ name + "-desc" } class="flex items-center gap-1.5 text-sm text-danger dark:text-red-400">
+				@c.Icon("alert", "size-3.5")
+				{ errMsg }
+			</p>
+		}
+	</div>
+}
+
+templ reviewPending(what string) {
+	<div id="verify-step" class="animate-rise">
+		<span class="grid size-10 place-items-center rounded-xl border border-line bg-surface-raised text-fg shadow-xs">
+			@c.Icon("clock", "size-5")
+		</span>
+		<h1 class="mt-5 text-2xl font-semibold text-fg">Your { what } is under review</h1>
+		<p class="mt-1.5 text-base text-fg-muted">A member of the RentMap team checks every submission by hand, usually within one working day. We'll text you the result.</p>
+		<div class="mt-6">
+			@c.LinkButton("/account", c.Ghost, c.MD) {
+				Back to your account
+			}
+		</div>
+	</div>
+}
+
+templ rejectedNotice(msg string) {
+	<div class="mb-5 flex items-start gap-2.5 rounded-lg border border-red-600/15 bg-red-50 p-3.5 text-sm text-danger dark:border-red-400/20 dark:bg-red-400/10 dark:text-red-300" role="alert">
+		@c.Icon("alert", "mt-0.5 size-4")
+		<div>
+			<p class="font-medium">We couldn't verify your last submission</p>
+			<p class="mt-0.5">{ msg }</p>
+		</div>
+	</div>
+}
+
+templ reattachNotice() {
+	<div class="mb-5 flex items-start gap-2 rounded-lg border border-amber-500/30 bg-amber-50 p-3 text-sm text-amber-900 dark:bg-amber-400/10 dark:text-amber-200" role="status">
+		@c.Icon("alert", "mt-0.5 size-3.5")
+		Please fix the highlighted fields and add your photos again — browsers clear them when a form is sent back.
+	</div>
+}
+
+templ uploadProgress() {
+	<div data-upload-progress class="hidden" aria-live="polite">
+		<div class="flex items-center justify-between text-sm text-fg-muted">
+			<span data-upload-label>Uploading…</span>
+			<span data-upload-percent class="tabular-nums">0%</span>
+		</div>
+		<div class="mt-1.5 h-1.5 overflow-hidden rounded-full bg-surface">
+			<div data-upload-bar class="h-full w-0 rounded-full bg-graphite-900 transition-[width] duration-200 dark:bg-mint-200"></div>
+		</div>
+	</div>
+}
+
+templ Identity(f IdentityForm) {
+	if f.Pending {
+		@reviewPending("ID")
+	} else {
+		<div id="verify-step" class="animate-rise">
+			<div class="mb-6">
+				<span class="grid size-10 place-items-center rounded-xl border border-line bg-surface-raised text-fg shadow-xs">
+					@c.Icon("shield-check", "size-5")
+				</span>
+				<h1 class="mt-5 text-2xl font-semibold text-fg">Verify your identity</h1>
+				<p class="mt-1.5 text-base text-fg-muted">Renters trust verified landlords and agents more. It takes about two minutes and you'll need your Ghana Card.</p>
+			</div>
+			if f.Rejected != "" {
+				@rejectedNotice(f.Rejected)
+			}
+			if f.Reattach {
+				@reattachNotice()
+			}
+			<form action="/verify/identity" method="post" enctype="multipart/form-data" hx-post="/verify/identity" hx-encoding="multipart/form-data" hx-target="#verify-step" hx-swap="outerHTML" hx-disabled-elt="find button[type=submit]" data-upload-form novalidate class="space-y-5">
+				@c.Field(c.FieldProps{
+					ID: "card-number", Name: "card_number", Label: "Ghana Card number", Value: f.CardNumber,
+					Placeholder: "GHA-123456789-0", Required: true, Error: f.Errors["card_number"],
+					Hint:  "Printed on the front of your card, under your photo.",
+					Attrs: templ.Attributes{"autocomplete": "off", "autocapitalize": "characters", "spellcheck": "false", "maxlength": "20"},
+				})
+				<div class="grid gap-3 sm:grid-cols-2">
+					@photoField("id_front", "Front of card", "Flat, in good light, all four corners visible", "badge-check", f.Errors["id_front"], false)
+					@photoField("id_back", "Back of card", "Same again for the back", "badge-check", f.Errors["id_back"], false)
+				</div>
+				@photoField("selfie", "Selfie holding your card", "Face and card both clear — no hats or sunglasses", "user", f.Errors["selfie"], false)
+				<div class="rounded-lg border border-line bg-surface p-3.5 text-sm text-fg-muted">
+					<p class="flex items-center gap-2 font-medium text-fg">
+						@c.Icon("shield-check", "size-4")
+						How we protect your ID
+					</p>
+					<ul class="mt-2 list-disc space-y-1 pl-5">
+						<li>Photos are encrypted and only seen by the RentMap verification team.</li>
+						<li>Renters never see your card — only a "verified" badge.</li>
+						<li>We delete the photos { strconv.Itoa(f.RetentionDays) } days after we've checked them.</li>
+					</ul>
+				</div>
+				@c.Checkbox("consent", "consent", "I agree that RentMap may use these photos and my card number to verify my identity, under the Data Protection Act, 2012 (Act 843).", f.Errors["consent"], f.Consent)
+				@uploadProgress()
+				@c.Button(c.ButtonProps{Type: "submit", Full: true}) {
+					Submit for review
+				}
+			</form>
+		</div>
+	}
+}
+
+templ License(f LicenseForm) {
+	if f.Pending {
+		@reviewPending("licence")
+	} else {
+		<div id="verify-step" class="animate-rise">
+			<div class="mb-6">
+				<span class="grid size-10 place-items-center rounded-xl border border-line bg-surface-raised text-fg shadow-xs">
+					@c.Icon("briefcase", "size-5")
+				</span>
+				<h1 class="mt-5 text-2xl font-semibold text-fg">Verify your agent licence</h1>
+				<p class="mt-1.5 text-base text-fg-muted">Licensed agents get the "Licensed agent" badge. We check your number against the Real Estate Agency Council register.</p>
+			</div>
+			if f.Rejected != "" {
+				@rejectedNotice(f.Rejected)
+			}
+			if f.Reattach {
+				@reattachNotice()
+			}
+			<form action="/verify/licence" method="post" enctype="multipart/form-data" hx-post="/verify/licence" hx-encoding="multipart/form-data" hx-target="#verify-step" hx-swap="outerHTML" hx-disabled-elt="find button[type=submit]" data-upload-form novalidate class="space-y-5">
+				@c.Field(c.FieldProps{
+					ID: "license-number", Name: "license_number", Label: "Licence number", Value: f.Number,
+					Placeholder: "As printed on your certificate", Required: true, Error: f.Errors["license_number"],
+					Attrs: templ.Attributes{"autocomplete": "off", "autocapitalize": "characters", "spellcheck": "false", "maxlength": "40"},
+				})
+				@c.Field(c.FieldProps{
+					ID: "agency-name", Name: "agency_name", Label: "Agency", Value: f.Agency,
+					Placeholder: "e.g. Adom Homes", Error: f.Errors["agency_name"],
+					Hint:  "Leave blank if you work independently.",
+					Attrs: templ.Attributes{"autocomplete": "organization", "maxlength": "120"},
+				})
+				@photoField("license_doc", "Photo of your licence", "Speeds up the check", "badge-check", f.Errors["license_doc"], true)
+				@uploadProgress()
+				@c.Button(c.ButtonProps{Type: "submit", Full: true}) {
+					Submit for review
+				}
+			</form>
+		</div>
+	}
+}

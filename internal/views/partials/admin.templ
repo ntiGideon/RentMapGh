@@ -1,0 +1,367 @@
+package partials
+
+import (
+	"strconv"
+
+	c "rentmapgh/internal/views/components"
+)
+
+type QueueRow struct {
+	ID, Name, Phone, Kind, Submitted, Decided string
+}
+
+type AdminQueue struct {
+	Status string
+	Counts map[string]int
+	Rows   []QueueRow
+	Notice string
+}
+
+func kindLabel(k string) string {
+	if k == "license" {
+		return "Agent licence"
+	}
+	return "Identity"
+}
+
+templ statusTab(href, label string, count int, active bool) {
+	<a
+		href={ templ.SafeURL(href) }
+		class={ "relative inline-flex h-9 items-center gap-2 px-1 text-sm font-medium transition-colors",
+			templ.KV("text-fg after:absolute after:inset-x-0 after:-bottom-px after:h-0.5 after:bg-graphite-900 dark:after:bg-mint-200", active),
+			templ.KV("text-fg-muted hover:text-fg", !active) }
+		if active {
+			aria-current="page"
+		}
+	>
+		{ label }
+		<span class="rounded-full bg-surface px-1.5 text-2xs tabular-nums text-fg-muted ring-1 ring-line">{ strconv.Itoa(count) }</span>
+	</a>
+}
+
+templ AdminQueueBody(q AdminQueue) {
+	<div id="admin-queue">
+		<div class="flex flex-wrap items-end justify-between gap-3">
+			<div>
+				<h1 class="text-2xl font-semibold text-fg">Verifications</h1>
+				<p class="mt-1 text-sm text-fg-muted">Check each person's Ghana Card, selfie and licence by hand. Oldest first.</p>
+			</div>
+		</div>
+		if q.Notice != "" {
+			<div class="mt-5 flex items-center gap-2 rounded-lg border border-green-600/15 bg-green-50 px-3 py-2.5 text-sm text-success dark:border-green-400/20 dark:bg-green-400/10 dark:text-green-300" role="status">
+				@c.Icon("check", "size-3.5")
+				{ q.Notice }
+			</div>
+		}
+		<nav class="mt-6 flex gap-5 border-b border-line" aria-label="Status">
+			@statusTab("/admin/verifications?status=pending", "Pending", q.Counts["pending"], q.Status == "pending")
+			@statusTab("/admin/verifications?status=approved", "Approved", q.Counts["approved"], q.Status == "approved")
+			@statusTab("/admin/verifications?status=rejected", "Rejected", q.Counts["rejected"], q.Status == "rejected")
+		</nav>
+		if len(q.Rows) == 0 {
+			@c.Card("mt-6") {
+				@c.EmptyState("check", "Nothing here", "When landlords and agents submit their ID or licence, they'll show up in this queue.")
+			}
+		} else {
+			@c.Card("mt-6 overflow-hidden") {
+				<table class="w-full text-left text-sm">
+					<thead class="hidden border-b border-line bg-surface text-xs font-medium text-fg-muted sm:table-header-group">
+						<tr>
+							<th scope="col" class="px-4 py-2.5 font-medium">Person</th>
+							<th scope="col" class="px-4 py-2.5 font-medium">Type</th>
+							<th scope="col" class="px-4 py-2.5 font-medium">Submitted</th>
+							if q.Status != "pending" {
+								<th scope="col" class="px-4 py-2.5 font-medium">Decided</th>
+							}
+							<th scope="col" class="px-4 py-2.5"><span class="sr-only">Open</span></th>
+						</tr>
+					</thead>
+					<tbody class="divide-y divide-line">
+						for _, r := range q.Rows {
+							<tr class="group relative transition-colors hover:bg-surface">
+								<td class="px-4 py-3">
+									<div class="flex items-center gap-3">
+										<span class="grid size-8 shrink-0 place-items-center rounded-full bg-surface text-xs font-semibold text-fg-muted ring-1 ring-line">{ initial(r.Name) }</span>
+										<div class="min-w-0">
+											<a href={ templ.SafeURL("/admin/verifications/" + r.ID) } class="block truncate font-medium text-fg after:absolute after:inset-0">{ r.Name }</a>
+											<p class="tabular-nums text-fg-muted">{ r.Phone }</p>
+										</div>
+									</div>
+								</td>
+								<td class="hidden px-4 py-3 sm:table-cell">
+									if r.Kind == "license" {
+										@c.Badge(c.Verified) {
+											{ kindLabel(r.Kind) }
+										}
+									} else {
+										@c.Badge(c.Neutral) {
+											{ kindLabel(r.Kind) }
+										}
+									}
+								</td>
+								<td class="hidden px-4 py-3 text-fg-muted sm:table-cell">{ r.Submitted }</td>
+								if q.Status != "pending" {
+									<td class="hidden px-4 py-3 text-fg-muted sm:table-cell">{ r.Decided }</td>
+								}
+								<td class="px-4 py-3 text-right text-fg-subtle">
+									<span class="sm:hidden">{ kindLabel(r.Kind) } · { r.Submitted }</span>
+									@c.Icon("arrow-right", "ml-2 inline size-4 transition-transform group-hover:translate-x-0.5")
+								</td>
+							</tr>
+						}
+					</tbody>
+				</table>
+			}
+		}
+	</div>
+}
+
+func initial(name string) string {
+	for _, r := range name {
+		return string(r)
+	}
+	return "?"
+}
+
+type ReasonOption struct{ Code, Label, Message string }
+
+type AdminPerson struct {
+	Name, Phone, Since string
+	Roles              []string
+	PhoneVerified      bool
+	Active             bool
+}
+
+type EvidenceFile struct{ URL, Label string }
+
+type HistoryItem struct{ Kind, Status, When string }
+
+type AdminReviewView struct {
+	ID, Kind, Status, Submitted string
+	CardNumber, Last4, License  string
+	Agency                      string
+	Person                      AdminPerson
+	Files                       []EvidenceFile
+	Reasons                     []ReasonOption
+	History                     []HistoryItem
+	Decided, DecisionMessage    string
+	Own, Purged                 bool
+	Errors                      map[string]string
+	PickedReason, Note          string
+}
+
+templ statusBadge(status string) {
+	switch status {
+		case "pending":
+			@c.Badge(c.Warning) {
+				Pending
+			}
+		case "approved":
+			@c.Badge(c.Success) {
+				Approved
+			}
+		case "rejected":
+			@c.Badge(c.Danger) {
+				Rejected
+			}
+		default:
+			@c.Badge(c.Neutral) {
+				Withdrawn
+			}
+	}
+}
+
+templ detail(label string) {
+	<div class="flex items-start justify-between gap-4 py-2.5">
+		<dt class="text-fg-muted">{ label }</dt>
+		<dd class="min-w-0 text-right font-medium text-fg">
+			{ children... }
+		</dd>
+	</div>
+}
+
+templ AdminReviewBody(v AdminReviewView) {
+	<div id="admin-review">
+		<a href="/admin/verifications" class="inline-flex items-center gap-1.5 text-sm text-fg-muted transition-colors hover:text-fg">
+			@c.Icon("arrow-right", "size-3.5 rotate-180")
+			Back to queue
+		</a>
+		<div class="mt-3 flex flex-wrap items-center gap-3">
+			<h1 class="text-2xl font-semibold text-fg">{ kindLabel(v.Kind) } verification</h1>
+			@statusBadge(v.Status)
+		</div>
+		<p class="mt-1 text-sm text-fg-muted">Submitted { v.Submitted }</p>
+		if msg, ok := v.Errors["form"]; ok {
+			<div class="mt-5 flex items-center gap-2 rounded-lg border border-red-600/15 bg-red-50 px-3 py-2.5 text-sm text-danger dark:border-red-400/20 dark:bg-red-400/10 dark:text-red-300" role="alert">
+				@c.Icon("alert", "size-3.5")
+				{ msg }
+			</div>
+		}
+		<div class="mt-6 grid gap-6 xl:grid-cols-[1fr_22rem]">
+			<section aria-label="Evidence">
+				if v.Purged {
+					@c.Card("") {
+						@c.EmptyState("clock", "Evidence deleted", "The photos were deleted after the retention period. The decision is kept.")
+					}
+				} else if len(v.Files) == 0 {
+					@c.Card("") {
+						@c.EmptyState("badge-check", "No photos", "The agent didn't attach a certificate. Check the number against the Real Estate Agency Council register.")
+					}
+				} else {
+					<div class="grid gap-4 md:grid-cols-2">
+						for i, f := range v.Files {
+							<figure class={ "overflow-hidden rounded-card border border-line bg-surface-raised shadow-card", templ.KV("md:col-span-2", i == 2 && len(v.Files) == 3) }>
+								<a href={ templ.SafeURL(f.URL) } target="_blank" rel="noopener" class="block bg-graphite-950/[0.03] dark:bg-black/30" title="Open full size">
+									<img src={ f.URL } alt={ f.Label } loading="lazy" class="mx-auto max-h-[28rem] w-auto object-contain"/>
+								</a>
+								<figcaption class="flex items-center justify-between border-t border-line px-3.5 py-2.5 text-sm">
+									<span class="font-medium text-fg">{ f.Label }</span>
+									<a href={ templ.SafeURL(f.URL) } target="_blank" rel="noopener" class="text-fg-muted hover:text-fg">Full size</a>
+								</figcaption>
+							</figure>
+						}
+					</div>
+				}
+			</section>
+			<aside class="space-y-4">
+				@c.Card("p-4") {
+					<div class="flex items-center gap-3">
+						<span class="grid size-10 shrink-0 place-items-center rounded-full bg-mint-200 text-sm font-semibold text-graphite-900">{ initial(v.Person.Name) }</span>
+						<div class="min-w-0">
+							<p class="truncate font-semibold text-fg">{ orDash(v.Person.Name) }</p>
+							<p class="text-sm tabular-nums text-fg-muted">{ v.Person.Phone }</p>
+						</div>
+					</div>
+					<dl class="mt-3 divide-y divide-line border-t border-line text-sm">
+						if v.Kind == "identity" {
+							@detail("Card number") {
+								if v.CardNumber != "" {
+									<span class="font-mono tabular-nums tracking-wide">{ v.CardNumber }</span>
+								} else {
+									<span class="text-fg-muted">•••• { v.Last4 }</span>
+								}
+							}
+						} else {
+							@detail("Licence number") {
+								<span class="font-mono tabular-nums">{ v.License }</span>
+							}
+							@detail("Agency") {
+								{ orDash(v.Agency) }
+							}
+						}
+						@detail("Roles") {
+							for i, r := range v.Person.Roles {
+								if i > 0 {
+									{ ", " }
+								}
+								{ RoleLabel(r) }
+							}
+						}
+						@detail("Phone") {
+							if v.Person.PhoneVerified {
+								@c.Badge(c.Success) {
+									Verified by OTP
+								}
+							} else {
+								{ "Not verified" }
+							}
+						}
+						@detail("Member since") {
+							{ v.Person.Since }
+						}
+					</dl>
+				}
+				if len(v.History) > 0 {
+					@c.Card("p-4") {
+						<h2 class="text-sm font-semibold text-fg">Earlier submissions</h2>
+						<ul class="mt-2 space-y-2 text-sm">
+							for _, h := range v.History {
+								<li class="flex items-center justify-between gap-2">
+									<span class="text-fg-muted">{ kindLabel(h.Kind) } · { h.When }</span>
+									@statusBadge(h.Status)
+								</li>
+							}
+						</ul>
+					}
+				}
+				if v.Status == "pending" && v.Own {
+					@c.Card("p-4 text-sm text-fg-muted") {
+						This is your own submission. Another moderator has to review it.
+					}
+				} else if v.Status == "pending" && !v.Person.Active {
+					@c.Card("p-4 text-sm text-fg-muted") {
+						This account has been deleted or suspended.
+					}
+				} else if v.Status == "pending" {
+					@decisionForms(v)
+				} else {
+					@c.Card("p-4 text-sm") {
+						<p class="font-semibold text-fg">Decided { v.Decided }</p>
+						if v.DecisionMessage != "" {
+							<p class="mt-1 text-fg-muted">Told the user: “{ v.DecisionMessage }”</p>
+						}
+					}
+				}
+			</aside>
+		</div>
+	</div>
+}
+
+templ decisionForms(v AdminReviewView) {
+	@c.Card("p-4") {
+		<h2 class="text-sm font-semibold text-fg">Decision</h2>
+		<ul class="mt-2 space-y-1 text-sm text-fg-muted">
+			if v.Kind == "identity" {
+				<li>• Card is a Ghana Card, readable and not expired</li>
+				<li>• Card number matches the one typed</li>
+				<li>• Selfie clearly matches the card photo</li>
+			} else {
+				<li>• Number is in the Real Estate Agency Council register</li>
+				<li>• Name on the licence matches their verified ID</li>
+			}
+		</ul>
+		<form action={ templ.SafeURL("/admin/verifications/" + v.ID + "/decision") } method="post" hx-post={ "/admin/verifications/" + v.ID + "/decision" } hx-target="#admin-review" hx-swap="outerHTML" hx-disabled-elt="find button" class="mt-4">
+			<input type="hidden" name="decision" value="approve"/>
+			@c.Button(c.ButtonProps{Type: "submit", Full: true}) {
+				@c.Icon("check", "size-4")
+				Approve
+			}
+		</form>
+		<form action={ templ.SafeURL("/admin/verifications/" + v.ID + "/decision") } method="post" hx-post={ "/admin/verifications/" + v.ID + "/decision" } hx-target="#admin-review" hx-swap="outerHTML" hx-disabled-elt="find button" class="mt-4 space-y-3 border-t border-line pt-4">
+			<input type="hidden" name="decision" value="reject"/>
+			<fieldset>
+				<legend class="text-sm font-medium text-fg">Reject because…</legend>
+				<div class="mt-2 space-y-1.5">
+					for _, r := range v.Reasons {
+						<label class="flex cursor-pointer items-start gap-2.5 rounded-md border border-line px-2.5 py-2 text-sm transition-colors hover:border-line-strong has-checked:border-graphite-900 has-checked:bg-surface dark:has-checked:border-mint-200">
+							<input type="radio" name="reason" value={ r.Code } checked?={ v.PickedReason == r.Code } class="mt-0.5 accent-graphite-900 dark:accent-mint-200"/>
+							<span>
+								<span class="block font-medium text-fg">{ r.Label }</span>
+								if r.Message != "" {
+									<span class="block text-xs text-fg-muted">{ r.Message }</span>
+								}
+							</span>
+						</label>
+					}
+				</div>
+				if msg, ok := v.Errors["reason"]; ok {
+					<p class="mt-1.5 text-sm text-danger dark:text-red-400">{ msg }</p>
+				}
+			</fieldset>
+			@c.Textarea(c.TextareaProps{
+				ID: "note", Name: "note", Label: "Note to the user", Value: v.Note, Rows: 3, MaxLen: 500,
+				Placeholder: "Replaces the standard message", Error: v.Errors["note"],
+			})
+			@c.Button(c.ButtonProps{Type: "submit", Variant: c.DangerSoft, Full: true}) {
+				Reject
+			}
+		</form>
+	}
+}
+
+func orDash(s string) string {
+	if s == "" {
+		return "—"
+	}
+	return s
+}

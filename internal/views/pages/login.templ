@@ -1,0 +1,12 @@
+package pages
+
+import "rentmapgh/internal/views/layouts"
+
+var loginMeta = layouts.Meta{Title: "Sign in", Description: "Sign in to RentMap with your phone number.", Path: "/login", NoIndex: true}
+
+// Login is the sign-in page; step is the phone or code partial.
+templ Login(step templ.Component) {
+	@layouts.Focused(loginMeta, "max-w-sm") {
+		@step
+	}
+}

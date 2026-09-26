@@ -1,0 +1,13 @@
+.git
+.idea
+.vscode
+bin
+tmp
+.env
+.env.*
+!.env.example
+deploy/.env.prod
+web/static/css/app.css
+e2e/test-results
+e2e/playwright-report
+data

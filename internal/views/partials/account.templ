@@ -1,0 +1,100 @@
+package partials
+
+import (
+	"slices"
+
+	c "rentmapgh/internal/views/components"
+)
+
+// RoleOption describes a self-service role card.
+type RoleOption struct {
+	Key, Label, Body, Icon string
+}
+
+var RoleOptions = []RoleOption{
+	{"renter", "Find a place", "Search the map, book viewings and see the full move-in cost.", "search"},
+	{"landlord", "List my property", "List rooms and houses you own and manage viewing requests.", "home"},
+	{"agent", "I'm an agent", "List for owners. We'll ask for your licence number later.", "briefcase"},
+}
+
+func RoleLabel(key string) string {
+	switch key {
+	case "renter":
+		return "Renter"
+	case "landlord":
+		return "Landlord"
+	case "agent":
+		return "Agent"
+	case "field_verifier":
+		return "Field verifier"
+	case "moderator":
+		return "Moderator"
+	case "admin":
+		return "Admin"
+	}
+	return key
+}
+
+type OnboardingForm struct {
+	Name   string
+	Roles  []string
+	Next   string
+	Errors map[string]string
+}
+
+templ Onboarding(f OnboardingForm) {
+	<div id="onboarding" class="animate-rise">
+		<div class="mb-6">
+			<p class="text-sm font-medium text-link">Almost done</p>
+			<h1 class="mt-1.5 text-2xl font-semibold text-fg">How will you use RentMap?</h1>
+			<p class="mt-1.5 text-base text-fg-muted">Choose all that apply. You can add more later from your account.</p>
+		</div>
+		<form action="/onboarding" method="post" hx-post="/onboarding" hx-target="#onboarding" hx-swap="outerHTML" hx-disabled-elt="find button[type=submit]" novalidate class="space-y-5">
+			<input type="hidden" name="next" value={ f.Next }/>
+			<fieldset class="space-y-1.5">
+				<legend class="sr-only">Roles</legend>
+				<div class="grid gap-2">
+					for _, o := range RoleOptions {
+						<label class="group flex cursor-pointer items-start gap-3 rounded-lg border border-line bg-surface-raised p-3.5 shadow-xs transition-[border-color,box-shadow] hover:border-line-strong has-checked:border-graphite-900 has-checked:ring-1 has-checked:ring-graphite-900 has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-focus dark:bg-white/[0.03] dark:has-checked:border-mint-200 dark:has-checked:ring-mint-200">
+							<input type="checkbox" name="roles" value={ o.Key } checked?={ slices.Contains(f.Roles, o.Key) } class="sr-only"/>
+							<span class="grid size-9 shrink-0 place-items-center rounded-lg border border-line bg-surface text-fg-muted transition group-has-checked:border-transparent group-has-checked:bg-mint-200 group-has-checked:text-graphite-900">
+								@c.Icon(o.Icon, "size-4")
+							</span>
+							<span class="min-w-0 flex-1">
+								<span class="block text-base font-medium text-fg">{ o.Label }</span>
+								<span class="block text-sm text-fg-muted">{ o.Body }</span>
+							</span>
+							<span class="mt-0.5 grid size-4 shrink-0 place-items-center rounded border border-line-strong text-white transition group-has-checked:border-graphite-900 group-has-checked:bg-graphite-900 dark:text-graphite-900 dark:group-has-checked:border-mint-200 dark:group-has-checked:bg-mint-200">
+								@c.Icon("check", "size-3 stroke-[3] opacity-0 group-has-checked:opacity-100")
+							</span>
+						</label>
+					}
+				</div>
+				if msg, ok := f.Errors["roles"]; ok {
+					<p class="flex items-center gap-1.5 text-sm text-danger dark:text-red-400" role="alert">
+						@c.Icon("alert", "size-3.5")
+						{ msg }
+					</p>
+				}
+			</fieldset>
+			@c.Field(c.FieldProps{
+				ID: "ob-name", Name: "name", Label: "First name", Value: f.Name, Placeholder: "Ama",
+				Hint: "Shown to landlords and renters you contact.", Error: f.Errors["name"],
+				Attrs: templ.Attributes{"autocomplete": "given-name", "maxlength": "80"},
+			})
+			@c.Button(c.ButtonProps{Type: "submit", Full: true}) {
+				Continue
+				@c.Icon("arrow-right", "size-4 transition-transform group-hover/btn:translate-x-0.5")
+			}
+		</form>
+	</div>
+}
+
+type Device struct {
+	ID         string
+	Label      string
+	Mobile     bool
+	IP         string
+	LastActive string
+	Current    bool
+}

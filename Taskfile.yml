@@ -1,0 +1,137 @@
+# https://taskfile.dev — install once: go install github.com/go-task/task/v3/cmd/task@latest
+version: "3"
+
+dotenv: [".env"]
+
+vars:
+  TAILWIND_VERSION: v4.3.3
+  AIR_VERSION: v1.67.4
+  TAILWIND: '{{if eq OS "windows"}}bin/tailwindcss.exe{{else}}bin/tailwindcss{{end}}'
+  COMPOSE: docker compose -f deploy/compose.dev.yml
+
+tasks:
+  setup:
+    desc: One-time setup (Tailwind CLI, .env, database)
+    cmds:
+      - task: tools:tailwind
+      - cmd: '{{if eq OS "windows"}}powershell -NoProfile -Command "if (-not (Test-Path .env)) {{"{"}} Copy-Item .env.example .env {{"}"}}"{{else}}test -f .env || cp .env.example .env{{end}}'
+      - task: db:up
+
+  dev:
+    desc: Run everything with live reload (templ + Tailwind + Go server)
+    deps: [db:up]
+    cmds:
+      - task: generate
+      - task: css
+      - task: dev:watch
+
+  dev:watch:
+    internal: true
+    deps: [dev:templ, dev:css, dev:server]
+
+  dev:templ:
+    internal: true
+    cmds: ["go tool templ generate --watch"]
+
+  dev:css:
+    internal: true
+    cmds: ["{{.TAILWIND}} -i web/css/app.css -o web/static/css/app.css --watch=always"]
+
+  dev:server:
+    internal: true
+    cmds: ["go run github.com/air-verse/air@{{.AIR_VERSION}}"]
+
+  generate:
+    desc: Generate templ and Ent code
+    cmds:
+      - go tool templ generate
+      - go generate ./internal/ent
+
+  css:
+    desc: Build minified CSS
+    cmds: ["{{.TAILWIND}} -i web/css/app.css -o web/static/css/app.css --minify"]
+
+  build:
+    desc: Build web and migrate binaries into bin/
+    deps: [generate, css]
+    cmds:
+      - go build -trimpath -ldflags="-s -w" -o bin/web{{exeExt}} ./cmd/web
+      - go build -trimpath -ldflags="-s -w" -o bin/migrate{{exeExt}} ./cmd/migrate
+      - go build -trimpath -ldflags="-s -w" -o bin/admin{{exeExt}} ./cmd/admin
+
+  test:
+    desc: Unit + integration tests (integration needs the dev DB running)
+    env:
+      TEST_DATABASE_URL: postgres://rentmap:rentmap@localhost:5432/rentmap_test?sslmode=disable
+      TEST_S3_ENDPOINT: http://localhost:8333
+    # -p 1: packages share one test database and truncate tables between tests.
+    cmds: ["go test -p 1 ./..."]
+
+  lint:
+    desc: go vet + golangci-lint
+    cmds:
+      - go vet ./...
+      - go run github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest run
+
+  check:drift:
+    desc: Fail if generated code is stale (used in CI)
+    cmds:
+      - task: generate
+      - git diff --exit-code -- '*_templ.go' internal/ent
+
+  db:up:
+    desc: Start Postgres (PostGIS + pgvector), Mailpit and SeaweedFS (S3)
+    cmds: ["{{.COMPOSE}} up -d --wait db mailpit s3"]
+
+  db:down:
+    desc: Stop dev services (data is kept)
+    cmds: ["{{.COMPOSE}} down"]
+
+  db:reset:
+    desc: Destroy and recreate the dev database
+    prompt: This deletes all local data. Continue?
+    cmds:
+      - "{{.COMPOSE}} down -v"
+      - task: db:up
+
+  db:psql:
+    desc: Open psql
+    cmds: ["{{.COMPOSE}} exec db psql -U rentmap -d rentmap"]
+
+  db:migrate:
+    desc: Apply pending migrations
+    cmds: ["go run ./cmd/migrate up"]
+
+  db:rollback:
+    desc: Roll back the last migration
+    cmds: ["go run ./cmd/migrate down 1"]
+
+  db:diff:
+    desc: "Generate a migration from the Ent schema: task db:diff NAME=add_users"
+    requires: { vars: [NAME] }
+    cmds:
+      - go generate ./internal/ent
+      - go run ./cmd/migrate diff {{.NAME}}
+
+  db:hash:
+    desc: Re-hash migrations after hand-editing a SQL file
+    cmds: ["go run ./cmd/migrate hash"]
+
+  admin:grant:
+    desc: "Give a user a role: task admin:grant PHONE=0241234567 ROLE=moderator"
+    requires: { vars: [PHONE, ROLE] }
+    cmds: ["go run ./cmd/admin grant {{.PHONE}} {{.ROLE}}"]
+
+  admin:revoke:
+    desc: "Remove a role: task admin:revoke PHONE=0241234567 ROLE=moderator"
+    requires: { vars: [PHONE, ROLE] }
+    cmds: ["go run ./cmd/admin revoke {{.PHONE}} {{.ROLE}}"]
+
+  tools:tailwind:
+    desc: Download the Tailwind standalone CLI into bin/
+    status: ["test -f {{.TAILWIND}}"]
+    cmds:
+      - cmd: powershell -NoProfile -Command "New-Item -ItemType Directory -Force bin | Out-Null; Invoke-WebRequest -UseBasicParsing https://github.com/tailwindlabs/tailwindcss/releases/download/{{.TAILWIND_VERSION}}/tailwindcss-windows-x64.exe -OutFile {{.TAILWIND}}"
+        platforms: [windows]
+      - cmd: mkdir -p bin && curl -sSfL -o {{.TAILWIND}} https://github.com/tailwindlabs/tailwindcss/releases/download/{{.TAILWIND_VERSION}}/tailwindcss-{{if eq OS "darwin"}}macos{{else}}linux{{end}}-{{if eq ARCH "arm64"}}arm64{{else}}x64{{end}} && chmod +x {{.TAILWIND}}
+        platforms: [linux, darwin]

@@ -1,0 +1,68 @@
+package components
+
+type Tone string
+
+const (
+	Neutral  Tone = "neutral"
+	Brand    Tone = "brand"
+	Success  Tone = "success"
+	Warning  Tone = "warning"
+	Danger   Tone = "danger"
+	Verified Tone = "verified"
+)
+
+func badgeClass(t Tone) string {
+	c := "inline-flex h-5 items-center gap-1 whitespace-nowrap rounded-md px-1.5 text-2xs font-medium ring-1 ring-inset "
+	switch t {
+	case Brand:
+		return c + "bg-mint-100 text-mint-900 ring-mint-300/60 dark:bg-mint-200/10 dark:text-mint-200 dark:ring-mint-200/20"
+	case Success:
+		return c + "bg-green-50 text-success ring-green-600/15 dark:bg-green-400/10 dark:text-green-300 dark:ring-green-400/20"
+	case Warning:
+		return c + "bg-amber-50 text-warning ring-amber-600/20 dark:bg-amber-400/10 dark:text-amber-300 dark:ring-amber-400/20"
+	case Danger:
+		return c + "bg-red-50 text-danger ring-red-600/15 dark:bg-red-400/10 dark:text-red-300 dark:ring-red-400/20"
+	case Verified:
+		return c + "bg-blue-50 text-verified ring-blue-600/15 dark:bg-blue-400/10 dark:text-blue-300 dark:ring-blue-400/20"
+	default:
+		return c + "bg-surface text-fg-muted ring-line"
+	}
+}
+
+templ Badge(t Tone) {
+	<span class={ badgeClass(t) }>
+		{ children... }
+	</span>
+}
+
+// Card is the standard raised surface.
+templ Card(class string) {
+	<div class={ "rounded-card border border-line bg-surface-raised shadow-card", class }>
+		{ children... }
+	</div>
+}
+
+// Skeleton is a shimmering placeholder block for loading regions.
+templ Skeleton(class string) {
+	<div class={ "skeleton rounded-lg", class } aria-hidden="true"></div>
+}
+
+templ EmptyState(icon, title, body string) {
+	<div class="flex flex-col items-center px-6 py-12 text-center">
+		<div class="mb-4 grid size-10 place-items-center rounded-lg border border-line bg-surface-raised text-fg-muted shadow-xs">
+			@Icon(icon, "size-5")
+		</div>
+		<h3 class="text-md font-semibold text-fg">{ title }</h3>
+		<p class="mt-1 max-w-sm text-fg-muted">{ body }</p>
+		<div class="mt-5">
+			{ children... }
+		</div>
+	</div>
+}
+
+// Chip is a non-interactive pill (filters get their own interactive variant).
+templ Chip() {
+	<span class="inline-flex h-7 items-center gap-1.5 rounded-full border border-line bg-surface-raised px-2.5 text-sm font-medium text-fg shadow-xs">
+		{ children... }
+	</span>
+}

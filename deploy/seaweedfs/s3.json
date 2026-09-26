@@ -1,0 +1,9 @@
+{
+  "identities": [
+    {
+      "name": "rentmap",
+      "credentials": [{ "accessKey": "rentmap", "secretKey": "rentmap-dev-secret" }],
+      "actions": ["Admin", "Read", "List", "Tagging", "Write"]
+    }
+  ]
+}

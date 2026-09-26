@@ -1,0 +1,67 @@
+package layouts
+
+import "rentmapgh/internal/server/reqctx"
+
+type Meta struct {
+	Title       string
+	Description string
+	Path        string // canonical path, e.g. "/"
+	NoIndex     bool
+	Styles      []string // extra stylesheets (static paths), e.g. the map's CSS
+	Modules     []string // extra ES modules, loaded only on pages that need them
+}
+
+const siteName = "RentMap Ghana"
+
+func (m Meta) fullTitle() string {
+	if m.Title == "" {
+		return siteName
+	}
+	return m.Title + " · " + siteName
+}
+
+// htmx: no eval (strict CSP), no injected indicator <style>, and 422 responses
+// are swapped so server-rendered validation errors replace the form.
+const htmxConfig = `{"allowEval":false,"includeIndicatorStyles":false,"selfRequestsOnly":true,"historyCacheSize":0,` +
+	`"responseHandling":[{"code":"204","swap":false},{"code":"[23]..","swap":true},{"code":"422","swap":true},{"code":"[45]..","swap":false,"error":true}]}`
+
+templ Base(m Meta) {
+	<!DOCTYPE html>
+	<html lang="en" class={ "h-full scroll-smooth antialiased", templ.KV("data-saver", reqctx.DataSaver(ctx)) }>
+		<head>
+			<meta charset="utf-8"/>
+			<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+			<title>{ m.fullTitle() }</title>
+			<meta name="description" content={ m.Description }/>
+			if m.NoIndex {
+				<meta name="robots" content="noindex"/>
+			}
+			<meta name="theme-color" content="#25272C"/>
+			<meta name="color-scheme" content="light dark"/>
+			<meta name="htmx-config" content={ htmxConfig }/>
+			<meta property="og:site_name" content={ siteName }/>
+			<meta property="og:title" content={ m.fullTitle() }/>
+			<meta property="og:description" content={ m.Description }/>
+			<meta property="og:type" content="website"/>
+			<meta property="og:locale" content="en_GH"/>
+			<!-- Blocking on purpose (~200 B, cached forever): sets dark mode before first paint. -->
+			<script src={ reqctx.Asset(ctx, "js/theme.js") }></script>
+			<link rel="preload" href="/static/fonts/inter-latin-var.woff2" as="font" type="font/woff2" crossorigin/>
+			<link rel="stylesheet" href={ reqctx.Asset(ctx, "css/app.css") }/>
+			for _, s := range m.Styles {
+				<link rel="stylesheet" href={ reqctx.Asset(ctx, s) }/>
+			}
+			<link rel="icon" href={ reqctx.Asset(ctx, "img/favicon.svg") } type="image/svg+xml"/>
+			<script src={ reqctx.Asset(ctx, "vendor/htmx-2.0.11.min.js") } defer></script>
+			<script src={ reqctx.Asset(ctx, "js/app.js") } defer></script>
+			for _, js := range m.Modules {
+				<script type="module" src={ reqctx.Asset(ctx, js) }></script>
+			}
+		</head>
+		<body class="min-h-full bg-bg font-sans text-base text-fg selection:bg-mint-200 selection:text-graphite-900">
+			<a href="#main" class="sr-only z-50 rounded-lg bg-primary px-4 py-2 text-on-primary focus:not-sr-only focus:fixed focus:left-4 focus:top-4">Skip to content</a>
+			{ children... }
+			<div id="toasts" class="pointer-events-none fixed inset-x-0 bottom-0 z-50 flex flex-col items-center gap-2 p-4 pb-[max(1rem,env(safe-area-inset-bottom))]" aria-live="polite" aria-atomic="false"></div>
+		</body>
+	</html>
+}

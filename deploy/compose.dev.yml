@@ -1,0 +1,54 @@
+name: rentmap
+
+services:
+  db:
+    build:
+      context: ..
+      dockerfile: deploy/docker/db.Dockerfile
+    image: rentmap/postgres:17-postgis-pgvector
+    environment:
+      POSTGRES_USER: rentmap
+      POSTGRES_PASSWORD: rentmap
+      POSTGRES_DB: rentmap
+    ports: ["5432:5432"]
+    volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U rentmap -d rentmap"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  # S3-compatible object storage for listing photos (production uses R2 or
+  # Garage). MinIO no longer publishes images; SeaweedFS is one small binary.
+  # Pinned: the :latest image shipped an empty entrypoint in Sept 2026.
+  s3:
+    image: chrislusf/seaweedfs:3.97
+    command: server -dir=/data -s3 -s3.port=8333 -s3.config=/etc/seaweedfs/s3.json -master.volumeSizeLimitMB=256 -volume.max=100
+    ports: ["8333:8333"]
+    volumes:
+      - s3data:/data
+      - ./seaweedfs/s3.json:/etc/seaweedfs/s3.json:ro
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO /dev/null http://127.0.0.1:8333/healthz || exit 1"]
+      interval: 3s
+      timeout: 3s
+      retries: 30
+
+  mailpit:
+    image: axllent/mailpit:latest
+    ports: ["8025:8025", "1025:1025"]
+
+  # Heavy: downloads Ghana OSM and builds routing tiles (several GB RAM, ~15 min
+  # first run). Only started with `docker compose --profile routing up`.
+  valhalla:
+    profiles: [routing]
+    image: ghcr.io/gis-ops/docker-valhalla/valhalla:latest
+    environment:
+      tile_urls: "https://download.geofabrik.de/africa/ghana-latest.osm.pbf"
+    ports: ["8002:8002"]
+    volumes: [valhalla:/custom_files]
+
+volumes:
+  pgdata: {}
+  s3data: {}
+  valhalla: {}

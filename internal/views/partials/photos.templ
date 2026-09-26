@@ -1,0 +1,260 @@
+package partials
+
+import (
+	"strconv"
+
+	c "rentmapgh/internal/views/components"
+)
+
+type PhotoTile struct {
+	ID, Small, Medium, Large, Blurhash string
+	Width, Height                      int
+}
+
+// PhotosView is the photo manager on the wizard's photos step.
+type PhotosView struct {
+	ListingID       string
+	Tiles           []PhotoTile
+	Min, Good, Max  int
+	Editable        bool
+	Error           string
+}
+
+func (v PhotosView) base() string { return "/listings/" + v.ListingID + "/photos" }
+
+func (v PhotosView) actionURL(id, action string) string { return v.base() + "/" + id + "/" + action }
+
+// photoHint is the one-line nudge under the count.
+func photoHint(v PhotosView) string {
+	n := len(v.Tiles)
+	switch {
+	case n == 0:
+		return "Start with the room itself, then the bathroom, kitchen, compound and the gate."
+	case n < v.Min:
+		return "Add " + strconv.Itoa(v.Min-n) + " more to publish."
+	case n < v.Good:
+		return "Add " + strconv.Itoa(v.Good-n) + " more for full marks. Listings with 8+ photos get far more viewing requests."
+	case n >= v.Max:
+		return "That's the maximum. Remove one to add another."
+	}
+	return "Great set. Drag to put the best photo first — it's the cover renters see on the map."
+}
+
+// photoMeter maps the count to a static width class (no inline styles under the CSP).
+func photoMeter(n, good int) string {
+	widths := []string{"w-0", "w-1/8", "w-2/8", "w-3/8", "w-4/8", "w-5/8", "w-6/8", "w-7/8", "w-full"}
+	return widths[max(0, min(len(widths)-1, n*8/max(good, 1)))]
+}
+
+templ StepPhotos(v WizardView) {
+	<div class="group/photos space-y-6">
+		<div>
+			<h1 class="text-2xl font-semibold text-fg">Show the place</h1>
+			<p class="mt-1.5 text-base text-fg-muted">
+				Add at least { strconv.Itoa(v.Photos.Min) } photos to publish, and 8 or more for the best ranking. The first photo is the cover.
+			</p>
+		</div>
+		if v.Photos.Editable {
+			@photoUploader(v.Photos)
+		}
+		@PhotoGrid(v.Photos)
+		<div class="rounded-lg border border-line bg-surface px-4 py-3 text-sm text-fg-muted">
+			<p class="font-medium text-fg">Photos that get viewings</p>
+			<p class="mt-1">Shoot in daylight with the lights on, phone held sideways. Show the room, bathroom and toilet, kitchen, the compound, the gate and the street, the meter and water tank. No people, and no phone numbers written on photos.</p>
+		</div>
+		<form action={ templ.SafeURL(v.stepURL("photos")) } method="post" class="border-t border-line pt-5">
+			if msg := v.err("form"); msg != "" {
+				@fieldError(msg)
+			}
+			<div class="flex flex-wrap items-center justify-between gap-3">
+				<a href={ templ.SafeURL(v.stepURL(prevStep(v))) } class="inline-flex h-11 items-center gap-1.5 rounded-lg px-3 text-base font-medium text-fg-muted transition-colors hover:bg-surface hover:text-fg">
+					@c.Icon("arrow-right", "size-4 rotate-180")
+					Back
+				</a>
+				<div class="flex flex-wrap items-center gap-2">
+					<!-- Hidden by CSS once the swapped-in grid has enough photos. -->
+					<span class="group-has-[[data-enough]]/photos:hidden">
+						@c.Button(c.ButtonProps{Type: "submit", Variant: c.Ghost, Attrs: templ.Attributes{"name": "later", "value": "1"}}) {
+							Add photos later
+						}
+					</span>
+					@c.Button(c.ButtonProps{Type: "submit"}) {
+						Continue
+						@c.Icon("arrow-right", "size-4 transition-transform group-hover/btn:translate-x-0.5")
+					}
+				</div>
+			</div>
+		</form>
+	</div>
+}
+
+// photoUploader is a plain multipart form; photo-manager.js takes it over to
+// shrink photos on the phone and upload them one by one with progress.
+templ photoUploader(v PhotosView) {
+	<form
+		action={ templ.SafeURL(v.base()) }
+		method="post"
+		enctype="multipart/form-data"
+		data-photo-uploader
+		data-upload-url={ v.base() }
+		data-order-url={ v.base() + "/order" }
+		data-max={ strconv.Itoa(v.Max) }
+	>
+		<label
+			for="photo-input"
+			data-dropzone
+			class="flex cursor-pointer flex-col items-center justify-center gap-1.5 rounded-card border border-dashed border-line-strong bg-surface px-6 py-8 text-center transition-colors hover:border-graphite-400 hover:bg-surface-raised has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-focus [&.is-over]:border-graphite-900 [&.is-over]:bg-mint-50 dark:[&.is-over]:border-mint-200 dark:[&.is-over]:bg-mint-200/10"
+		>
+			<span class="mb-1 grid size-11 place-items-center rounded-full bg-surface-raised text-fg shadow-xs ring-1 ring-line">
+				@c.Icon("image-plus", "size-5")
+			</span>
+			<span class="text-base font-semibold text-fg">Add photos</span>
+			<span class="text-sm text-fg-muted sm:hidden">Choose from your gallery or camera</span>
+			<span class="hidden text-sm text-fg-muted sm:inline">Drop photos here, or choose from your gallery or camera</span>
+			<span class="text-xs text-fg-subtle">JPEG, PNG or WebP · up to { strconv.Itoa(v.Max) } photos</span>
+			<input id="photo-input" type="file" name="photo" multiple accept="image/*" class="sr-only"/>
+		</label>
+		<div data-no-js class="mt-3 flex justify-end">
+			@c.Button(c.ButtonProps{Type: "submit", Variant: c.Ghost}) {
+				@c.Icon("upload", "size-4")
+				Upload photos
+			}
+		</div>
+		<ul data-upload-queue class="mt-3 grid grid-cols-2 gap-3 empty:hidden sm:grid-cols-3 lg:grid-cols-4" aria-live="polite"></ul>
+		<template data-upload-tile>
+			<li class="relative overflow-hidden rounded-lg border border-line bg-surface shadow-xs">
+				<div class="relative aspect-[4/3] bg-surface">
+					<img data-preview alt="" class="size-full object-cover opacity-60"/>
+					<div data-failed class="absolute inset-0 hidden place-items-center bg-bg/80 p-3 text-center text-sm font-medium text-danger dark:text-red-300"></div>
+				</div>
+				<div class="flex h-11 items-center gap-2 border-t border-line bg-surface-raised px-2.5">
+					<span data-status class="min-w-0 flex-1 truncate text-xs text-fg-muted">Waiting…</span>
+					<button type="button" data-retry hidden aria-label="Try again" title="Try again" class="grid size-8 place-items-center rounded-md text-fg-muted hover:bg-surface hover:text-fg">
+						@c.Icon("rotate-ccw", "size-4")
+					</button>
+					<button type="button" data-dismiss hidden aria-label="Dismiss" title="Dismiss" class="grid size-8 place-items-center rounded-md text-fg-muted hover:bg-surface hover:text-fg">
+						@c.Icon("x", "size-4")
+					</button>
+				</div>
+				<div class="absolute inset-x-0 bottom-11 h-1 bg-graphite-900/10 dark:bg-white/10">
+					<div data-bar class="h-full w-0 bg-graphite-900 transition-[width] duration-200 dark:bg-mint-200"></div>
+				</div>
+			</li>
+		</template>
+	</form>
+}
+
+// PhotoGrid is swapped in after every upload, move and delete.
+templ PhotoGrid(v PhotosView) {
+	<section
+		id="photo-grid"
+		data-photo-grid
+		if len(v.Tiles) >= v.Min {
+			data-enough
+		}
+		aria-labelledby="photo-count"
+	>
+		<div class="flex flex-wrap items-end justify-between gap-x-4 gap-y-1">
+			<h2 id="photo-count" class="text-base font-semibold text-fg">
+				if len(v.Tiles) == 1 {
+					1 photo
+				} else {
+					{ strconv.Itoa(len(v.Tiles)) } photos
+				}
+			</h2>
+			<div class="flex items-center gap-2 text-xs text-fg-muted">
+				<span class="h-1.5 w-24 overflow-hidden rounded-full bg-surface ring-1 ring-line">
+					<span class={ "block h-full rounded-full bg-graphite-900 transition-[width] dark:bg-mint-200", photoMeter(len(v.Tiles), v.Good) }></span>
+				</span>
+				{ strconv.Itoa(min(len(v.Tiles), v.Good)) }/{ strconv.Itoa(v.Good) }
+			</div>
+		</div>
+		<p class="mt-1 text-sm text-fg-muted">{ photoHint(v) }</p>
+		if v.Error != "" {
+			<div class="mt-3 flex items-center gap-2 rounded-lg border border-red-600/15 bg-red-50 px-3 py-2.5 text-sm text-danger dark:bg-red-400/10 dark:text-red-300" role="alert">
+				@c.Icon("alert", "size-3.5")
+				{ v.Error }
+			</div>
+		}
+		if len(v.Tiles) > 0 {
+			<ol data-photo-list class="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+				for i, t := range v.Tiles {
+					<li data-photo-id={ t.ID } class="relative overflow-hidden rounded-lg border border-line bg-surface-raised shadow-xs transition-opacity [&.is-dragging]:opacity-40 [&.is-dragging]:ring-2 [&.is-dragging]:ring-graphite-900 dark:[&.is-dragging]:ring-mint-200">
+						<div class="relative aspect-[4/3] bg-surface">
+							<img
+								src={ t.Small }
+								srcset={ t.Small + " 320w, " + t.Medium + " 800w" }
+								sizes="(min-width: 1024px) 13rem, (min-width: 640px) 30vw, 45vw"
+								width={ strconv.Itoa(t.Width) }
+								height={ strconv.Itoa(t.Height) }
+								alt={ "Photo " + strconv.Itoa(i+1) }
+								loading="lazy"
+								decoding="async"
+								draggable="false"
+								class="size-full object-cover"
+							/>
+							if i == 0 {
+								<span class="absolute left-2 top-2 inline-flex items-center gap-1 rounded-md bg-graphite-900/85 px-1.5 py-0.5 text-2xs font-semibold text-white">
+									@c.Icon("star", "size-3 fill-current")
+									Cover
+								</span>
+							}
+							if v.Editable && len(v.Tiles) > 1 {
+								<button type="button" data-drag-handle hidden aria-label={ "Drag to reorder photo " + strconv.Itoa(i+1) } title="Drag to reorder" class="absolute right-2 top-2 grid size-9 cursor-grab touch-none place-items-center rounded-md bg-white/90 text-graphite-900 shadow-xs active:cursor-grabbing dark:bg-graphite-900/85 dark:text-white">
+									@c.Icon("grip", "size-4")
+								</button>
+							}
+						</div>
+						if v.Editable {
+							<div class="flex h-11 items-center justify-between gap-1 border-t border-line px-1">
+								<div class="flex items-center">
+									@photoAction(v.actionURL(t.ID, "left"), "chevron-left", "Move earlier", i == 0, "", "")
+									@photoAction(v.actionURL(t.ID, "right"), "chevron-right", "Move later", i == len(v.Tiles)-1, "", "")
+									if i > 0 {
+										@photoAction(v.actionURL(t.ID, "cover"), "star", "Make this the cover", false, "", "")
+									}
+								</div>
+								@photoAction(v.actionURL(t.ID, "delete"), "trash", "Delete photo", false, "Delete this photo?", "hover:text-danger")
+							</div>
+						}
+					</li>
+				}
+			</ol>
+		}
+	</section>
+}
+
+templ photoAction(url, icon, label string, disabled bool, confirm, hoverClass string) {
+	<form
+		method="post"
+		action={ templ.SafeURL(url) }
+		hx-post={ url }
+		hx-target="#photo-grid"
+		hx-swap="outerHTML"
+		if confirm != "" {
+			hx-confirm={ confirm }
+		}
+	>
+		<button type="submit" disabled?={ disabled } aria-label={ label } title={ label } class={ "grid size-9 place-items-center rounded-md text-fg-muted transition-colors hover:bg-surface hover:text-fg disabled:pointer-events-none disabled:opacity-30", hoverClass }>
+			@c.Icon(icon, "size-4")
+		</button>
+	</form>
+}
+
+// PhotoStrip is a row of thumbnails (review step, admin review).
+templ PhotoStrip(tiles []PhotoTile) {
+	if len(tiles) > 0 {
+		<ul class="flex gap-2 overflow-x-auto pb-1">
+			for i, t := range tiles {
+				<li class="shrink-0">
+					<a href={ templ.SafeURL(t.Large) } target="_blank" rel="noopener" class="relative block overflow-hidden rounded-md border border-line">
+						<img src={ t.Small } width={ strconv.Itoa(t.Width) } height={ strconv.Itoa(t.Height) } alt={ "Photo " + strconv.Itoa(i+1) } loading="lazy" class="h-20 w-28 object-cover"/>
+						if i == 0 {
+							<span class="absolute left-1 top-1 rounded bg-graphite-900/85 px-1 text-2xs font-semibold text-white">Cover</span>
+						}
+					</a>
+				</li>
+			}
+		</ul>
+	}
+}

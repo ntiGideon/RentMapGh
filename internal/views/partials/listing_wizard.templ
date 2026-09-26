@@ -1,0 +1,663 @@
+package partials
+
+import (
+	"slices"
+	"strconv"
+
+	c "rentmapgh/internal/views/components"
+)
+
+type WizStep struct {
+	Key, Label, Hint string
+	State            string // done | current | todo
+	Reachable        bool
+}
+
+type OptionGroup struct {
+	Label   string
+	Options []c.Option
+	// AskBedrooms / Commercial mark options that change which questions show.
+	AskBedrooms []string
+	Commercial  []string
+}
+
+type MoneyLine struct{ Label, Amount string }
+
+type MoveInView struct {
+	Lines          []MoneyLine
+	Total, Monthly string
+	Complete       bool
+	Missing        []string
+	HasRent        bool
+}
+
+type FeeRow struct{ Label, Amount string }
+
+type TipView struct {
+	Text, Step string
+	Points     int
+}
+
+type ReqView struct{ Step, Text string }
+
+type SummaryRow struct{ Label, Value string }
+
+type SummarySection struct {
+	Title, Step string
+	Rows        []SummaryRow
+}
+
+// WizardView carries every step's fields; each step template reads its own.
+type WizardView struct {
+	ID, Step, Title, Status, ReviewNote string
+	Steps                               []WizStep
+	StepNumber                          int
+	IsAgent, SharedProperty             bool
+	Errors                              map[string]string
+	SavedAt                             string
+
+	// location
+	Lat, Lng, DefaultLat, DefaultLng                string
+	DigitalAddress, Landmark, Street, Neighbourhood string
+	Neighbourhoods                                  []c.Option
+
+	// property
+	Category, Name string
+	Categories     []c.Option
+
+	// unit
+	UnitType, Bedrooms, Bathrooms, SizeSqm, Floor, Label string
+	Furnished, SelfContained, Meter, Water, Kitchen      string
+	UnitGroups                                           []OptionGroup
+	FurnishedOpts, MeterOpts, WaterOpts, KitchenOpts     []c.Option
+
+	// amenities
+	Amenities     []string
+	AmenityGroups []OptionGroup
+
+	// photos
+	Photos PhotosView
+
+	// pricing
+	Rent, Period, Advance, Deposit, AgentFee, ServiceCharge, ViewingFee, MinLease string
+	Negotiable                                                                    bool
+	Fees                                                                          []FeeRow
+	Periods                                                                       []c.Option
+	MoveIn                                                                        MoveInView
+
+	// details
+	Headline, Description, AvailableFrom, Today string
+
+	// review
+	Score            int
+	Tips             []TipView
+	Missing          []ReqView
+	Summary          []SummarySection
+	IdentityVerified bool
+}
+
+func (v WizardView) stepURL(step string) string { return "/listings/" + v.ID + "/edit/" + step }
+
+func (v WizardView) err(k string) string { return v.Errors[k] }
+
+// ── Shell ─────────────────────────────────────────────────────────────────
+templ Wizard(v WizardView, body templ.Component) {
+	<div class="mx-auto max-w-6xl px-4 pb-24 pt-6 sm:px-6 lg:pt-10">
+		<div class="lg:grid lg:grid-cols-[15rem_1fr] lg:gap-12">
+			<aside class="hidden lg:block">
+				<nav class="sticky top-20" aria-label="Listing steps">
+					<ol class="space-y-0.5">
+						for i, s := range v.Steps {
+							<li>
+								@stepLink(v, s, i+1)
+							</li>
+						}
+					</ol>
+					if v.SharedProperty {
+						<p class="mt-6 rounded-lg border border-line bg-surface p-3 text-xs text-fg-muted">This unit shares its location and building details with the other units in the property.</p>
+					}
+				</nav>
+			</aside>
+			<div class="min-w-0">
+				<div class="mb-5 lg:hidden">
+					<div class="flex items-center justify-between text-sm">
+						<span class="font-medium text-fg">Step { strconv.Itoa(v.StepNumber) } of { strconv.Itoa(len(v.Steps)) }</span>
+						<span class="text-fg-muted">{ v.Steps[v.StepNumber-1].Label }</span>
+					</div>
+					<div class="mt-2 h-1 overflow-hidden rounded-full bg-surface">
+						<div class={ "h-full rounded-full bg-graphite-900 dark:bg-mint-200", progressWidth(v.StepNumber, len(v.Steps)) }></div>
+					</div>
+				</div>
+				if v.ReviewNote != "" && v.Status == "draft" {
+					<div class="mb-5 flex items-start gap-2.5 rounded-lg border border-amber-500/30 bg-amber-50 p-3.5 text-sm text-amber-900 dark:bg-amber-400/10 dark:text-amber-200" role="status">
+						@c.Icon("alert", "mt-0.5 size-4")
+						<div>
+							<p class="font-medium">Our team asked for changes</p>
+							<p class="mt-0.5">{ v.ReviewNote }</p>
+						</div>
+					</div>
+				}
+				@body
+			</div>
+		</div>
+	</div>
+}
+
+// progressWidth maps step n of total to a static width class (no inline styles under the CSP).
+func progressWidth(n, total int) string {
+	widths := []string{"w-1/7", "w-2/7", "w-3/7", "w-4/7", "w-5/7", "w-6/7", "w-full"}
+	i := n*len(widths)/total - 1
+	return widths[max(0, min(i, len(widths)-1))]
+}
+
+templ stepLink(v WizardView, s WizStep, n int) {
+	if s.Reachable && s.State != "current" {
+		<a href={ templ.SafeURL(v.stepURL(s.Key)) } class="group flex items-center gap-3 rounded-lg px-2.5 py-2 transition-colors hover:bg-surface">
+			@stepDot(s, n)
+			<span class="min-w-0">
+				<span class="block text-sm font-medium text-fg">{ s.Label }</span>
+				<span class="block truncate text-xs text-fg-subtle">{ s.Hint }</span>
+			</span>
+		</a>
+	} else {
+		<div class={ "flex items-center gap-3 rounded-lg px-2.5 py-2", templ.KV("bg-surface", s.State == "current") } aria-current?={ s.State == "current" }>
+			@stepDot(s, n)
+			<span class="min-w-0">
+				<span class={ "block text-sm font-medium", templ.KV("text-fg", s.State == "current"), templ.KV("text-fg-subtle", s.State != "current") }>{ s.Label }</span>
+				<span class="block truncate text-xs text-fg-subtle">{ s.Hint }</span>
+			</span>
+		</div>
+	}
+}
+
+templ stepDot(s WizStep, n int) {
+	switch s.State {
+		case "done":
+			<span class="grid size-6 shrink-0 place-items-center rounded-full bg-graphite-900 text-white dark:bg-mint-200 dark:text-graphite-900">
+				@c.Icon("check", "size-3 stroke-[3]")
+			</span>
+		case "current":
+			<span class="grid size-6 shrink-0 place-items-center rounded-full border-2 border-graphite-900 text-2xs font-semibold tabular-nums text-fg dark:border-mint-200">{ strconv.Itoa(n) }</span>
+		default:
+			<span class="grid size-6 shrink-0 place-items-center rounded-full border border-line-strong text-2xs font-medium tabular-nums text-fg-subtle">{ strconv.Itoa(n) }</span>
+	}
+}
+
+// SaveStatus is swapped in after every autosave.
+templ SaveStatus(savedAt string, failed bool) {
+	<span id="save-status" class="inline-flex items-center gap-1.5 text-xs text-fg-subtle" aria-live="polite">
+		if failed {
+			@c.Icon("alert", "size-3.5 text-danger")
+			<span class="text-danger">Not saved — check your connection</span>
+		} else if savedAt != "" {
+			@c.Icon("check", "size-3.5")
+			Saved { savedAt }
+		} else {
+			Drafts save automatically
+		}
+	</span>
+}
+
+// stepForm wraps a step: autosave on change, plain POST on Continue.
+templ stepForm(v WizardView, title, subtitle string) {
+	<form
+		action={ templ.SafeURL(v.stepURL(v.Step)) }
+		method="post"
+		hx-post={ v.stepURL(v.Step) + "/autosave" }
+		hx-trigger="input changed delay:900ms, change delay:300ms"
+		hx-target="#save-status"
+		hx-swap="outerHTML"
+		novalidate
+		class="group/step"
+	>
+		<div class="mb-6">
+			<h1 class="text-2xl font-semibold text-fg">{ title }</h1>
+			<p class="mt-1.5 text-base text-fg-muted">{ subtitle }</p>
+		</div>
+		if msg := v.err("form"); msg != "" {
+			<div class="mb-5 flex items-center gap-2 rounded-lg border border-red-600/15 bg-red-50 px-3 py-2.5 text-sm text-danger dark:bg-red-400/10 dark:text-red-300" role="alert">
+				@c.Icon("alert", "size-3.5")
+				{ msg }
+			</div>
+		}
+		{ children... }
+		<div class="mt-8 flex items-center justify-between gap-3 border-t border-line pt-5">
+			if prev := prevStep(v); prev != "" {
+				<a href={ templ.SafeURL(v.stepURL(prev)) } class="inline-flex h-11 items-center gap-1.5 rounded-lg px-3 text-base font-medium text-fg-muted transition-colors hover:bg-surface hover:text-fg">
+					@c.Icon("arrow-right", "size-4 rotate-180")
+					Back
+				</a>
+			} else {
+				<span></span>
+			}
+			@c.Button(c.ButtonProps{Type: "submit"}) {
+				Continue
+				@c.Icon("arrow-right", "size-4 transition-transform group-hover/btn:translate-x-0.5")
+			}
+		</div>
+	</form>
+}
+
+func prevStep(v WizardView) string {
+	for i, s := range v.Steps {
+		if s.Key == v.Step && i > 0 {
+			return v.Steps[i-1].Key
+		}
+	}
+	return ""
+}
+
+// ── Reusable bits ─────────────────────────────────────────────────────────
+templ fieldError(msg string) {
+	if msg != "" {
+		<p class="mt-1.5 flex items-center gap-1.5 text-sm text-danger dark:text-red-400" role="alert">
+			@c.Icon("alert", "size-3.5")
+			{ msg }
+		</p>
+	}
+}
+
+// pills is a single-choice group rendered as pill buttons.
+templ pills(name, legend, value string, opts []c.Option, errMsg string) {
+	<fieldset>
+		<legend class="text-sm font-medium text-fg">{ legend }</legend>
+		<div class="mt-2 flex flex-wrap gap-1.5">
+			for _, o := range opts {
+				<label class="inline-flex min-h-9 cursor-pointer items-center rounded-full border border-line bg-surface-raised px-3.5 py-1.5 text-sm text-fg-muted shadow-xs transition-colors hover:border-line-strong hover:text-fg has-checked:border-graphite-900 has-checked:bg-graphite-900 has-checked:text-white has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-focus dark:has-checked:border-mint-200 dark:has-checked:bg-mint-200 dark:has-checked:text-graphite-900">
+					<input type="radio" name={ name } value={ o.Value } checked?={ value == o.Value } class="sr-only"/>
+					{ o.Label }
+				</label>
+			}
+		</div>
+		@fieldError(errMsg)
+	</fieldset>
+}
+
+templ moneyField(id, name, label, value, hint, errMsg string, required bool) {
+	@c.Field(c.FieldProps{
+		ID: id, Name: name, Label: label, Value: value, Placeholder: "0", Prefix: "GH₵", Required: required,
+		Hint: hint, Error: errMsg, Attrs: templ.Attributes{"inputmode": "decimal", "autocomplete": "off", "maxlength": "14"},
+	})
+}
+
+// ── Steps ─────────────────────────────────────────────────────────────────
+templ StepLocation(v WizardView) {
+	@stepForm(v, "Where is it?", "Drop the pin on the building. Renters only see the approximate area until you confirm a viewing.") {
+		<div class="space-y-5">
+			<div data-location-picker data-default-lat={ v.DefaultLat } data-default-lng={ v.DefaultLng } class="group/pin">
+				<div class="relative overflow-hidden rounded-card border border-line bg-surface shadow-card">
+					<div data-map class="h-80 w-full sm:h-96"></div>
+					<noscript>
+						<div class="absolute inset-0 grid place-items-center bg-surface p-6 text-center text-sm text-fg-muted">The map needs JavaScript. Enter the coordinates below instead.</div>
+					</noscript>
+				</div>
+				<div class="mt-2.5 flex flex-wrap items-center justify-between gap-2">
+					<p data-pin-hint class="text-sm text-fg-muted">
+						if v.Lat != "" {
+							Drag the pin to fine-tune. Renters only ever see the approximate area.
+						} else {
+							Tap the map where the building is.
+						}
+					</p>
+					<button type="button" data-locate hidden class="inline-flex h-8 items-center gap-1.5 rounded-lg border border-line bg-surface-raised px-3 text-sm font-medium text-fg shadow-xs transition-colors hover:border-line-strong disabled:opacity-60">
+						@c.Icon("map-pin", "size-3.5")
+						<span data-label>Use my current location</span>
+					</button>
+				</div>
+				<p class="mt-1 text-xs tabular-nums text-fg-subtle">
+					Pin: 
+					<span data-pin-readout>
+						if v.Lat != "" {
+							{ v.Lat }, { v.Lng }
+						} else {
+							not set
+						}
+					</span>
+				</p>
+				@fieldError(v.err("pin"))
+				<details class="mt-2 text-sm">
+					<summary class="cursor-pointer text-fg-muted hover:text-fg">Enter coordinates by hand</summary>
+					<!-- The map fills these too; they're the only lat/lng fields in the form. -->
+					<div class="mt-2 grid gap-3 sm:grid-cols-2">
+						<label class="text-sm text-fg-muted">Latitude <input name="lat" value={ v.Lat } inputmode="decimal" class="mt-1 block h-10 w-full rounded-lg border border-line bg-surface-raised px-3 text-fg"/></label>
+						<label class="text-sm text-fg-muted">Longitude <input name="lng" value={ v.Lng } inputmode="decimal" class="mt-1 block h-10 w-full rounded-lg border border-line bg-surface-raised px-3 text-fg"/></label>
+					</div>
+				</details>
+			</div>
+			<div class="grid gap-4 sm:grid-cols-2">
+				@NeighbourhoodField(v.Neighbourhood, v.Neighbourhoods, v.err("neighbourhood"), false)
+				@c.Field(c.FieldProps{
+					ID: "digital-address", Name: "digital_address", Label: "GhanaPostGPS address", Value: v.DigitalAddress,
+					Placeholder: "AK-039-5028", Error: v.err("digital_address"),
+					Attrs: templ.Attributes{"autocapitalize": "characters", "autocomplete": "off", "maxlength": "14"},
+				})
+			</div>
+			@c.Field(c.FieldProps{
+				ID: "landmark", Name: "landmark", Label: "Landmark", Value: v.Landmark,
+				Placeholder: "e.g. Behind the Ayigya Zongo mosque, blue gate", Error: v.err("landmark"),
+				Hint: "Helps renters find it on viewing day. Only shown once a viewing is confirmed.", Attrs: templ.Attributes{"maxlength": "160"},
+			})
+			@c.Field(c.FieldProps{
+				ID: "street", Name: "street", Label: "Street", Value: v.Street, Error: v.err("street"),
+				Attrs: templ.Attributes{"maxlength": "120", "autocomplete": "address-line1"},
+			})
+		</div>
+	}
+}
+
+// NeighbourhoodField is re-sent out of band after a location autosave, so
+// the area detected from the pin appears without a reload.
+templ NeighbourhoodField(value string, opts []c.Option, errMsg string, oob bool) {
+	<div
+		id="neighbourhood-field"
+		if oob {
+			hx-swap-oob="true"
+		}
+	>
+		@c.Select(c.SelectProps{
+			ID: "neighbourhood", Name: "neighbourhood", Label: "Area", Value: value, Options: opts,
+			Prompt: "Detected from the pin", Error: errMsg,
+		})
+	</div>
+}
+
+templ StepProperty(v WizardView) {
+	@stepForm(v, "What kind of property?", "One property can have many units — rooms in a hostel, flats in a block, rooms in a compound house.") {
+		<div class="space-y-5">
+			<fieldset>
+				<legend class="text-sm font-medium text-fg">Property type</legend>
+				<div class="mt-2 grid gap-2 sm:grid-cols-2">
+					for _, o := range v.Categories {
+						<label class="flex cursor-pointer items-center gap-3 rounded-lg border border-line bg-surface-raised p-3.5 shadow-xs transition-colors hover:border-line-strong has-checked:border-graphite-900 has-checked:ring-1 has-checked:ring-graphite-900 has-focus-visible:outline-2 has-focus-visible:outline-focus dark:has-checked:border-mint-200 dark:has-checked:ring-mint-200">
+							<input type="radio" name="category" value={ o.Value } checked?={ v.Category == o.Value } class="accent-graphite-900 dark:accent-mint-200"/>
+							<span class="text-base font-medium text-fg">{ o.Label }</span>
+						</label>
+					}
+				</div>
+				@fieldError(v.err("category"))
+			</fieldset>
+			@c.Field(c.FieldProps{
+				ID: "prop-name", Name: "name", Label: "Property name", Value: v.Name, Error: v.err("name"),
+				Placeholder: "e.g. Adom Hostel, Owusu Villa", Hint: "Leave blank for a private house.", Attrs: templ.Attributes{"maxlength": "80"},
+			})
+		</div>
+	}
+}
+
+templ StepUnit(v WizardView) {
+	@stepForm(v, "Tell us about the space", "These answers become the filters renters use, so be exact.") {
+		<div class="space-y-6">
+			<fieldset>
+				<legend class="text-sm font-medium text-fg">Type of space</legend>
+				<div class="mt-2 space-y-3">
+					for _, g := range v.UnitGroups {
+						<div>
+							<p class="mb-1.5 text-xs font-medium text-fg-subtle">{ g.Label }</p>
+							<div class="flex flex-wrap gap-1.5">
+								for _, o := range g.Options {
+									<label class="inline-flex min-h-9 cursor-pointer items-center rounded-full border border-line bg-surface-raised px-3.5 py-1.5 text-sm text-fg-muted shadow-xs transition-colors hover:border-line-strong hover:text-fg has-checked:border-graphite-900 has-checked:bg-graphite-900 has-checked:text-white has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-focus dark:has-checked:border-mint-200 dark:has-checked:bg-mint-200 dark:has-checked:text-graphite-900">
+										<input
+											type="radio"
+											name="unit_type"
+											value={ o.Value }
+											checked?={ v.UnitType == o.Value }
+											class="sr-only"
+											if slices.Contains(g.AskBedrooms, o.Value) {
+												data-ask-bedrooms
+											}
+											if slices.Contains(g.Commercial, o.Value) {
+												data-commercial
+											}
+										/>
+										{ o.Label }
+									</label>
+								}
+							</div>
+						</div>
+					}
+				</div>
+				@fieldError(v.err("unit_type"))
+			</fieldset>
+			<div class="grid gap-4 sm:grid-cols-3">
+				<div class="hidden group-has-[[data-ask-bedrooms]:checked]/step:block">
+					@c.Field(c.FieldProps{ID: "bedrooms", Name: "bedrooms", Label: "Bedrooms", Value: v.Bedrooms, Type: "number", Error: v.err("bedrooms"), Required: true, Attrs: templ.Attributes{"min": "0", "max": "20", "inputmode": "numeric"}})
+				</div>
+				@c.Field(c.FieldProps{ID: "bathrooms", Name: "bathrooms", Label: "Bathrooms", Value: v.Bathrooms, Type: "number", Error: v.err("bathrooms"), Attrs: templ.Attributes{"min": "0", "max": "20", "inputmode": "numeric"}})
+				@c.Field(c.FieldProps{ID: "size", Name: "size_sqm", Label: "Size (m²)", Value: v.SizeSqm, Type: "number", Error: v.err("size_sqm"), Attrs: templ.Attributes{"min": "1", "max": "5000", "inputmode": "numeric"}})
+			</div>
+			<div class="space-y-5 group-has-[[data-commercial]:checked]/step:hidden">
+				@pills("self_contained", "Self-contained? (own bathroom and toilet)", v.SelfContained, []c.Option{{Value: "yes", Label: "Yes"}, {Value: "no", Label: "No, shared"}}, v.err("self_contained"))
+				@pills("furnished", "Furnishing", v.Furnished, v.FurnishedOpts, v.err("furnished"))
+				@pills("meter_type", "Electricity", v.Meter, v.MeterOpts, v.err("meter_type"))
+				@pills("water_source", "Water", v.Water, v.WaterOpts, v.err("water_source"))
+				@pills("kitchen", "Kitchen", v.Kitchen, v.KitchenOpts, v.err("kitchen"))
+			</div>
+			<div class="grid gap-4 sm:grid-cols-2">
+				@c.Field(c.FieldProps{ID: "unit-label", Name: "label", Label: "Unit name", Value: v.Label, Placeholder: "e.g. Room 4, Flat B2", Error: v.err("label"), Hint: "Only for you, to tell units apart.", Attrs: templ.Attributes{"maxlength": "40"}})
+				@c.Field(c.FieldProps{ID: "floor", Name: "floor", Label: "Floor", Value: v.Floor, Type: "number", Placeholder: "0 = ground", Error: v.err("floor"), Attrs: templ.Attributes{"min": "-2", "max": "60", "inputmode": "numeric"}})
+			</div>
+		</div>
+	}
+}
+
+templ StepAmenities(v WizardView) {
+	@stepForm(v, "What's included?", "Tick everything that comes with the place. Renters filter by these.") {
+		<div class="space-y-6">
+			for _, g := range v.AmenityGroups {
+				<fieldset>
+					<legend class="text-sm font-medium text-fg">{ g.Label }</legend>
+					<div class="mt-2 grid gap-2 sm:grid-cols-2">
+						for _, o := range g.Options {
+							<label class="flex cursor-pointer items-center gap-3 rounded-lg border border-line bg-surface-raised px-3.5 py-3 text-base text-fg shadow-xs transition-colors hover:border-line-strong has-checked:border-graphite-900 has-checked:bg-surface has-focus-visible:outline-2 has-focus-visible:outline-focus dark:has-checked:border-mint-200">
+								<input type="checkbox" name="amenities" value={ o.Value } checked?={ slices.Contains(v.Amenities, o.Value) } class="size-4 rounded accent-graphite-900 dark:accent-mint-200"/>
+								{ o.Label }
+							</label>
+						}
+					</div>
+				</fieldset>
+			}
+		</div>
+	}
+}
+
+templ StepPricing(v WizardView) {
+	@stepForm(v, "Rent and every fee", "Renters see the full move-in cost before they call. Enter 0 for any fee you don't charge.") {
+		<div class="grid gap-8 xl:grid-cols-[1fr_20rem]">
+			<div class="space-y-6">
+				<div class="grid gap-4 sm:grid-cols-[1fr_12rem]">
+					@moneyField("rent", "rent", "Rent", v.Rent, "", v.err("rent"), true)
+					@c.Select(c.SelectProps{ID: "rent-period", Name: "rent_period", Label: "Paid", Value: v.Period, Options: v.Periods, Error: v.err("rent_period")})
+				</div>
+				@c.Field(c.FieldProps{
+					ID: "advance", Name: "advance_periods", Label: "Rent paid before moving in", Value: v.Advance, Type: "number", Required: true,
+					Hint:  "Number of payments upfront — e.g. 6 for six months when rent is monthly, 1 for one academic year.",
+					Error: v.err("advance_periods"), Attrs: templ.Attributes{"min": "1", "max": "60", "inputmode": "numeric"},
+				})
+				<div class="grid gap-4 sm:grid-cols-2">
+					@moneyField("deposit", "deposit", "Security deposit", v.Deposit, "Refundable at the end", v.err("deposit"), true)
+					@moneyField("agent-fee", "agent_fee", "Agent fee", v.AgentFee, agentFeeHint(v.IsAgent), v.err("agent_fee"), true)
+					@moneyField("service-charge", "service_charge", "Service charge (upfront)", v.ServiceCharge, "Sanitation, security, cleaning…", v.err("service_charge"), true)
+					@moneyField("viewing-fee", "viewing_fee", "Viewing fee", v.ViewingFee, "Paid at the viewing, not part of move-in", v.err("viewing_fee"), true)
+				</div>
+				<fieldset>
+					<legend class="text-sm font-medium text-fg">Other one-off fees <span class="font-normal text-fg-subtle">· optional</span></legend>
+					<div class="mt-2 space-y-2">
+						for i, f := range v.Fees {
+							<div class="grid grid-cols-[1fr_9rem] gap-2">
+								<input name={ "fee_label_" + strconv.Itoa(i+1) } value={ f.Label } placeholder="e.g. Key deposit" maxlength="40" aria-label={ "Fee " + strconv.Itoa(i+1) + " name" } class="block h-11 w-full rounded-lg border border-line bg-surface-raised px-3 text-md text-fg shadow-xs outline-none placeholder:text-fg-subtle focus:border-graphite-900 focus:ring-3 focus:ring-mint-200/80 sm:text-base dark:bg-white/[0.03]"/>
+								<input name={ "fee_amount_" + strconv.Itoa(i+1) } value={ f.Amount } placeholder="GH₵ 0" inputmode="decimal" maxlength="14" aria-label={ "Fee " + strconv.Itoa(i+1) + " amount" } class="block h-11 w-full rounded-lg border border-line bg-surface-raised px-3 text-md tabular-nums text-fg shadow-xs outline-none placeholder:text-fg-subtle focus:border-graphite-900 focus:ring-3 focus:ring-mint-200/80 sm:text-base dark:bg-white/[0.03]"/>
+							</div>
+							@fieldError(v.err("fee_" + strconv.Itoa(i+1)))
+						}
+					</div>
+				</fieldset>
+				<div class="grid gap-4 sm:grid-cols-2">
+					@c.Field(c.FieldProps{ID: "min-lease", Name: "min_lease_months", Label: "Minimum stay (months)", Value: v.MinLease, Type: "number", Error: v.err("min_lease_months"), Attrs: templ.Attributes{"min": "1", "max": "120", "inputmode": "numeric"}})
+					<label class="flex cursor-pointer items-center gap-2.5 self-end pb-3 text-sm text-fg-muted">
+						<input type="checkbox" name="negotiable" value="1" checked?={ v.Negotiable } class="size-4 rounded accent-graphite-900 dark:accent-mint-200"/>
+						Rent is negotiable
+					</label>
+				</div>
+			</div>
+			<aside class="xl:sticky xl:top-20 xl:self-start">
+				@MoveInPreview(v.MoveIn, false)
+			</aside>
+		</div>
+	}
+}
+
+func agentFeeHint(agent bool) string {
+	if agent {
+		return "Your commission, paid by the renter"
+	}
+	return "If an agent helps you let it"
+}
+
+// MoveInPreview is the live cost card; oob re-renders it next to autosaves.
+templ MoveInPreview(m MoveInView, oob bool) {
+	<div
+		id="movein-preview"
+		if oob {
+			hx-swap-oob="true"
+		}
+		class="overflow-hidden rounded-card border border-line bg-surface-raised shadow-card"
+	>
+		<div class="border-b border-line px-4 py-3">
+			<p class="text-sm font-semibold text-fg">What renters will see</p>
+			<p class="text-xs text-fg-muted">Updates as you type</p>
+		</div>
+		<dl class="space-y-1.5 px-4 py-3 text-sm tabular-nums">
+			if !m.HasRent {
+				<p class="py-4 text-center text-fg-subtle">Enter the rent to see the move-in cost.</p>
+			}
+			for _, l := range m.Lines {
+				<div class="flex items-center justify-between gap-3 text-fg-muted">
+					<dt>{ l.Label }</dt>
+					<dd class="text-fg">{ l.Amount }</dd>
+				</div>
+			}
+		</dl>
+		if m.HasRent {
+			<div class="mx-3 mb-3 flex items-center justify-between rounded-md bg-mint-200 px-3 py-2 text-graphite-900">
+				<span class="text-sm font-medium">Total to move in</span>
+				<span class="font-semibold tabular-nums">{ m.Total }</span>
+			</div>
+			<p class="px-4 pb-3 text-xs text-fg-muted">About { m.Monthly } per month</p>
+		}
+		if len(m.Missing) > 0 {
+			<div class="border-t border-line bg-surface px-4 py-3 text-xs text-fg-muted">
+				<span class="font-medium text-fg">Still to answer:</span>
+				for i, x := range m.Missing {
+					if i > 0 {
+						{ ", " }
+					}
+					{ x }
+				}
+			</div>
+		}
+	</div>
+}
+
+templ StepDetails(v WizardView) {
+	@stepForm(v, "Describe it", "A clear headline and a few honest lines get more viewing requests.") {
+		<div class="space-y-5">
+			@c.Field(c.FieldProps{
+				ID: "headline", Name: "headline", Label: "Headline", Value: v.Headline, Required: true, Error: v.err("headline"),
+				Placeholder: "e.g. Self-contained chamber & hall, 5 min walk to KNUST", Attrs: templ.Attributes{"maxlength": "90"},
+			})
+			@c.Textarea(c.TextareaProps{
+				ID: "description", Name: "description", Label: "Description", Value: v.Description, Rows: 7, MaxLen: 3000, Error: v.err("description"),
+				Placeholder: "The room, the compound, water and light, who it suits, the neighbourhood…",
+				Hint:        "Listings with 200+ characters score higher. Don't include phone numbers — renters contact you through RentMap.",
+			})
+			<div class="sm:w-60">
+				@c.Field(c.FieldProps{ID: "available-from", Name: "available_from", Label: "Available from", Value: v.AvailableFrom, Type: "date", Error: v.err("available_from"), Attrs: templ.Attributes{"min": v.Today}})
+			</div>
+		</div>
+	}
+}
+
+templ StepReview(v WizardView) {
+	<div class="space-y-6">
+		<div>
+			<h1 class="text-2xl font-semibold text-fg">Review and publish</h1>
+			<p class="mt-1.5 text-base text-fg-muted">Check everything renters will see. You can edit it any time after publishing.</p>
+		</div>
+		@c.Card("p-5") {
+			<div class="flex flex-wrap items-center gap-5">
+				<div class="relative grid size-20 place-items-center">
+					<svg viewBox="0 0 36 36" class="absolute inset-0 size-full -rotate-90" aria-hidden="true">
+						<circle cx="18" cy="18" r="15.9" fill="none" class="stroke-surface" stroke-width="3.2"></circle>
+						<circle cx="18" cy="18" r="15.9" fill="none" class="stroke-graphite-900 dark:stroke-mint-200" stroke-width="3.2" stroke-linecap="round" stroke-dasharray={ strconv.Itoa(v.Score) + " 100" } pathLength="100"></circle>
+					</svg>
+					<span class="text-xl font-semibold tabular-nums text-fg">{ strconv.Itoa(v.Score) }</span>
+				</div>
+				<div class="min-w-0 flex-1">
+					<p class="text-base font-semibold text-fg">Listing quality</p>
+					<p class="text-sm text-fg-muted">Higher scores rank higher on the map.</p>
+				</div>
+			</div>
+			if len(v.Tips) > 0 {
+				<ul class="mt-4 divide-y divide-line border-t border-line">
+					for _, t := range v.Tips {
+						<li class="flex items-center justify-between gap-3 py-2.5 text-sm">
+							<span class="text-fg-muted">{ t.Text }</span>
+							<a href={ templ.SafeURL(v.stepURL(t.Step)) } class="shrink-0 font-medium text-link">+{ strconv.Itoa(t.Points) }</a>
+						</li>
+					}
+				</ul>
+			}
+		}
+		for _, s := range v.Summary {
+			@c.Card("p-5") {
+				<div class="flex items-center justify-between">
+					<h2 class="text-base font-semibold text-fg">{ s.Title }</h2>
+					<a href={ templ.SafeURL(v.stepURL(s.Step)) } class="text-sm font-medium text-link">Edit</a>
+				</div>
+				<dl class="mt-3 grid gap-x-6 gap-y-2 text-sm sm:grid-cols-2">
+					for _, r := range s.Rows {
+						<div class="flex justify-between gap-3 border-b border-line pb-2 sm:block sm:border-0 sm:pb-0">
+							<dt class="text-fg-muted">{ r.Label }</dt>
+							<dd class="text-right font-medium text-fg sm:mt-0.5 sm:text-left">{ r.Value }</dd>
+						</div>
+					}
+				</dl>
+				if s.Step == "photos" && len(v.Photos.Tiles) > 0 {
+					<div class="mt-4">
+						@PhotoStrip(v.Photos.Tiles)
+					</div>
+				}
+			}
+		}
+		@MoveInPreview(v.MoveIn, false)
+		if len(v.Missing) > 0 {
+			<div class="rounded-card border border-amber-500/30 bg-amber-50 p-4 dark:bg-amber-400/10">
+				<p class="text-sm font-semibold text-amber-900 dark:text-amber-200">Before you can publish</p>
+				<ul class="mt-2 space-y-1.5 text-sm">
+					for _, m := range v.Missing {
+						<li class="flex items-center justify-between gap-3">
+							<span class="text-amber-900 dark:text-amber-100">{ m.Text }</span>
+							<a href={ templ.SafeURL(v.stepURL(m.Step)) } class="shrink-0 font-medium text-amber-900 underline underline-offset-4 dark:text-amber-200">Fix</a>
+						</li>
+					}
+				</ul>
+			</div>
+		}
+		<form action={ templ.SafeURL("/listings/" + v.ID + "/submit") } method="post" class="flex flex-col gap-3 border-t border-line pt-5 sm:flex-row sm:items-center sm:justify-between">
+			<p class="text-sm text-fg-muted">
+				if v.IdentityVerified {
+					Your ID is verified, so it goes live straight away.
+				} else {
+					Our team checks listings from new accounts first, usually within a day. <a href="/verify/identity" class="font-medium text-link">Verify your ID</a> to publish instantly next time.
+				}
+			</p>
+			<button type="submit" disabled?={ len(v.Missing) > 0 } class="inline-flex h-11 shrink-0 items-center justify-center gap-1.5 rounded-lg bg-primary px-5 text-base font-medium text-on-primary shadow-btn transition-colors hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-50">
+				if v.IdentityVerified {
+					Publish listing
+				} else {
+					Submit for review
+				}
+			</button>
+		</form>
+	</div>
+}

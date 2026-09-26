@@ -1,0 +1,33 @@
+version: "2"
+
+run:
+  timeout: 5m
+
+linters:
+  enable:
+    - bodyclose
+    - errorlint
+    - gosec
+    - misspell
+    - noctx
+    - revive
+    - sqlclosecheck
+    - unconvert
+  settings:
+    misspell:
+      locale: UK
+      # Go identifiers and stdlib packages (image/color) keep US spelling.
+      ignore-rules: [color, normalize]
+  exclusions:
+    generated: strict
+    paths:
+      - internal/ent/
+    rules:
+      - path: _test\.go
+        linters: [gosec, noctx]
+
+formatters:
+  enable: [gofmt, goimports]
+  settings:
+    goimports:
+      local-prefixes: [rentmapgh]

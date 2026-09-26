@@ -1,0 +1,30 @@
+package pages
+
+import (
+	"strconv"
+
+	c "rentmapgh/internal/views/components"
+	"rentmapgh/internal/views/layouts"
+)
+
+type ErrorPage struct {
+	Status  int
+	Title   string
+	Message string
+}
+
+templ Error(e ErrorPage) {
+	@layouts.Site(layouts.Meta{Title: e.Title, NoIndex: true}) {
+		<section class="mx-auto flex min-h-[60vh] max-w-xl flex-col items-center justify-center px-4 py-20 text-center">
+			<p class="inline-flex h-6 items-center rounded-full border border-line bg-surface px-2.5 text-xs font-medium tabular-nums text-fg-muted">Error { strconv.Itoa(e.Status) }</p>
+			<h1 class="mt-5 text-2xl font-semibold text-fg sm:text-3xl">{ e.Title }</h1>
+			<p class="mt-3 text-md text-fg-muted">{ e.Message }</p>
+			<div class="mt-8">
+				@c.LinkButton("/", c.Primary, c.MD) {
+					@c.Icon("home", "size-4")
+					Back to home
+				}
+			</div>
+		</section>
+	}
+}

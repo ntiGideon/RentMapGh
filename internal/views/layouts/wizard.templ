@@ -1,0 +1,33 @@
+package layouts
+
+import (
+	"rentmapgh/internal/views/components"
+	"rentmapgh/internal/views/partials"
+)
+
+// Wizard is the listing editor shell: slim bar with save state and exit.
+templ Wizard(m Meta, title, savedAt string) {
+	@Base(m) {
+		<header class="sticky top-0 z-40 border-b border-line bg-bg/85 backdrop-blur-lg">
+			<div class="mx-auto flex h-14 max-w-6xl items-center gap-3 px-4 sm:px-6">
+				<a href="/listings" class="-m-1 rounded-md p-1" aria-label="Your listings">
+					@components.LogoMark("size-7")
+				</a>
+				<span class="h-5 w-px bg-line" aria-hidden="true"></span>
+				<p class="min-w-0 truncate text-sm font-medium text-fg">{ title }</p>
+				<div class="ml-auto flex items-center gap-3">
+					<span class="hidden sm:inline">
+						@partials.SaveStatus(savedAt, false)
+					</span>
+					@ThemeToggle()
+					@components.LinkButton("/listings", components.Ghost, components.SM) {
+						Save &amp; exit
+					}
+				</div>
+			</div>
+		</header>
+		<main id="main">
+			{ children... }
+		</main>
+	}
+}

@@ -1,0 +1,188 @@
+package partials
+
+import (
+	"strconv"
+
+	c "rentmapgh/internal/views/components"
+)
+
+type AdminListingRow struct{ ID, Title, Lister, Area, Rent, Submitted, Kind string }
+
+type AdminListingQueue struct {
+	Rows   []AdminListingRow
+	Notice string
+}
+
+type AdminListingView struct {
+	ID, Title, Status, Kind       string
+	ListerName, ListerPhone       string
+	ListerVerified                bool
+	Headline, Description         string
+	ExactPin, ApproxPin, Landmark string
+	Sections                      []SummarySection
+	MoveIn                        MoveInView
+	Photos                        []PhotoTile
+	Own                           bool
+	Errors                        map[string]string
+	Note                          string
+}
+
+templ AdminListingQueueBody(q AdminListingQueue) {
+	<div>
+		<h1 class="text-2xl font-semibold text-fg">Listings in review</h1>
+		<p class="mt-1 text-sm text-fg-muted">New listings from accounts without a verified ID. Check the details and fees make sense, then approve or send back.</p>
+		if q.Notice != "" {
+			<div class="mt-5 flex items-center gap-2 rounded-lg border border-green-600/15 bg-green-50 px-3 py-2.5 text-sm text-success dark:border-green-400/20 dark:bg-green-400/10 dark:text-green-300" role="status">
+				@c.Icon("check", "size-3.5")
+				{ q.Notice }
+			</div>
+		}
+		if len(q.Rows) == 0 {
+			@c.Card("mt-6") {
+				@c.EmptyState("check", "All caught up", "Listings submitted by unverified landlords and agents will show up here.")
+			}
+		} else {
+			@c.Card("mt-6 overflow-hidden") {
+				<table class="w-full text-left text-sm">
+					<thead class="hidden border-b border-line bg-surface text-xs text-fg-muted sm:table-header-group">
+						<tr>
+							<th scope="col" class="px-4 py-2.5 font-medium">Listing</th>
+							<th scope="col" class="px-4 py-2.5 font-medium">Lister</th>
+							<th scope="col" class="px-4 py-2.5 font-medium">Rent</th>
+							<th scope="col" class="px-4 py-2.5 font-medium">Submitted</th>
+						</tr>
+					</thead>
+					<tbody class="divide-y divide-line">
+						for _, r := range q.Rows {
+							<tr class="relative transition-colors hover:bg-surface">
+								<td class="px-4 py-3">
+									<a href={ templ.SafeURL("/admin/listings/" + r.ID) } class="block font-medium text-fg after:absolute after:inset-0">{ r.Title }</a>
+									<p class="text-fg-muted">{ r.Area }</p>
+								</td>
+								<td class="hidden px-4 py-3 sm:table-cell">
+									<span class="text-fg">{ r.Lister }</span>
+									<span class="block text-xs text-fg-subtle">{ r.Kind }</span>
+								</td>
+								<td class="hidden px-4 py-3 tabular-nums text-fg sm:table-cell">{ r.Rent }</td>
+								<td class="hidden px-4 py-3 text-fg-muted sm:table-cell">{ r.Submitted }</td>
+							</tr>
+						}
+					</tbody>
+				</table>
+			}
+		}
+	</div>
+}
+
+templ AdminListingReviewBody(v AdminListingView) {
+	<div id="admin-listing">
+		<a href="/admin/listings" class="inline-flex items-center gap-1.5 text-sm text-fg-muted transition-colors hover:text-fg">
+			@c.Icon("arrow-right", "size-3.5 rotate-180")
+			Back to queue
+		</a>
+		<div class="mt-3 flex flex-wrap items-center gap-3">
+			<h1 class="text-2xl font-semibold text-fg">{ v.Title }</h1>
+			@ListingStatus(v.Status)
+		</div>
+		if msg, ok := v.Errors["form"]; ok {
+			<div class="mt-5 rounded-lg border border-red-600/15 bg-red-50 px-3 py-2.5 text-sm text-danger dark:bg-red-400/10 dark:text-red-300" role="alert">{ msg }</div>
+		}
+		<div class="mt-6 grid gap-6 xl:grid-cols-[1fr_22rem]">
+			<div class="space-y-4">
+				@c.Card("p-5") {
+					<div class="flex items-center justify-between">
+						<h2 class="text-base font-semibold text-fg">Photos</h2>
+						<span class="text-sm text-fg-muted">{ strconv.Itoa(len(v.Photos)) }</span>
+					</div>
+					if len(v.Photos) > 0 {
+						<div class="mt-3">
+							@PhotoStrip(v.Photos)
+						</div>
+					} else {
+						<p class="mt-2 text-sm text-fg-subtle">No photos.</p>
+					}
+				}
+				@c.Card("p-5") {
+					<h2 class="text-base font-semibold text-fg">{ v.Headline }</h2>
+					if v.Description != "" {
+						<p class="mt-2 whitespace-pre-line text-sm text-fg-muted">{ v.Description }</p>
+					} else {
+						<p class="mt-2 text-sm text-fg-subtle">No description.</p>
+					}
+				}
+				for _, s := range v.Sections {
+					@c.Card("p-5") {
+						<h2 class="text-base font-semibold text-fg">{ s.Title }</h2>
+						<dl class="mt-3 grid gap-x-6 gap-y-2 text-sm sm:grid-cols-2">
+							for _, r := range s.Rows {
+								<div>
+									<dt class="text-fg-muted">{ r.Label }</dt>
+									<dd class="mt-0.5 font-medium text-fg">{ r.Value }</dd>
+								</div>
+							}
+						</dl>
+					}
+				}
+				@c.Card("p-5 text-sm") {
+					<h2 class="text-base font-semibold text-fg">Location</h2>
+					<dl class="mt-3 grid gap-2 sm:grid-cols-2">
+						<div><dt class="text-fg-muted">Exact pin (private)</dt><dd class="mt-0.5 font-mono text-fg">{ v.ExactPin }</dd></div>
+						<div><dt class="text-fg-muted">Public approximate point</dt><dd class="mt-0.5 font-mono text-fg">{ v.ApproxPin }</dd></div>
+						<div class="sm:col-span-2"><dt class="text-fg-muted">Landmark</dt><dd class="mt-0.5 text-fg">{ orDash(v.Landmark) }</dd></div>
+					</dl>
+				}
+			</div>
+			<aside class="space-y-4">
+				@c.Card("p-4") {
+					<p class="text-sm text-fg-muted">Listed by</p>
+					<p class="mt-0.5 font-semibold text-fg">{ orDash(v.ListerName) }</p>
+					<p class="text-sm tabular-nums text-fg-muted">{ v.ListerPhone } · { v.Kind }</p>
+					<div class="mt-2">
+						if v.ListerVerified {
+							@c.Badge(c.Success) {
+								ID verified
+							}
+						} else {
+							@c.Badge(c.Neutral) {
+								ID not verified
+							}
+						}
+					</div>
+				}
+				@MoveInPreview(v.MoveIn, false)
+				if v.Status == "pending_review" && !v.Own {
+					@c.Card("p-4") {
+						<h2 class="text-sm font-semibold text-fg">Decision</h2>
+						<ul class="mt-2 space-y-1 text-sm text-fg-muted">
+							<li>• Real place, sensible price for the area</li>
+							<li>• Fees look complete and plausible</li>
+							<li>• No phone numbers or "pay first" requests in the text</li>
+							<li>• Photos show this place: no people, no numbers written on them</li>
+						</ul>
+						<form action={ templ.SafeURL("/admin/listings/" + v.ID + "/decision") } method="post" class="mt-4">
+							<input type="hidden" name="decision" value="approve"/>
+							@c.Button(c.ButtonProps{Type: "submit", Full: true}) {
+								@c.Icon("check", "size-4")
+								Approve and publish
+							}
+						</form>
+						<form action={ templ.SafeURL("/admin/listings/" + v.ID + "/decision") } method="post" class="mt-4 space-y-3 border-t border-line pt-4">
+							<input type="hidden" name="decision" value="changes"/>
+							@c.Textarea(c.TextareaProps{
+								ID: "note", Name: "note", Label: "What should the lister change?", Value: v.Note, Rows: 3, MaxLen: 500, Required: true,
+								Error: v.Errors["note"], Placeholder: "Shown to the lister on their listing",
+							})
+							@c.Button(c.ButtonProps{Type: "submit", Variant: c.DangerSoft, Full: true}) {
+								Send back for changes
+							}
+						</form>
+					}
+				} else if v.Own {
+					@c.Card("p-4 text-sm text-fg-muted") {
+						This is your own listing. Another moderator has to review it.
+					}
+				}
+			</aside>
+		</div>
+	</div>
+}

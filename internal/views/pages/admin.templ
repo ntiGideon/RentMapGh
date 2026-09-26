@@ -1,0 +1,30 @@
+package pages
+
+import (
+	"rentmapgh/internal/views/layouts"
+	"rentmapgh/internal/views/partials"
+)
+
+templ AdminQueue(q partials.AdminQueue) {
+	@layouts.Admin(layouts.Meta{Title: "Verifications"}, layouts.AdminNav{Active: "verifications"}) {
+		@partials.AdminQueueBody(q)
+	}
+}
+
+templ AdminReview(v partials.AdminReviewView) {
+	@layouts.Admin(layouts.Meta{Title: "Review"}, layouts.AdminNav{Active: "verifications"}) {
+		@partials.AdminReviewBody(v)
+	}
+}
+
+templ AdminListings(q partials.AdminListingQueue) {
+	@layouts.Admin(layouts.Meta{Title: "Listings"}, layouts.AdminNav{Active: "listings"}) {
+		@partials.AdminListingQueueBody(q)
+	}
+}
+
+templ AdminListingReview(v partials.AdminListingView) {
+	@layouts.Admin(layouts.Meta{Title: "Listing review"}, layouts.AdminNav{Active: "listings"}) {
+		@partials.AdminListingReviewBody(v)
+	}
+}

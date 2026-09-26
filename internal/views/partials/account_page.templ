@@ -1,0 +1,476 @@
+package partials
+
+import (
+	"slices"
+
+	c "rentmapgh/internal/views/components"
+)
+
+// VerifItem is one verification row on the account page.
+type VerifItem struct {
+	Title, Body          string
+	State                string // none | pending | approved | rejected
+	Message, When        string
+	ActionURL, ActionLbl string
+}
+
+type Topic struct{ Key, Label, Hint string }
+
+type AccountView struct {
+	Name          string
+	Initial       string
+	AvatarURL     string
+	PhonePretty   string
+	PhoneVerified bool
+	MemberSince   string
+	Roles         []string
+	Verifications []VerifItem
+	Devices       []Device
+	Errors        map[string]string
+	Notice        string
+
+	IsLandlord, IsAgent bool
+	LandlordName        string
+	LandlordBio         string
+	AgentAgency         string
+	AgentAreas          []string
+	AreaOptions         []c.Option
+
+	Topics    []Topic
+	Channels  []string
+	Prefs     map[string]bool
+	DataSaver bool
+}
+
+func (a AccountView) missingRoles() []RoleOption {
+	var out []RoleOption
+	for _, o := range RoleOptions {
+		if !slices.Contains(a.Roles, o.Key) {
+			out = append(out, o)
+		}
+	}
+	return out
+}
+
+func (a AccountView) otherDevices() int {
+	n := 0
+	for _, d := range a.Devices {
+		if !d.Current {
+			n++
+		}
+	}
+	return n
+}
+
+func channelLabel(ch string) string {
+	if ch == "whatsapp" {
+		return "WhatsApp"
+	}
+	return "SMS"
+}
+
+templ section(id, title, subtitle string) {
+	<section id={ id } class="grid scroll-mt-20 gap-4 border-t border-line py-8 first:border-t-0 first:pt-0 md:grid-cols-[16rem_1fr] md:gap-10">
+		<div>
+			<h2 class="text-base font-semibold text-fg">{ title }</h2>
+			<p class="mt-1 text-sm text-fg-muted">{ subtitle }</p>
+		</div>
+		<div class="min-w-0">
+			{ children... }
+		</div>
+	</section>
+}
+
+templ avatar(a AccountView, size string) {
+	if a.AvatarURL != "" {
+		<img src={ a.AvatarURL } alt="" class={ "shrink-0 rounded-full object-cover ring-1 ring-line", size }/>
+	} else {
+		<span class={ "grid shrink-0 place-items-center rounded-full bg-mint-200 font-semibold text-graphite-900", size }>{ a.Initial }</span>
+	}
+}
+
+templ verifState(state string) {
+	switch state {
+		case "approved":
+			@c.Badge(c.Success) {
+				@c.Icon("check", "size-3 stroke-[2.5]")
+				Verified
+			}
+		case "pending":
+			@c.Badge(c.Warning) {
+				Under review
+			}
+		case "rejected":
+			@c.Badge(c.Danger) {
+				Needs another try
+			}
+		default:
+			@c.Badge(c.Neutral) {
+				Not verified
+			}
+	}
+}
+
+templ Account(a AccountView) {
+	<div id="account">
+		if a.Notice != "" {
+			<div class="mb-6 flex items-start gap-2 rounded-lg border border-green-600/15 bg-green-50 p-3 text-sm text-success dark:border-green-400/20 dark:bg-green-400/10 dark:text-green-300" role="status">
+				@c.Icon("check", "mt-0.5 size-3.5")
+				{ a.Notice }
+			</div>
+		}
+		@section("profile", "Profile", "How you appear to landlords, agents and renters.") {
+			@c.Card("p-5") {
+				<div class="flex flex-wrap items-center gap-4">
+					@avatar(a, "size-14 text-xl")
+					<div class="min-w-0 flex-1">
+						<p class="truncate text-base font-semibold text-fg">
+							if a.Name != "" {
+								{ a.Name }
+							} else {
+								<span class="text-fg-muted">No name yet</span>
+							}
+						</p>
+						<p class="mt-0.5 flex flex-wrap items-center gap-2 text-sm tabular-nums text-fg-muted">
+							{ a.PhonePretty }
+							if a.PhoneVerified {
+								@c.Badge(c.Success) {
+									@c.Icon("check", "size-3 stroke-[2.5]")
+									Phone verified
+								}
+							}
+						</p>
+					</div>
+					<div class="flex items-center gap-2">
+						<form action="/account/avatar" method="post" enctype="multipart/form-data" data-avatar-form>
+							<label class="inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-lg border border-line bg-surface-raised px-3 text-sm font-medium text-fg shadow-xs transition-colors hover:border-line-strong hover:bg-surface has-focus-visible:outline-2 has-focus-visible:outline-focus">
+								<input type="file" name="avatar" accept="image/jpeg,image/png,image/webp" data-avatar-input class="sr-only"/>
+								if a.AvatarURL != "" {
+									Change photo
+								} else {
+									Add photo
+								}
+							</label>
+							<noscript><button type="submit" class="ml-1 text-sm text-link">Upload</button></noscript>
+						</form>
+						if a.AvatarURL != "" {
+							<form action="/account/avatar/remove" method="post" hx-post="/account/avatar/remove" hx-target="#account" hx-swap="outerHTML">
+								<button type="submit" class="h-8 rounded-lg px-2 text-sm text-fg-muted transition-colors hover:bg-surface hover:text-fg">Remove</button>
+							</form>
+						}
+					</div>
+				</div>
+				if msg, ok := a.Errors["avatar"]; ok {
+					<p class="mt-3 flex items-center gap-1.5 text-sm text-danger dark:text-red-400" role="alert">
+						@c.Icon("alert", "size-3.5")
+						{ msg }
+					</p>
+				}
+				<form action="/account/profile" method="post" hx-post="/account/profile" hx-target="#account" hx-swap="outerHTML" class="mt-5 flex flex-col gap-3 border-t border-line pt-5 sm:flex-row sm:items-end">
+					<div class="flex-1">
+						@c.Field(c.FieldProps{
+							ID: "acc-name", Name: "name", Label: "First name", Value: a.Name, Placeholder: "Ama", Required: true,
+							Error: a.Errors["name"], Attrs: templ.Attributes{"autocomplete": "given-name", "maxlength": "80"},
+						})
+					</div>
+					@c.Button(c.ButtonProps{Type: "submit", Variant: c.Ghost}) {
+						Save
+					}
+				</form>
+			}
+		}
+		@section("verification", "Verification", "Badges renters see on your profile and listings.") {
+			@c.Card("divide-y divide-line") {
+				<div class="flex items-center justify-between gap-3 px-5 py-4">
+					<div>
+						<p class="text-base font-medium text-fg">Phone number</p>
+						<p class="text-sm text-fg-muted">Confirmed each time you sign in with a code.</p>
+					</div>
+					@verifState("approved")
+				</div>
+				for _, v := range a.Verifications {
+					<div class="px-5 py-4">
+						<div class="flex items-start justify-between gap-3">
+							<div class="min-w-0">
+								<p class="text-base font-medium text-fg">{ v.Title }</p>
+								<p class="text-sm text-fg-muted">{ v.Body }</p>
+							</div>
+							@verifState(v.State)
+						</div>
+						if v.State == "rejected" && v.Message != "" {
+							<p class="mt-2 rounded-md bg-red-50 px-3 py-2 text-sm text-danger dark:bg-red-400/10 dark:text-red-300">{ v.Message }</p>
+						}
+						if v.When != "" {
+							<p class="mt-2 text-sm text-fg-subtle">{ v.When }</p>
+						}
+						if v.ActionURL != "" {
+							<div class="mt-3">
+								@c.LinkButton(v.ActionURL, c.Ghost, c.SM) {
+									{ v.ActionLbl }
+									@c.Icon("arrow-right", "size-3.5")
+								}
+							</div>
+						}
+					</div>
+				}
+			}
+		}
+		if a.IsLandlord {
+			@section("landlord", "Landlord profile", "Shown on your listings. A business name is fine.") {
+				@c.Card("p-5") {
+					<form action="/account/landlord-profile" method="post" hx-post="/account/landlord-profile" hx-target="#account" hx-swap="outerHTML" class="space-y-4">
+						@c.Field(c.FieldProps{
+							ID: "ll-name", Name: "display_name", Label: "Display name", Value: a.LandlordName,
+							Placeholder: "e.g. Mrs Owusu or Adom Properties", Error: a.Errors["display_name"],
+							Attrs: templ.Attributes{"maxlength": "80"},
+						})
+						@c.Textarea(c.TextareaProps{
+							ID: "ll-bio", Name: "bio", Label: "About you", Value: a.LandlordBio, Rows: 3, MaxLen: 600,
+							Placeholder: "How long you've been letting, what renters can expect…", Error: a.Errors["bio"],
+						})
+						<div class="flex justify-end">
+							@c.Button(c.ButtonProps{Type: "submit", Variant: c.Ghost}) {
+								Save profile
+							}
+						</div>
+					</form>
+				}
+			}
+		}
+		if a.IsAgent {
+			@section("agent", "Agent profile", "Your agency and the areas you cover.") {
+				@c.Card("p-5") {
+					<form action="/account/agent-profile" method="post" hx-post="/account/agent-profile" hx-target="#account" hx-swap="outerHTML" class="space-y-4">
+						@c.Field(c.FieldProps{
+							ID: "ag-agency", Name: "agency_name", Label: "Agency", Value: a.AgentAgency,
+							Placeholder: "Leave blank if independent", Error: a.Errors["agency_name"],
+							Attrs: templ.Attributes{"maxlength": "120", "autocomplete": "organization"},
+						})
+						<fieldset>
+							<legend class="text-sm font-medium text-fg">Areas you cover</legend>
+							<div class="mt-2 flex flex-wrap gap-1.5">
+								for _, o := range a.AreaOptions {
+									<label class="inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-full border border-line bg-surface-raised px-3 text-sm text-fg-muted transition-colors hover:border-line-strong has-checked:border-graphite-900 has-checked:bg-graphite-900 has-checked:text-white has-focus-visible:outline-2 has-focus-visible:outline-focus dark:has-checked:border-mint-200 dark:has-checked:bg-mint-200 dark:has-checked:text-graphite-900">
+										<input type="checkbox" name="areas" value={ o.Value } checked?={ slices.Contains(a.AgentAreas, o.Value) } class="sr-only"/>
+										{ o.Label }
+									</label>
+								}
+							</div>
+						</fieldset>
+						<div class="flex justify-end">
+							@c.Button(c.ButtonProps{Type: "submit", Variant: c.Ghost}) {
+								Save profile
+							}
+						</div>
+					</form>
+				}
+			}
+		}
+		@section("roles", "Roles", "What you do on RentMap. Each role unlocks its own tools.") {
+			@c.Card("divide-y divide-line") {
+				for _, r := range a.Roles {
+					<div class="flex items-center justify-between gap-3 px-5 py-3.5">
+						<span class="text-base font-medium text-fg">{ RoleLabel(r) }</span>
+						@c.Badge(c.Neutral) {
+							Active
+						}
+					</div>
+				}
+				for _, o := range a.missingRoles() {
+					<form action="/account/roles" method="post" hx-post="/account/roles" hx-target="#account" hx-swap="outerHTML" class="flex items-center justify-between gap-3 px-5 py-3.5">
+						<input type="hidden" name="role" value={ o.Key }/>
+						<span class="min-w-0">
+							<span class="block text-base text-fg-muted">{ RoleLabel(o.Key) }</span>
+							<span class="block text-sm text-fg-subtle">{ o.Body }</span>
+						</span>
+						@c.Button(c.ButtonProps{Type: "submit", Variant: c.Ghost, Size: c.SM}) {
+							@c.Icon("plus", "size-3.5")
+							Add
+						}
+					</form>
+				}
+			}
+			if msg, ok := a.Errors["role"]; ok {
+				<p class="mt-2 text-sm text-danger" role="alert">{ msg }</p>
+			}
+		}
+		@section("notifications", "Notifications", "Choose how we reach you. Sign-in codes and verification results always come by SMS.") {
+			@c.Card("") {
+				<form action="/account/notifications" method="post" hx-post="/account/notifications" hx-target="#account" hx-swap="outerHTML">
+					<table class="w-full text-sm">
+						<thead>
+							<tr class="border-b border-line text-xs text-fg-muted">
+								<th scope="col" class="px-5 py-2.5 text-left font-medium">Topic</th>
+								for _, ch := range a.Channels {
+									<th scope="col" class="w-24 px-2 py-2.5 text-center font-medium">{ channelLabel(ch) }</th>
+								}
+							</tr>
+						</thead>
+						<tbody class="divide-y divide-line">
+							for _, t := range a.Topics {
+								<tr>
+									<th scope="row" class="px-5 py-3 text-left font-normal">
+										<span class="block text-base font-medium text-fg">{ t.Label }</span>
+										<span class="block text-sm text-fg-muted">{ t.Hint }</span>
+									</th>
+									for _, ch := range a.Channels {
+										<td class="px-2 py-3 text-center">
+											<input type="checkbox" name="on" value={ t.Key + "." + ch } checked?={ a.Prefs[t.Key+"."+ch] } aria-label={ t.Label + " by " + channelLabel(ch) } class="size-4 cursor-pointer rounded accent-graphite-900 dark:accent-mint-200"/>
+										</td>
+									}
+								</tr>
+							}
+						</tbody>
+					</table>
+					<div class="flex justify-end border-t border-line px-5 py-3">
+						@c.Button(c.ButtonProps{Type: "submit", Variant: c.Ghost, Size: c.SM}) {
+							Save preferences
+						}
+					</div>
+				</form>
+			}
+		}
+		@section("data", "Data saver", "Smaller pages and photos, no auto-playing video. Good on 3G or when bundles run low.") {
+			@c.Card("flex items-center justify-between gap-4 px-5 py-4") {
+				<div>
+					<p class="text-base font-medium text-fg">
+						if a.DataSaver {
+							Data saver is on
+						} else {
+							Data saver is off
+						}
+					</p>
+					<p class="text-sm text-fg-muted">Saved to your account, so it follows you to any phone.</p>
+				</div>
+				<form action="/account/data-saver" method="post">
+					<input type="hidden" name="on" value={ boolStr(!a.DataSaver) }/>
+					@c.Button(c.ButtonProps{Type: "submit", Variant: c.Ghost, Size: c.SM}) {
+						if a.DataSaver {
+							Turn off
+						} else {
+							Turn on
+						}
+					}
+				</form>
+			}
+		}
+		@section("devices", "Signed-in devices", "Log out of devices you don't recognise.") {
+			@c.Card("divide-y divide-line") {
+				for _, d := range a.Devices {
+					<div class="flex items-center gap-3 px-5 py-3.5">
+						<span class="grid size-9 shrink-0 place-items-center rounded-lg border border-line bg-surface text-fg-muted">
+							if d.Mobile {
+								@c.Icon("smartphone", "size-4")
+							} else {
+								@c.Icon("monitor", "size-4")
+							}
+						</span>
+						<div class="min-w-0 flex-1">
+							<p class="flex items-center gap-2 text-base font-medium text-fg">
+								<span class="truncate">{ d.Label }</span>
+								if d.Current {
+									@c.Badge(c.Brand) {
+										This device
+									}
+								}
+							</p>
+							<p class="text-sm tabular-nums text-fg-muted">{ d.LastActive } · { d.IP }</p>
+						</div>
+						if !d.Current {
+							<form action={ templ.SafeURL("/account/sessions/" + d.ID + "/revoke") } method="post" hx-post={ "/account/sessions/" + d.ID + "/revoke" } hx-target="#account" hx-swap="outerHTML">
+								@c.Button(c.ButtonProps{Type: "submit", Variant: c.Ghost, Size: c.SM}) {
+									Log out
+								}
+							</form>
+						}
+					</div>
+				}
+			}
+			<div class="mt-3 flex flex-wrap items-center justify-between gap-3">
+				if a.otherDevices() > 0 {
+					<form action="/account/sessions/revoke-others" method="post" hx-post="/account/sessions/revoke-others" hx-target="#account" hx-swap="outerHTML">
+						<button type="submit" class="text-sm font-medium text-danger underline-offset-4 hover:underline dark:text-red-400">Log out of all other devices</button>
+					</form>
+				} else {
+					<span></span>
+				}
+				<form action="/logout" method="post">
+					@c.Button(c.ButtonProps{Type: "submit", Variant: c.Ghost, Size: c.SM}) {
+						@c.Icon("log-out", "size-3.5")
+						Log out
+					}
+				</form>
+			</div>
+		}
+		@section("delete", "Delete account", "Member since "+a.MemberSince+".") {
+			@c.Card("flex flex-wrap items-center justify-between gap-4 border-red-600/20 px-5 py-4 dark:border-red-400/20") {
+				<p class="max-w-md text-sm text-fg-muted">Permanently removes your name, number, photo, ID documents and roles. Your phone number can be used for a new account afterwards.</p>
+				@c.LinkButton("/account/delete", c.Ghost, c.SM) {
+					<span class="text-danger dark:text-red-400">Delete account…</span>
+				}
+			}
+		}
+	</div>
+}
+
+func boolStr(b bool) string {
+	if b {
+		return "1"
+	}
+	return "0"
+}
+
+// DeleteConfirm is the "are you sure" step.
+templ DeleteConfirm(errMsg string) {
+	<div class="animate-rise">
+		<span class="grid size-10 place-items-center rounded-xl border border-red-600/20 bg-red-50 text-danger shadow-xs dark:border-red-400/20 dark:bg-red-400/10 dark:text-red-300">
+			@c.Icon("alert", "size-5")
+		</span>
+		<h1 class="mt-5 text-2xl font-semibold text-fg">Delete your account?</h1>
+		<p class="mt-1.5 text-base text-fg-muted">This can't be undone. We'll remove:</p>
+		<ul class="mt-3 space-y-1.5 text-base text-fg-muted">
+			<li class="flex gap-2">
+				@c.Icon("check", "mt-1 size-3.5 shrink-0")
+				Your name, phone number and photo
+			</li>
+			<li class="flex gap-2">
+				@c.Icon("check", "mt-1 size-3.5 shrink-0")
+				Ghana Card photos, card number and licence details
+			</li>
+			<li class="flex gap-2">
+				@c.Icon("check", "mt-1 size-3.5 shrink-0")
+				Your roles and profiles, and you'll be logged out everywhere
+			</li>
+		</ul>
+		<p class="mt-3 text-sm text-fg-subtle">We keep an anonymous record that an account existed, for security and legal reasons.</p>
+		<form action="/account/delete" method="post" class="mt-6 space-y-4">
+			@c.Field(c.FieldProps{
+				ID: "confirm", Name: "confirm", Label: "Type DELETE to confirm", Required: true, Error: errMsg,
+				Attrs: templ.Attributes{"autocomplete": "off", "autocapitalize": "characters", "spellcheck": "false"},
+			})
+			<div class="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+				@c.LinkButton("/account", c.Ghost, c.MD) {
+					Keep my account
+				}
+				@c.Button(c.ButtonProps{Type: "submit", Variant: c.Destructive}) {
+					Delete my account
+				}
+			</div>
+		</form>
+	</div>
+}
+
+templ Deleted() {
+	<div class="animate-rise text-center">
+		<span class="mx-auto grid size-12 place-items-center rounded-full bg-mint-200 text-graphite-900">
+			@c.Icon("check", "size-6 stroke-[2.5]")
+		</span>
+		<h1 class="mt-5 text-2xl font-semibold text-fg">Your account has been deleted</h1>
+		<p class="mt-1.5 text-base text-fg-muted">Thanks for trying RentMap. You're welcome back any time — just sign in with your number to start fresh.</p>
+		<div class="mt-6">
+			@c.LinkButton("/", c.Ghost, c.MD) {
+				Back to home
+			}
+		</div>
+	</div>
+}

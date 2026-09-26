@@ -1,0 +1,235 @@
+/* Tailwind v4 entry. Built to web/static/css/app.css by `task css`. */
+@import "tailwindcss" source(none);
+
+@source "../../internal/views";
+@source "../static/js";
+
+/* Class-based dark mode (toggle stores the choice in localStorage). */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Inter 4 variable (wght 400–700 + opsz), subset to Latin + ₵ (U+20B5).
+   Optical sizing is on by default, so headlines get Inter Display's tighter cut. */
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url("/static/fonts/inter-latin-var.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+    U+2000-206F, U+20AC, U+20B5, U+2122, U+2190-2193, U+2212, U+2215, U+2248, U+FEFF, U+FFFD;
+}
+
+/* Metric-matched fallback so the swap to the web font doesn't shift layout. */
+@font-face {
+  font-family: "Inter Fallback";
+  src: local("Arial");
+  size-adjust: 107%;
+  ascent-override: 90%;
+  descent-override: 22%;
+  line-gap-override: 0%;
+}
+
+@theme {
+  --font-sans: "Inter", "Inter Fallback", ui-sans-serif, system-ui, sans-serif;
+
+  /* Type scale. Body is 15 px; headings are semibold with tight tracking. */
+  --text-2xs: 0.6875rem;
+  --text-2xs--line-height: 1rem;
+  --text-xs: 0.75rem;
+  --text-xs--line-height: 1.125rem;
+  --text-sm: 0.8125rem;
+  --text-sm--line-height: 1.25rem;
+  --text-base: 0.9375rem;
+  --text-base--line-height: 1.5rem;
+  --text-md: 1rem;
+  --text-md--line-height: 1.625rem;
+  --text-lg: 1.0625rem;
+  --text-lg--line-height: 1.75rem;
+  --text-xl: 1.25rem;
+  --text-xl--line-height: 1.75rem;
+  --text-xl--letter-spacing: -0.015em;
+  --text-2xl: 1.5rem;
+  --text-2xl--line-height: 2rem;
+  --text-2xl--letter-spacing: -0.02em;
+  --text-3xl: 2rem;
+  --text-3xl--line-height: 2.375rem;
+  --text-3xl--letter-spacing: -0.028em;
+  --text-display: 3.25rem;
+  --text-display--line-height: 1.05;
+  --text-display--letter-spacing: -0.038em;
+  --text-display-sm: 2.375rem;
+  --text-display-sm--line-height: 1.08;
+  --text-display-sm--letter-spacing: -0.035em;
+
+  /* ── Brand: Sky Mint (#B8F7E4 = 200) ─────────────────────────────── */
+  --color-mint-50: #f0fdf8;
+  --color-mint-100: #dcfcf1;
+  --color-mint-200: #b8f7e4;
+  --color-mint-300: #86edd0;
+  --color-mint-400: #4fdbb6;
+  --color-mint-500: #22c39c;
+  --color-mint-600: #13a081; /* ≥3:1 on white — large text / icons only */
+  --color-mint-700: #0f7f68; /* ≥4.5:1 on white — links, small text */
+  --color-mint-800: #106554;
+  --color-mint-900: #0f5346;
+
+  /* ── Brand: Graphite (#25272C = 900) ─────────────────────────────── */
+  --color-graphite-50: #f7f8f9;
+  --color-graphite-100: #f1f2f4;
+  --color-graphite-200: #e3e5e8;
+  --color-graphite-300: #c7cad0;
+  --color-graphite-400: #a0a4ad;
+  --color-graphite-500: #7a7f8a;
+  --color-graphite-600: #5c616c;
+  --color-graphite-700: #454952;
+  --color-graphite-800: #33363d;
+  --color-graphite-900: #25272c;
+  --color-graphite-950: #141518;
+
+  /* ── Status (all ≥4.5:1 on white; deliberately not brand mint) ──── */
+  --color-success: #15803d;
+  --color-warning: #b45309;
+  --color-danger: #b91c1c;
+  --color-verified: #1d4ed8;
+
+  --radius-card: 0.875rem;
+
+  --shadow-xs: 0 1px 2px rgb(20 21 24 / 0.05);
+  --shadow-card: 0 1px 2px rgb(20 21 24 / 0.04), 0 2px 8px -2px rgb(20 21 24 / 0.06);
+  --shadow-float: 0 1px 2px rgb(20 21 24 / 0.05), 0 12px 32px -8px rgb(20 21 24 / 0.18);
+  --shadow-frame: 0 0 0 1px rgb(20 21 24 / 0.04), 0 2px 4px rgb(20 21 24 / 0.04), 0 24px 64px -16px rgb(20 21 24 / 0.22);
+  --shadow-btn: inset 0 1px 0 rgb(255 255 255 / 0.12), 0 1px 2px rgb(20 21 24 / 0.16);
+
+  --animate-pop: pop 420ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  --animate-rise: rise 600ms cubic-bezier(0.22, 1, 0.36, 1) both;
+
+  @keyframes pop {
+    0% { transform: scale(0.6); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  @keyframes rise {
+    0% { transform: translateY(8px); opacity: 0; }
+    100% { transform: translateY(0); opacity: 1; }
+  }
+}
+
+/* ── Semantic tokens: components use these, never raw scale values ── */
+:root {
+  --bg: #ffffff;
+  --surface: var(--color-graphite-50);
+  --surface-raised: #ffffff;
+  --text: var(--color-graphite-900);
+  --text-muted: var(--color-graphite-600);
+  --text-subtle: var(--color-graphite-500);
+  --border: #e6e7ea;
+  --border-strong: var(--color-graphite-300);
+  --primary: var(--color-graphite-900);
+  --primary-hover: #3a3d44;
+  --on-primary: #ffffff;
+  --accent: var(--color-mint-200);
+  --on-accent: var(--color-graphite-900);
+  --link: var(--color-mint-700);
+  --focus: var(--color-mint-700);
+  --grid-line: rgb(37 39 44 / 0.05);
+  color-scheme: light;
+}
+.dark {
+  --bg: var(--color-graphite-950);
+  --surface: #191a1e;
+  --surface-raised: #1c1d21;
+  --text: #f4f5f6;
+  --text-muted: var(--color-graphite-400);
+  --text-subtle: var(--color-graphite-500);
+  --border: rgb(255 255 255 / 0.08);
+  --border-strong: rgb(255 255 255 / 0.16);
+  --primary: var(--color-mint-200); /* mint becomes the CTA in dark mode */
+  --primary-hover: var(--color-mint-100);
+  --on-primary: var(--color-graphite-900);
+  --accent: var(--color-mint-200);
+  --on-accent: var(--color-graphite-900);
+  --link: var(--color-mint-300);
+  --focus: var(--color-mint-200);
+  --grid-line: rgb(255 255 255 / 0.04);
+  color-scheme: dark;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-raised: var(--surface-raised);
+  --color-fg: var(--text);
+  --color-fg-muted: var(--text-muted);
+  --color-fg-subtle: var(--text-subtle);
+  --color-line: var(--border);
+  --color-line-strong: var(--border-strong);
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-on-primary: var(--on-primary);
+  --color-accent: var(--accent);
+  --color-on-accent: var(--on-accent);
+  --color-link: var(--link);
+  --color-focus: var(--focus);
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-rendering: optimizeLegibility;
+  }
+  body {
+    /* cv11: single-storey a — friendlier, less "default Inter". */
+    font-feature-settings: "cv11", "calt";
+  }
+  h1, h2, h3, h4 { text-wrap: balance; }
+  p { text-wrap: pretty; }
+}
+
+/* htmx indicators (htmx's own inline <style> is disabled for the CSP). */
+.htmx-indicator { opacity: 0; transition: opacity 150ms ease-out; }
+.htmx-request .htmx-indicator, .htmx-request.htmx-indicator { opacity: 1; }
+
+@layer components {
+  .skeleton {
+    background: linear-gradient(90deg, var(--color-graphite-100) 25%, var(--color-graphite-200) 37%, var(--color-graphite-100) 63%);
+    background-size: 400% 100%;
+    animation: shimmer 1.4s ease infinite;
+  }
+  .dark .skeleton {
+    background-image: linear-gradient(90deg, var(--color-graphite-800) 25%, var(--color-graphite-700) 37%, var(--color-graphite-800) 63%);
+  }
+
+  /* Faint engineering grid, faded out towards the edges. */
+  .bg-grid {
+    background-image:
+      linear-gradient(to right, var(--grid-line) 1px, transparent 1px),
+      linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px);
+    background-size: 44px 44px;
+    mask-image: radial-gradient(ellipse 70% 60% at 50% 0%, #000 30%, transparent 75%);
+  }
+  .bg-dots {
+    background-image: radial-gradient(rgb(255 255 255 / 0.07) 1px, transparent 1px);
+    background-size: 18px 18px;
+  }
+}
+
+/* Listing wizard map pin (location-picker.js). */
+.location-pin { width: 34px; height: 44px; cursor: grab; filter: drop-shadow(0 4px 6px rgb(20 21 24 / 0.35)); }
+.location-pin:active { cursor: grabbing; }
+.location-pin svg { width: 100%; height: 100%; }
+.location-pin path { fill: var(--color-graphite-900); }
+.location-pin circle { fill: var(--color-mint-200); }
+.dark .location-pin path { fill: var(--color-mint-200); }
+.dark .location-pin circle { fill: var(--color-graphite-900); }
+.maplibregl-map { font: inherit; }
+.maplibregl-ctrl-group { border-radius: 0.5rem !important; box-shadow: var(--shadow-card) !important; }
+
+@keyframes shimmer {
+  0% { background-position: 100% 50%; }
+  100% { background-position: 0 50%; }
+}
+
+/* Motion is decoration: honour reduced-motion and data-saver mode. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 1ms !important; animation-iteration-count: 1 !important; transition-duration: 1ms !important; scroll-behavior: auto !important; }
+}
+.data-saver *, .data-saver *::before, .data-saver *::after { animation: none !important; }

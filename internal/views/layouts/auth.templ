@@ -1,0 +1,26 @@
+package layouts
+
+import c "rentmapgh/internal/views/components"
+
+// Focused is the shell for sign-in and onboarding: logo, one card, no nav.
+templ Focused(m Meta, width string) {
+	@Base(m) {
+		<div class="relative isolate flex min-h-dvh flex-col">
+			<div class="bg-grid pointer-events-none absolute inset-0 -z-10"></div>
+			<header class="mx-auto flex h-14 w-full max-w-6xl items-center justify-between px-4 sm:px-6">
+				<a href="/" class="-m-1 rounded-md p-1 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus" aria-label="RentMap Ghana home">
+					@c.Logo()
+				</a>
+				@ThemeToggle()
+			</header>
+			<main id="main" class="flex flex-1 items-start justify-center px-4 pb-16 pt-8 sm:items-center sm:pt-0">
+				<div class={ "w-full", width }>
+					{ children... }
+				</div>
+			</main>
+			<footer class="px-4 pb-6 text-center text-xs text-fg-subtle">
+				Honest rentals, on a map · Made in Kumasi
+			</footer>
+		</div>
+	}
+}

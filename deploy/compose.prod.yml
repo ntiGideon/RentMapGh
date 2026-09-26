@@ -1,0 +1,79 @@
+# Single-VPS production/staging stack. Secrets come from deploy/.env.prod
+# (not committed). Deploy:
+#   docker compose -f deploy/compose.prod.yml --env-file deploy/.env.prod run --rm migrate
+#   docker compose -f deploy/compose.prod.yml --env-file deploy/.env.prod up -d
+name: rentmap
+
+x-web-env: &web-env
+  APP_ENV: ${APP_ENV:-production}
+  BASE_URL: ${BASE_URL:?set BASE_URL}
+  DATABASE_URL: postgres://rentmap:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}@db:5432/rentmap?sslmode=disable
+  TRUST_PROXY: "true"
+  LOG_LEVEL: info
+  AUTH_SECRET: ${AUTH_SECRET:?set AUTH_SECRET}
+  DOCUMENT_KEY: ${DOCUMENT_KEY:?set DOCUMENT_KEY}
+  LOCATION_SECRET: ${LOCATION_SECRET:?set LOCATION_SECRET}
+  STORAGE_DIR: /data/private
+  # Listing photos: the media volume by default; set MEDIA_STORE=s3 and the
+  # S3_* variables for Cloudflare R2 (S3_REGION=auto) or Garage.
+  MEDIA_STORE: ${MEDIA_STORE:-disk}
+  MEDIA_DIR: /data/media
+  S3_ENDPOINT: ${S3_ENDPOINT:-}
+  S3_REGION: ${S3_REGION:-auto}
+  S3_BUCKET: ${S3_BUCKET:-}
+  S3_ACCESS_KEY_ID: ${S3_ACCESS_KEY_ID:-}
+  S3_SECRET_ACCESS_KEY: ${S3_SECRET_ACCESS_KEY:-}
+  SMS_PROVIDER: ${SMS_PROVIDER:-africastalking}
+  SMS_SENDER_ID: ${SMS_SENDER_ID:-RentMap}
+  AT_USERNAME: ${AT_USERNAME:?set AT_USERNAME}
+  AT_API_KEY: ${AT_API_KEY:?set AT_API_KEY}
+  AT_SANDBOX: ${AT_SANDBOX:-false}
+
+services:
+  db:
+    image: ${DB_IMAGE:-rentmap/postgres:17-postgis-pgvector}
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: rentmap
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
+      POSTGRES_DB: rentmap
+    volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U rentmap -d rentmap"]
+      interval: 5s
+      retries: 20
+
+  # One-off job, run before rolling out a new web image.
+  migrate:
+    image: ${WEB_IMAGE:-rentmap/web:latest}
+    entrypoint: ["/app/migrate", "up"]
+    environment: *web-env
+    depends_on: { db: { condition: service_healthy } }
+    profiles: [tools]
+
+  web:
+    image: ${WEB_IMAGE:-rentmap/web:latest}
+    restart: unless-stopped
+    environment: *web-env
+    depends_on: { db: { condition: service_healthy } }
+    expose: ["8080"]
+    volumes: [uploads:/data/private, media:/data/media]
+
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    ports: ["80:80", "443:443", "443:443/udp"]
+    environment:
+      SITE_ADDRESS: ${SITE_ADDRESS:?set SITE_ADDRESS}
+    volumes:
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on: [web]
+
+volumes:
+  pgdata: {}
+  uploads: {} # back this up with the database; evidence is useless without DOCUMENT_KEY
+  media: {} # listing photos when MEDIA_STORE=disk; back it up with the database
+  caddy_data: {}
+  caddy_config: {}

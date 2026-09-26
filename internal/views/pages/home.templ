@@ -1,0 +1,412 @@
+package pages
+
+import (
+	"fmt"
+
+	c "rentmapgh/internal/views/components"
+	"rentmapgh/internal/views/layouts"
+)
+
+var homeMeta = layouts.Meta{
+	Title:       "Rooms & houses for rent around KNUST",
+	Description: "Find rooms, hostels and apartments in Kumasi on a map — with the full move-in cost, honest availability and verified landlords. Join the waitlist.",
+	Path:        "/",
+}
+
+// Home is the pre-launch landing page. form is the waitlist form or its
+// success state (when arriving via the no-JS redirect).
+templ Home(form templ.Component) {
+	@layouts.Site(homeMeta) {
+		@hero(form)
+		@launchAreas()
+		@features()
+		@howItWorks()
+		@listerBand()
+	}
+}
+
+// eyebrow is the small label above a section heading.
+templ eyebrow(text string) {
+	<p class="text-sm font-medium text-link">{ text }</p>
+}
+
+templ hero(form templ.Component) {
+	<section class="relative isolate overflow-hidden">
+		<div class="bg-grid pointer-events-none absolute inset-0 -z-10"></div>
+		<div class="pointer-events-none absolute left-1/2 top-[-18rem] -z-10 h-[36rem] w-[64rem] -translate-x-1/2 rounded-full bg-[radial-gradient(closest-side,var(--color-mint-100),transparent)] dark:bg-[radial-gradient(closest-side,rgb(184_247_228/0.07),transparent)]"></div>
+		<div class="mx-auto grid max-w-6xl items-start gap-10 px-4 pb-14 pt-10 sm:px-6 sm:pt-14 lg:grid-cols-[1fr_25rem] lg:gap-16 lg:pb-20 lg:pt-20">
+			<div class="animate-rise lg:pt-4">
+				<a href="#how" class="group inline-flex items-center gap-2 rounded-full border border-line bg-surface-raised/80 py-1 pl-1 pr-3 text-sm text-fg-muted shadow-xs backdrop-blur transition-colors hover:border-line-strong hover:text-fg">
+					<span class="rounded-full bg-mint-200 px-2 py-0.5 text-2xs font-semibold text-graphite-900">Early access</span>
+					Launching around KNUST
+					@c.Icon("arrow-right", "size-3.5 text-fg-subtle transition-transform group-hover:translate-x-0.5")
+				</a>
+				<h1 class="mt-6 text-display-sm font-semibold text-fg sm:text-[2.875rem] sm:tracking-[-0.037em] lg:text-display">
+					Find a place in Kumasi.
+					<span class="block text-fg-subtle">Know the full cost before you call.</span>
+				</h1>
+				<p class="mt-5 max-w-xl text-lg text-fg-muted">
+					Rooms, hostels and apartments on a map — with the total move-in cost, availability confirmed by the owner, and verified landlords and agents. No wasted viewing fees.
+				</p>
+				<ul class="mt-10 grid gap-5 border-t border-line pt-6 sm:grid-cols-3 sm:gap-6">
+					@heroPoint("wallet", "Full move-in cost", "Advance, fees and deposit, added up.")
+					@heroPoint("shield-check", "Verified listers", "Ghana Card and agent licence checks.")
+					@heroPoint("map-pin", "Address on confirm", "Shared once your viewing is booked.")
+				</ul>
+			</div>
+			<div id="join" class="scroll-mt-20 lg:sticky lg:top-20">
+				@c.Card("animate-rise p-5 shadow-float [animation-delay:100ms] sm:p-6") {
+					<div class="mb-5">
+						<h2 class="text-lg font-semibold tracking-[-0.01em] text-fg">Join the waitlist</h2>
+						<p class="mt-1 text-sm text-fg-muted">Get first pick of new listings before the semester rush. Free for renters.</p>
+					</div>
+					@form
+				}
+			</div>
+		</div>
+		<div class="mx-auto max-w-6xl px-4 pb-16 sm:px-6 lg:pb-24">
+			@productPreview()
+		</div>
+	</section>
+}
+
+templ heroPoint(icon, title, body string) {
+	<li class="flex gap-3 sm:flex-col sm:gap-2.5">
+		<span class="grid size-8 shrink-0 place-items-center rounded-lg border border-line bg-surface-raised text-fg shadow-xs">
+			@c.Icon(icon, "size-4")
+		</span>
+		<span>
+			<span class="block text-sm font-medium text-fg">{ title }</span>
+			<span class="block text-sm text-fg-muted">{ body }</span>
+		</span>
+	</li>
+}
+
+type sampleListing struct {
+	title, area, price string
+	confirmed          string // "" hides the badge
+	verified, selected bool
+}
+
+var sampleListings = []sampleListing{
+	{"Chamber & hall, self-contained", "Ayeduase · 1.2 km", "1,200", "2 h ago", true, true},
+	{"Single room, shared bath", "Bomso · 0.8 km", "650", "today", false, false},
+	{"1-bedroom apartment", "Kotei · 2.4 km", "1,800", "", true, false},
+	{"Hostel room, 2 in a room", "Ayigya · 1.5 km", "480", "yesterday", false, false},
+}
+
+// productPreview is an HTML/SVG mock of the map search screen (no map
+// library, no images) so visitors see the product, not a stock photo.
+templ productPreview() {
+	<div class="animate-rise rounded-[1.125rem] border border-line bg-surface p-1.5 shadow-frame [animation-delay:200ms] dark:bg-white/[0.02]" aria-hidden="true">
+		<div class="overflow-hidden rounded-xl border border-line bg-surface-raised">
+			<!-- toolbar -->
+			<div class="flex h-12 items-center gap-2 border-b border-line px-3">
+				<div class="flex h-8 min-w-0 flex-1 items-center gap-2 rounded-md border border-line bg-bg px-2.5 text-sm text-fg sm:max-w-64">
+					@c.Icon("search", "size-3.5 text-fg-subtle")
+					<span class="truncate">Ayeduase, near KNUST</span>
+				</div>
+				<div class="hidden items-center gap-1.5 md:flex">
+					@filterChip("Under GH₵ 1,500", true)
+					@filterChip("Self-contained", true)
+					@filterChip("Reliable water", false)
+				</div>
+				<span class="ml-auto inline-flex h-8 items-center gap-1.5 rounded-md border border-line px-2.5 text-sm font-medium text-fg">
+					@c.Icon("sliders", "size-3.5")
+					Filters
+				</span>
+			</div>
+			<div class="grid lg:grid-cols-[21rem_1fr]">
+				<!-- results list -->
+				<div class="hidden border-r border-line lg:block">
+					<div class="flex items-center justify-between border-b border-line px-4 py-2.5 text-xs text-fg-muted">
+						<span><span class="font-medium text-fg">24 places</span> in this area</span>
+						<span>Sorted by total cost</span>
+					</div>
+					<ul class="divide-y divide-line">
+						for _, l := range sampleListings {
+							@listingRow(l)
+						}
+					</ul>
+				</div>
+				<!-- map -->
+				<div class="relative h-[30rem] overflow-hidden bg-[#eef0f2] dark:bg-[#18191c]">
+					@mapArt()
+					@pricePin("left-[10%] top-[14%]", "650", false)
+					@pricePin("left-[60%] top-[29%]", "900", false)
+					@pricePin("left-[27%] top-[40%] sm:top-[47%]", "1,200", true)
+					@pricePin("left-[72%] top-[70%]", "480", false)
+					@pricePin("left-[40%] top-[78%]", "1,800", false)
+					<span class="absolute left-[47%] top-[19%] grid size-8 place-items-center rounded-full bg-graphite-900 text-xs font-semibold text-white shadow-float ring-4 ring-graphite-900/10 dark:bg-white dark:text-graphite-900 dark:ring-white/10">12</span>
+					<div class="absolute right-3 top-3 flex flex-col overflow-hidden rounded-md border border-line bg-surface-raised text-fg-muted shadow-card">
+						<span class="grid size-8 place-items-center border-b border-line">
+							@c.Icon("plus", "size-3.5")
+						</span>
+						<span class="grid size-8 place-items-center">
+							@c.Icon("minus", "size-3.5")
+						</span>
+					</div>
+					@listingCard()
+				</div>
+			</div>
+		</div>
+	</div>
+}
+
+templ filterChip(label string, on bool) {
+	<span
+		class={ "inline-flex h-7 items-center rounded-full border px-2.5 text-xs font-medium",
+		templ.KV("border-graphite-900 bg-graphite-900 text-white dark:border-mint-200/30 dark:bg-mint-200/10 dark:text-mint-200", on),
+		templ.KV("border-line text-fg-muted", !on) }
+	>
+		{ label }
+	</span>
+}
+
+templ listingRow(l sampleListing) {
+	<li class={ "flex gap-3 px-4 py-3", templ.KV("bg-surface", l.selected) }>
+		<span class="grid size-14 shrink-0 place-items-center rounded-lg bg-[linear-gradient(135deg,var(--color-mint-100),var(--color-graphite-100))] text-graphite-500 dark:bg-[linear-gradient(135deg,rgb(184_247_228/0.12),rgb(255_255_255/0.03))] dark:text-graphite-400">
+			@c.Icon("bed", "size-5")
+		</span>
+		<span class="min-w-0 flex-1">
+			<span class="flex items-baseline justify-between gap-2">
+				<span class="truncate text-sm font-medium text-fg">{ l.title }</span>
+				<span class="whitespace-nowrap text-sm font-semibold tabular-nums text-fg">GH₵ { l.price }</span>
+			</span>
+			<span class="block text-xs text-fg-muted">{ l.area }</span>
+			<span class="mt-1.5 flex items-center gap-2">
+				<span class="flex gap-1">
+					if l.confirmed != "" {
+						@c.Badge(c.Success) {
+							Confirmed { l.confirmed }
+						}
+					}
+					if l.verified {
+						@c.Badge(c.Verified) {
+							@c.Icon("badge-check", "size-3")
+							Verified
+						}
+					}
+				</span>
+			</span>
+		</span>
+	</li>
+}
+
+templ pricePin(pos, amount string, selected bool) {
+	<span
+		class={ "absolute whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-semibold tabular-nums shadow-card", pos,
+		templ.KV("border border-line bg-surface-raised text-fg", !selected),
+		templ.KV("z-10 bg-graphite-900 text-white ring-4 ring-graphite-900/15 dark:bg-mint-200 dark:text-graphite-900 dark:ring-mint-200/20", selected) }
+	>
+		GH₵ { amount }
+	</span>
+}
+
+templ mapArt() {
+	<svg class="absolute inset-0 size-full" viewBox="0 0 800 500" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+		<!-- campus + park -->
+		<path d="M440 30 L760 20 L790 230 L540 270 L430 180 Z" class="fill-mint-100 dark:fill-mint-200/[0.06]"></path>
+		<ellipse cx="150" cy="420" rx="120" ry="60" class="fill-mint-100 dark:fill-mint-200/[0.06]"></ellipse>
+		<!-- stream -->
+		<path d="M-10 310 C 120 290, 200 350, 330 330 S 560 370, 810 340" class="fill-none stroke-sky-100 dark:stroke-sky-300/10" stroke-width="14" stroke-linecap="round"></path>
+		<!-- building blocks -->
+		<g class="fill-graphite-200/60 dark:fill-white/[0.03]">
+			<rect x="120" y="120" width="70" height="44" rx="4"></rect>
+			<rect x="200" y="120" width="44" height="44" rx="4"></rect>
+			<rect x="360" y="260" width="56" height="40" rx="4"></rect>
+			<rect x="600" y="300" width="80" height="50" rx="4"></rect>
+			<rect x="480" y="400" width="60" height="44" rx="4"></rect>
+		</g>
+		<!-- roads -->
+		<g class="fill-none stroke-white dark:stroke-white/[0.07]" stroke-linecap="round">
+			<path d="M-10 235 L810 180" stroke-width="16"></path>
+			<path d="M330 -10 L390 510" stroke-width="12"></path>
+			<path d="M100 -10 C 150 150, 80 300, 180 510" stroke-width="8"></path>
+			<path d="M390 390 L810 440" stroke-width="8"></path>
+			<path d="M570 190 L620 510" stroke-width="6"></path>
+			<path d="M-10 105 L340 85" stroke-width="6"></path>
+		</g>
+		<!-- labels -->
+		<g class="fill-graphite-400 dark:fill-graphite-600" font-family="inherit" font-weight="600" font-size="11" letter-spacing="1.6">
+			<text x="560" y="110">KNUST</text>
+			<text x="140" y="200">AYEDUASE</text>
+			<text x="430" y="480">BOMSO</text>
+			<text x="190" y="64">KOTEI</text>
+		</g>
+		<!-- approximate area of the selected listing (exact address is private) -->
+		<circle cx="258" cy="258" r="64" class="fill-graphite-900/[0.06] stroke-graphite-900/40 dark:fill-mint-200/[0.06] dark:stroke-mint-200/40" stroke-width="1.5" stroke-dasharray="4 5"></circle>
+	</svg>
+}
+
+templ listingCard() {
+	<div class="absolute bottom-3 left-3 right-3 z-20 rounded-xl border border-line bg-surface-raised/95 p-3.5 shadow-float backdrop-blur sm:left-auto sm:w-[20rem]">
+		<div class="flex items-start justify-between gap-3">
+			<div class="min-w-0">
+				<p class="text-sm font-semibold leading-snug text-fg">Chamber & hall, self-contained</p>
+				<p class="mt-0.5 flex items-center gap-1 text-xs text-fg-muted">
+					@c.Icon("map-pin", "size-3")
+					Ayeduase · ~1.2 km from KNUST
+				</p>
+			</div>
+			<p class="shrink-0 text-right text-sm font-semibold tabular-nums text-fg">
+				GH₵ 1,200
+				<span class="block text-2xs font-normal text-fg-muted">per month</span>
+			</p>
+		</div>
+		<div class="mt-2.5 flex flex-wrap gap-1">
+			@c.Badge(c.Success) {
+				<span class="size-1.5 rounded-full bg-current"></span>
+				Confirmed 2 h ago
+			}
+			@c.Badge(c.Verified) {
+				@c.Icon("badge-check", "size-3")
+				Verified owner
+			}
+			@c.Badge(c.Neutral) {
+				@c.Icon("droplet", "size-3")
+				Poly tank
+			}
+		</div>
+		<dl class="mt-3 space-y-1 border-t border-line pt-2.5 text-xs tabular-nums">
+			@costRow("Rent × 6 months advance", "7,200")
+			@costRow("Agent fee", "600")
+			@costRow("Service charge", "250")
+			<div class="mt-1.5 flex items-center justify-between rounded-md bg-mint-200 px-2 py-1.5 text-graphite-900">
+				<dt class="font-medium">Total to move in</dt>
+				<dd class="font-semibold">GH₵ 8,050</dd>
+			</div>
+		</dl>
+	</div>
+}
+
+templ costRow(label, amount string) {
+	<div class="flex items-center justify-between px-2 text-fg-muted">
+		<dt>{ label }</dt>
+		<dd class="text-fg">GH₵ { amount }</dd>
+	</div>
+}
+
+var launchNeighbourhoods = []string{"Ayeduase", "Bomso", "Kotei", "Ayigya", "Oduom", "Kentinkrono"}
+
+templ launchAreas() {
+	<section class="border-y border-line bg-surface">
+		<div class="mx-auto flex max-w-6xl flex-col gap-3 px-4 py-5 sm:flex-row sm:items-center sm:gap-6 sm:px-6">
+			<p class="shrink-0 text-sm text-fg-subtle">Opening first in</p>
+			<ul class="flex flex-wrap gap-1.5">
+				for _, n := range launchNeighbourhoods {
+					<li>
+						@c.Chip() {
+							@c.Icon("map-pin", "size-3 text-mint-700 dark:text-mint-300")
+							{ n }
+						}
+					</li>
+				}
+			</ul>
+		</div>
+	</section>
+}
+
+type feature struct{ icon, title, body string }
+
+var featureList = []feature{
+	{"wallet", "The full move-in cost, upfront", "Advance, agent fee, deposit and service charge are added up on every listing. No surprises at the viewing."},
+	{"clock", "Availability you can trust", "Owners re-confirm their listings. You'll see “confirmed 2 hours ago” — not a room that went last month."},
+	{"shield-check", "Verified owners and agents", "Ghana Card checks, licensed agents and a scam shield that warns you before you pay anyone anything."},
+	{"signal", "Light on your data", "Built for phones on 3G and 4G, with a data saver mode that keeps every page tiny."},
+}
+
+templ features() {
+	<section id="why" class="scroll-mt-14 mx-auto max-w-6xl px-4 py-20 sm:px-6 lg:py-28">
+		<div class="grid gap-4 lg:grid-cols-2 lg:items-end lg:gap-16">
+			<div>
+				@eyebrow("Why RentMap")
+				<h2 class="mt-2 text-2xl font-semibold text-fg sm:text-3xl">House hunting without the runaround</h2>
+			</div>
+			<p class="text-md text-fg-muted lg:pb-1">Everything you usually find out too late — the real price, whether it's still free, who you're dealing with — shown before you make the trip.</p>
+		</div>
+		<div class="mt-12 grid gap-px overflow-hidden rounded-card border border-line bg-line sm:grid-cols-2 lg:grid-cols-4">
+			for _, f := range featureList {
+				<div class="group bg-bg p-6 transition-colors hover:bg-surface">
+					<span class="grid size-8 place-items-center rounded-lg border border-line bg-surface-raised text-fg shadow-xs">
+						@c.Icon(f.icon, "size-4")
+					</span>
+					<h3 class="mt-6 text-base font-semibold text-fg">{ f.title }</h3>
+					<p class="mt-1.5 text-sm leading-relaxed text-fg-muted">{ f.body }</p>
+				</div>
+			}
+		</div>
+	</section>
+}
+
+var steps = []feature{
+	{"map", "Explore the map", "Filter by price, room type, water and meter. Every pin shows the monthly price."},
+	{"calendar-check", "Book a viewing", "Pick a time that suits you. The exact address unlocks once the owner confirms."},
+	{"key", "Move in with confidence", "Know exactly what you'll pay, who you're paying, and get receipts for it."},
+}
+
+templ howItWorks() {
+	<section id="how" class="scroll-mt-14 border-y border-line bg-surface">
+		<div class="mx-auto max-w-6xl px-4 py-20 sm:px-6 lg:py-24">
+			<div class="max-w-xl">
+				@eyebrow("How it works")
+				<h2 class="mt-2 text-2xl font-semibold text-fg sm:text-3xl">From search to keys in three steps</h2>
+			</div>
+			<ol class="mt-12 grid gap-10 md:grid-cols-3 md:gap-8">
+				for i, s := range steps {
+					<li class="relative border-t border-line pt-6">
+						<span class="absolute -top-px left-0 h-px w-10 bg-graphite-900 dark:bg-mint-200"></span>
+						<div class="flex items-center justify-between">
+							<span class="grid size-8 place-items-center rounded-lg border border-line bg-surface-raised text-fg shadow-xs">
+								@c.Icon(s.icon, "size-4")
+							</span>
+							<span class="text-xs font-medium tabular-nums text-fg-subtle">{ fmt.Sprintf("%02d", i+1) }</span>
+						</div>
+						<h3 class="mt-5 text-base font-semibold text-fg">{ s.title }</h3>
+						<p class="mt-1.5 text-sm leading-relaxed text-fg-muted">{ s.body }</p>
+					</li>
+				}
+			</ol>
+		</div>
+	</section>
+}
+
+var listerPerks = []string{
+	"Free listings during launch",
+	"Verified badge from day one",
+	"Viewing requests straight to WhatsApp",
+	"Renters who already know the full price",
+}
+
+templ listerBand() {
+	<section id="listers" class="scroll-mt-14 mx-auto max-w-6xl px-4 py-20 sm:px-6 lg:py-24">
+		<div class="relative isolate overflow-hidden rounded-2xl bg-graphite-900 px-6 py-10 ring-1 ring-white/10 sm:px-10 sm:py-12 dark:bg-[#1a1b1f]">
+			<div class="bg-dots pointer-events-none absolute inset-0 -z-10 [mask-image:linear-gradient(to_left,#000,transparent_70%)]"></div>
+			<div class="pointer-events-none absolute -right-32 -top-32 -z-10 size-96 rounded-full bg-[radial-gradient(closest-side,rgb(184_247_228/0.16),transparent)]"></div>
+			<div class="grid items-center gap-10 lg:grid-cols-[1.25fr_1fr] lg:gap-16">
+				<div>
+					<p class="text-sm font-medium text-mint-200">For landlords and agents</p>
+					<h2 class="mt-2 text-2xl font-semibold text-white sm:text-3xl">Fill your rooms faster, with renters who've seen the price.</h2>
+					<p class="mt-3 max-w-lg text-md text-graphite-300">List free during launch, get verified early, and reach students and workers around KNUST before anyone else.</p>
+					<div class="mt-8 flex flex-wrap items-center gap-x-5 gap-y-3">
+						@c.LinkButton("/?role=landlord#join", c.OnDark, c.MD) {
+							Become a founding lister
+							@c.Icon("arrow-right", "size-4 transition-transform group-hover/btn:translate-x-0.5")
+						}
+						<p class="text-sm text-graphite-400">Agents welcome — licence checks from day one.</p>
+					</div>
+				</div>
+				<ul class="space-y-3 rounded-xl border border-white/10 bg-white/[0.03] p-5 backdrop-blur">
+					for _, p := range listerPerks {
+						<li class="flex items-center gap-3 text-sm text-graphite-200">
+							<span class="grid size-5 shrink-0 place-items-center rounded-full bg-mint-200/15 text-mint-200">
+								@c.Icon("check", "size-3 stroke-[2.5]")
+							</span>
+							{ p }
+						</li>
+					}
+				</ul>
+			</div>
+		</div>
+	</section>
+}

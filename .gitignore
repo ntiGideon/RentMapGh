@@ -1,0 +1,28 @@
+# Binaries & build output
+/bin/
+/tmp/
+*.exe
+
+# Built assets (produced by `task css`)
+/web/static/css/app.css
+
+# Local uploads (verification evidence, avatars)
+/data/
+
+# Local config & secrets
+.env
+.env.*
+!.env.example
+
+# Editors / OS
+.idea/workspace.xml
+.idea/shelf/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Test output
+coverage.out
+/e2e/test-results/
+/e2e/playwright-report/
+.claude

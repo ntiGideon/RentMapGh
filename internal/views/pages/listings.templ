@@ -1,0 +1,33 @@
+package pages
+
+import (
+	"rentmapgh/internal/views/layouts"
+	"rentmapgh/internal/views/partials"
+)
+
+templ MyListings(v partials.MyListingsView) {
+	@layouts.Site(layouts.Meta{Title: "Your listings", Path: "/listings", NoIndex: true}) {
+		<div class="mx-auto max-w-4xl px-4 py-10 sm:px-6 lg:py-14">
+			@partials.MyListings(v)
+		</div>
+	}
+}
+
+// ListingWizard is one step of the wizard in its own focused shell.
+templ ListingWizard(v partials.WizardView, step templ.Component) {
+	@layouts.Wizard(wizardMeta(v), v.Title, v.SavedAt) {
+		@partials.Wizard(v, step)
+	}
+}
+
+func wizardMeta(v partials.WizardView) layouts.Meta {
+	m := layouts.Meta{Title: v.Title, NoIndex: true}
+	if v.Step == "location" {
+		m.Styles = []string{"vendor/maplibre-6.11.2/maplibre-gl.css"}
+		m.Modules = []string{"js/location-picker.js"}
+	}
+	if v.Step == "photos" {
+		m.Modules = []string{"js/photo-manager.js"}
+	}
+	return m
+}
