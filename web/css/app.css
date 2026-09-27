@@ -233,3 +233,13 @@
   *, *::before, *::after { animation-duration: 1ms !important; animation-iteration-count: 1 !important; transition-duration: 1ms !important; scroll-behavior: auto !important; }
 }
 .data-saver *, .data-saver *::before, .data-saver *::after { animation: none !important; }
+/* Search map: price pills (DOM markers from search.js). */
+.price-pill { display: inline-flex; align-items: center; height: 26px; padding: 0 9px; border-radius: 9999px; cursor: pointer;
+  font: 600 12.5px/1 var(--font-sans); font-variant-numeric: tabular-nums; white-space: nowrap; letter-spacing: -0.01em;
+  background: var(--color-white); color: var(--color-graphite-900);
+  box-shadow: 0 1px 2px rgb(20 21 24 / 0.18), 0 0 0 1px rgb(20 21 24 / 0.12); transition: transform 120ms ease-out, background-color 120ms; }
+.price-pill:hover, .price-pill.is-hot { background: var(--color-graphite-900); color: var(--color-white); transform: scale(1.08); z-index: 2; }
+.price-pill.is-open { background: var(--color-mint-200); color: var(--color-graphite-900); }
+.dark .price-pill { background: var(--color-graphite-800); color: var(--color-white); box-shadow: 0 0 0 1px rgb(255 255 255 / 0.14); }
+.dark .price-pill:hover, .dark .price-pill.is-hot, .dark .price-pill.is-open { background: var(--color-mint-200); color: var(--color-graphite-900); }
+@media (prefers-reduced-motion: reduce) { .price-pill { transition: none; } }

@@ -172,6 +172,9 @@ func New(d Deps) http.Handler {
 	r.Post("/logout", authH.Logout)
 	r.Get("/u/{id}/avatar.jpg", usersH.Avatar)
 	r.Get("/media/{id}/{file}", listingsH.Media)
+	r.With(rateLimit(240, time.Minute)).Get("/search", listingsH.Search)
+	r.With(rateLimit(240, time.Minute)).Get("/search/markers.geojson", listingsH.Markers)
+	r.Get("/l/{id}/card", listingsH.Preview)
 	r.Get("/l/{id}", listingsH.ListingPage)
 	r.Get("/l/{id}/{slug}", listingsH.ListingPage)
 	// A landlord's answer to an agent's request: the SMS link is the key.

@@ -48,6 +48,13 @@ templ hero(form templ.Component) {
 				<p class="mt-5 max-w-xl text-lg text-fg-muted">
 					Rooms, hostels and apartments on a map — with the total move-in cost, availability confirmed by the owner, and verified landlords and agents. No wasted viewing fees.
 				</p>
+				<div class="mt-7 flex flex-wrap items-center gap-3">
+					@c.LinkButton("/search", c.Primary, c.LG) {
+						@c.Icon("map", "size-4")
+						Browse places near KNUST
+					}
+					<span class="text-sm text-fg-muted">Early preview — more listings every week.</span>
+				</div>
 				<ul class="mt-10 grid gap-5 border-t border-line pt-6 sm:grid-cols-3 sm:gap-6">
 					@heroPoint("wallet", "Full move-in cost", "Advance, fees and deposit, added up.")
 					@heroPoint("shield-check", "Verified listers", "Ghana Card and agent licence checks.")

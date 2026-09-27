@@ -48,6 +48,18 @@ func (h *Handler) ListingPage(w http.ResponseWriter, r *http.Request) {
 	}
 	v := publicView(d, lister, authority, viewer, reqctx.DataSaver(r.Context()), time.Now().UTC())
 	v.PageURL = h.baseURL + path
+	v.AreaURL = "/search"
+	if d.P.ApproxLat != nil && d.P.ApproxLng != nil {
+		c := BBox{MinLng: *d.P.ApproxLng - 0.02, MinLat: *d.P.ApproxLat - 0.015, MaxLng: *d.P.ApproxLng + 0.02, MaxLat: *d.P.ApproxLat + 0.015}
+		v.AreaURL = "/search?bbox=" + c.String()
+	}
+	if d.L.Status == listing.StatusActive {
+		sim, err := h.svc.Similar(r.Context(), d, 4)
+		if err != nil {
+			slog.ErrorContext(r.Context(), "listing page: similar", "err", err)
+		}
+		v.Similar = h.cards(r.Context(), sim)
+	}
 	v.ShareURL = shareURL(v, v.PageURL)
 
 	m := layouts.Meta{

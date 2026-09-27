@@ -1,0 +1,296 @@
+package pages
+
+import (
+	"strconv"
+
+	"rentmapgh/internal/server/reqctx"
+	c "rentmapgh/internal/views/components"
+	"rentmapgh/internal/views/layouts"
+	"rentmapgh/internal/views/partials"
+)
+
+// SearchView is the map + list discovery page. The form round-trips every
+// filter through the URL, so each search is a shareable link.
+type SearchView struct {
+	Total, Page, Pages int
+	PrevURL, NextURL   string
+	Results            []partials.ResultCard
+	EmptyText          string
+	ZoomOutURL         string
+	ClearURL           string
+
+	BBox, Sort string
+	DefaultBBox string // the map's first view when the URL has none
+	Sorts      []c.Option
+
+	Min, Max      string
+	Groups        []Chip
+	Beds, Baths   string
+	SC, Furnished bool
+	OwnMeter      bool
+	Water         string
+	WaterOpts     []c.Option
+	Kitchen       bool
+	Features      []Chip
+	Verified      bool
+	Owner         bool
+	From          string
+	Active        int
+}
+
+// Chip is a toggle filter (unit-type family, feature).
+type Chip struct {
+	Key, Label string
+	On         bool
+}
+
+func (v SearchView) countText() string {
+	switch v.Total {
+	case 0:
+		return "No places in this area"
+	case 1:
+		return "1 place in this area"
+	}
+	return strconv.Itoa(v.Total) + " places in this area"
+}
+
+templ Search(m layouts.Meta, v SearchView) {
+	@layouts.Base(m) {
+		<form id="search-form" action="/search" method="get" class="flex h-dvh flex-col" data-search>
+			<input type="hidden" name="bbox" value={ v.BBox } data-bbox/>
+			<header class="z-30 border-b border-line bg-bg">
+				<div class="flex h-14 items-center gap-3 px-4">
+					<a href="/" class="-m-1 shrink-0 rounded-md p-1" aria-label="RentMap Ghana home">
+						@c.Logo()
+					</a>
+					<div class="ml-2 hidden min-w-0 flex-1 items-center gap-1.5 overflow-x-auto md:flex [scrollbar-width:none]">
+						@typeChips(v)
+					</div>
+					<div class="ml-auto flex items-center gap-1.5">
+						<button type="button" data-open-filters class="inline-flex h-9 items-center gap-1.5 rounded-lg border border-line bg-surface-raised px-3 text-sm font-medium text-fg shadow-xs hover:bg-surface">
+							@c.Icon("sliders", "size-4")
+							Filters
+							<span data-active-badge class={ "size-5 place-items-center rounded-full bg-graphite-900 text-2xs font-semibold text-white dark:bg-mint-200 dark:text-graphite-900", templ.KV("grid", v.Active > 0), templ.KV("hidden", v.Active == 0) }>{ strconv.Itoa(v.Active) }</span>
+						</button>
+						@layouts.ThemeToggle()
+						if vw := reqctx.CurrentViewer(ctx); vw != nil {
+							<a href="/account" class="hidden h-9 items-center rounded-lg px-2.5 text-sm font-medium text-fg-muted hover:bg-surface hover:text-fg sm:inline-flex">Account</a>
+						} else {
+							<a href="/login" class="hidden h-9 items-center rounded-lg px-2.5 text-sm font-medium text-fg-muted hover:bg-surface hover:text-fg sm:inline-flex">Sign in</a>
+						}
+					</div>
+				</div>
+				<div class="flex items-center gap-1.5 overflow-x-auto px-4 pb-2.5 md:hidden [scrollbar-width:none]">
+					@typeChips(v)
+				</div>
+			</header>
+			<div class="relative flex min-h-0 flex-1">
+				<section data-list-pane class="w-full overflow-y-auto overscroll-contain lg:w-[46%] lg:max-w-[46rem] lg:border-r lg:border-line [.show-map_&]:hidden lg:[.show-map_&]:block">
+					@SearchResults(v)
+				</section>
+				<div data-map-pane class="relative hidden flex-1 lg:block [.show-map_&]:block">
+					<div data-search-map data-default-bbox={ v.DefaultBBox } class="size-full"></div>
+					<div data-map-off class="absolute inset-0 hidden place-items-center bg-surface">
+						<div class="text-center">
+							<p class="text-sm text-fg-muted">The map is off to save data.</p>
+							<button type="button" data-show-map class="mt-3 inline-flex h-9 items-center rounded-lg border border-line bg-surface-raised px-3.5 text-sm font-medium text-fg shadow-xs">Show map</button>
+						</div>
+					</div>
+					<div data-map-loading class="pointer-events-none absolute left-1/2 top-3 hidden -translate-x-1/2 rounded-full bg-bg/95 px-3 py-1 text-xs font-medium text-fg shadow-card ring-1 ring-line">Updating…</div>
+					<div data-preview class="pointer-events-auto absolute inset-x-3 bottom-3 z-10 hidden sm:inset-x-auto sm:left-4 sm:w-80"></div>
+				</div>
+				<button type="button" data-toggle-view class="fixed bottom-5 left-1/2 z-20 hidden -translate-x-1/2 items-center gap-2 rounded-full bg-graphite-900 px-4 py-2.5 text-sm font-semibold text-white shadow-card ring-1 ring-black/10 dark:bg-mint-200 dark:text-graphite-900 max-lg:[.js_&]:inline-flex">
+					<span class="[.show-map_&]:hidden inline-flex items-center gap-2">
+						@c.Icon("map", "size-4")
+						Map
+					</span>
+					<span class="hidden [.show-map_&]:inline-flex items-center gap-2">
+						@c.Icon("list", "size-4")
+						List
+					</span>
+				</button>
+			</div>
+			@filterSheet(v)
+		</form>
+	}
+}
+
+templ typeChips(v SearchView) {
+	for _, g := range v.Groups {
+		<label class="inline-flex h-8 shrink-0 cursor-pointer items-center rounded-full border border-line px-3 text-sm text-fg transition-colors hover:bg-surface has-checked:border-graphite-900 has-checked:bg-graphite-900 has-checked:text-white dark:has-checked:border-mint-200 dark:has-checked:bg-mint-200 dark:has-checked:text-graphite-900">
+			<input type="checkbox" name="type" value={ g.Key } checked?={ g.On } class="sr-only" data-autosubmit/>
+			{ g.Label }
+		</label>
+	}
+}
+
+// SearchResults is the list pane: swapped on every search.
+templ SearchResults(v SearchView) {
+	<div id="search-results" data-active={ strconv.Itoa(v.Active) } class="px-4 pb-24 pt-4 lg:pb-8">
+		<div class="flex flex-wrap items-center justify-between gap-2">
+			<p class="text-sm font-medium text-fg" aria-live="polite">{ v.countText() }</p>
+			<label class="inline-flex items-center gap-2 text-sm text-fg-muted">
+				Sort
+				<select name="sort" form="search-form" data-autosubmit class="h-8 rounded-lg border border-line bg-surface-raised px-2 pr-7 text-sm text-fg">
+					for _, o := range v.Sorts {
+						<option value={ o.Value } selected?={ o.Value == v.Sort }>{ o.Label }</option>
+					}
+				</select>
+			</label>
+		</div>
+		if v.Total == 0 {
+			<div class="mt-10 rounded-card border border-dashed border-line-strong px-6 py-10 text-center">
+				<span class="mx-auto grid size-11 place-items-center rounded-full bg-surface text-fg-muted ring-1 ring-line">
+					@c.Icon("search", "size-5")
+				</span>
+				<p class="mt-4 text-base font-semibold text-fg">{ v.EmptyText }</p>
+				<p class="mt-1 text-sm text-fg-muted">Try a wider area, or loosen a filter.</p>
+				<div class="mt-5 flex flex-wrap justify-center gap-2">
+					<a href={ templ.SafeURL(v.ZoomOutURL) } data-zoom-out class="inline-flex h-9 items-center rounded-lg bg-primary px-3.5 text-sm font-medium text-on-primary shadow-btn">Widen the area</a>
+					if v.Active > 0 {
+						<a href={ templ.SafeURL(v.ClearURL) } class="inline-flex h-9 items-center rounded-lg border border-line bg-surface-raised px-3.5 text-sm font-medium text-fg shadow-xs">Clear filters</a>
+					}
+				</div>
+			</div>
+		} else {
+			<div class="mt-4 grid gap-x-4 gap-y-7 sm:grid-cols-2">
+				for i, r := range v.Results {
+					@partials.ResultCardView(r, i < 2)
+				}
+			</div>
+			if v.Pages > 1 {
+				<nav class="mt-8 flex items-center justify-between gap-3" aria-label="Pages">
+					if v.PrevURL != "" {
+						<a href={ templ.SafeURL(v.PrevURL) } data-page class="inline-flex h-9 items-center gap-1 rounded-lg border border-line px-3 text-sm font-medium text-fg hover:bg-surface">
+							@c.Icon("chevron-left", "size-4")
+							Previous
+						</a>
+					} else {
+						<span></span>
+					}
+					<span class="text-sm tabular-nums text-fg-muted">Page { strconv.Itoa(v.Page) } of { strconv.Itoa(v.Pages) }</span>
+					if v.NextURL != "" {
+						<a href={ templ.SafeURL(v.NextURL) } data-page class="inline-flex h-9 items-center gap-1 rounded-lg border border-line px-3 text-sm font-medium text-fg hover:bg-surface">
+							Next
+							@c.Icon("chevron-right", "size-4")
+						</a>
+					} else {
+						<span></span>
+					}
+				</nav>
+			}
+		}
+	</div>
+}
+
+templ filterSheet(v SearchView) {
+	<dialog data-filters aria-labelledby="filters-h" class="m-0 ml-auto h-dvh max-h-none w-full max-w-md bg-bg p-0 text-fg shadow-card backdrop:bg-graphite-900/40 sm:border-l sm:border-line">
+		<div class="flex h-full flex-col">
+			<div class="flex h-14 shrink-0 items-center justify-between border-b border-line px-4">
+				<h2 id="filters-h" class="text-base font-semibold">Filters</h2>
+				<button type="button" data-close-filters aria-label="Close" class="grid size-9 place-items-center rounded-lg text-fg-muted hover:bg-surface hover:text-fg">
+					@c.Icon("x", "size-5")
+				</button>
+			</div>
+			<div class="flex-1 space-y-7 overflow-y-auto px-4 py-5">
+				<fieldset>
+					<legend class="text-sm font-semibold">Price per month</legend>
+					<p class="text-xs text-fg-muted">Yearly and hostel rents are converted to a monthly figure.</p>
+					<div class="mt-3 grid grid-cols-2 gap-3">
+						@priceInput("min", "Minimum", v.Min)
+						@priceInput("max", "Maximum", v.Max)
+					</div>
+				</fieldset>
+				<fieldset>
+					<legend class="text-sm font-semibold">Type</legend>
+					<div class="mt-3 flex flex-wrap gap-1.5">
+						@typeChips(v)
+					</div>
+				</fieldset>
+				<div class="grid grid-cols-2 gap-3">
+					@countSelect("beds", "Bedrooms", v.Beds)
+					@countSelect("baths", "Bathrooms", v.Baths)
+				</div>
+				<fieldset class="space-y-2.5">
+					<legend class="mb-1 text-sm font-semibold">The place</legend>
+					@toggle("sc", "Self-contained (own bath and toilet)", v.SC)
+					@toggle("furnished", "Furnished or semi-furnished", v.Furnished)
+					@toggle("meter", "Own prepaid meter", v.OwnMeter)
+					@toggle("kitchen", "Own kitchen", v.Kitchen)
+				</fieldset>
+				<label class="block">
+					<span class="text-sm font-semibold">Water</span>
+					<select name="water" class="mt-2 h-10 w-full rounded-lg border border-line bg-surface-raised px-3 text-sm text-fg">
+						<option value="">Any</option>
+						for _, o := range v.WaterOpts {
+							<option value={ o.Value } selected?={ o.Value == v.Water }>{ o.Label }</option>
+						}
+					</select>
+				</label>
+				<fieldset>
+					<legend class="text-sm font-semibold">Features</legend>
+					<div class="mt-3 flex flex-wrap gap-1.5">
+						for _, f := range v.Features {
+							<label class="inline-flex h-8 cursor-pointer items-center rounded-full border border-line px-3 text-sm text-fg hover:bg-surface has-checked:border-graphite-900 has-checked:bg-graphite-900 has-checked:text-white dark:has-checked:border-mint-200 dark:has-checked:bg-mint-200 dark:has-checked:text-graphite-900">
+								<input type="checkbox" name="feature" value={ f.Key } checked?={ f.On } class="sr-only"/>
+								{ f.Label }
+							</label>
+						}
+					</div>
+				</fieldset>
+				<fieldset class="space-y-2.5">
+					<legend class="mb-1 text-sm font-semibold">Lister</legend>
+					@toggle("verified", "ID-checked listers only", v.Verified)
+					@toggle("owner", "Listed by the owner (no agent)", v.Owner)
+				</fieldset>
+				<label class="block">
+					<span class="text-sm font-semibold">Available by</span>
+					<input type="date" name="from" value={ v.From } class="mt-2 h-10 w-full rounded-lg border border-line bg-surface-raised px-3 text-sm text-fg"/>
+				</label>
+			</div>
+			<div class="flex shrink-0 items-center justify-between gap-3 border-t border-line px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+				<a href={ templ.SafeURL(v.ClearURL) } data-clear-filters class="text-sm font-medium text-fg-muted underline-offset-4 hover:text-fg hover:underline">Clear all</a>
+				<button type="submit" data-apply-filters class="inline-flex h-11 items-center rounded-lg bg-primary px-5 text-base font-medium text-on-primary shadow-btn">Show results</button>
+			</div>
+		</div>
+	</dialog>
+}
+
+templ priceInput(name, label, value string) {
+	<label class="block">
+		<span class="text-xs text-fg-muted">{ label }</span>
+		<span class="relative mt-1 block">
+			<span class="pointer-events-none absolute inset-y-0 left-3 flex items-center text-sm text-fg-muted">₵</span>
+			<input type="text" inputmode="numeric" name={ name } value={ value } placeholder="Any" autocomplete="off" class="h-10 w-full rounded-lg border border-line bg-surface-raised pl-7 pr-3 text-sm tabular-nums text-fg placeholder:text-fg-subtle"/>
+		</span>
+	</label>
+}
+
+templ countSelect(name, label, value string) {
+	<label class="block">
+		<span class="text-sm font-semibold">{ label }</span>
+		<select name={ name } class="mt-2 h-10 w-full rounded-lg border border-line bg-surface-raised px-3 text-sm text-fg">
+			<option value="">Any</option>
+			for _, n := range []string{"1", "2", "3", "4"} {
+				<option value={ n } selected?={ n == value }>{ n }+</option>
+			}
+		</select>
+	</label>
+}
+
+templ toggle(name, label string, on bool) {
+	<label class="flex cursor-pointer items-center justify-between gap-3 text-sm text-fg">
+		{ label }
+		<input type="checkbox" name={ name } value="1" checked?={ on } class="size-4 accent-graphite-900 dark:accent-mint-200"/>
+	</label>
+}
+
+// ListingPreview is the card shown when a map marker is tapped.
+templ ListingPreview(r partials.ResultCard) {
+	<div class="relative rounded-card bg-bg p-2.5 shadow-card ring-1 ring-line">
+		<button type="button" data-close-preview aria-label="Close" class="absolute right-4 top-4 z-10 grid size-8 place-items-center rounded-full bg-white/95 text-graphite-900 shadow-xs">
+			@c.Icon("x", "size-4")
+		</button>
+		@partials.ResultCardView(r, true)
+	</div>
+}

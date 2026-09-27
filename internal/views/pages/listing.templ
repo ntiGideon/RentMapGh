@@ -29,6 +29,8 @@ type ListingPageView struct {
 	ApproxLat, ApproxLng                   string
 	Lister                                 ListerCard
 	ShareURL, PageURL                      string
+	AreaURL                                string // search around the area
+	Similar                                []partials.ResultCard
 }
 
 type Fact struct{ Label, Value, Icon string }
@@ -68,7 +70,7 @@ templ ListingPage(m layouts.Meta, v ListingPageView) {
 				<ol class="flex items-center gap-1.5">
 					<li>{ v.City }</li>
 					<li aria-hidden="true" class="text-fg-subtle">/</li>
-					<li>{ v.Area }</li>
+					<li><a href={ templ.SafeURL(v.AreaURL) } class="hover:text-fg hover:underline underline-offset-4">{ v.Area }</a></li>
 				</ol>
 			</nav>
 			<header class="mt-2 flex flex-wrap items-end justify-between gap-x-6 gap-y-2">
@@ -178,6 +180,19 @@ templ ListingPage(m layouts.Meta, v ListingPageView) {
 					@shareRow(v)
 				</aside>
 			</div>
+			if len(v.Similar) > 0 {
+				<section aria-labelledby="similar-h" class="mt-14 border-t border-line pt-8">
+					<div class="flex items-baseline justify-between gap-3">
+						<h2 id="similar-h" class="text-lg font-semibold text-fg">Similar places nearby</h2>
+						<a href={ templ.SafeURL(v.AreaURL) } class="text-sm font-medium text-link">See all on the map</a>
+					</div>
+					<div class="mt-5 grid gap-x-5 gap-y-7 sm:grid-cols-2 lg:grid-cols-4">
+						for _, r := range v.Similar {
+							@partials.ResultCardView(r, false)
+						}
+					</div>
+				</section>
+			}
 		</div>
 		if v.Price != "" {
 			<div class="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-bg/95 px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur lg:hidden">

@@ -529,19 +529,19 @@ Engineering:
 
 ### Phase 3 — Map discovery, search & listing pages (3–4 weeks)
 
-- [ ] Map home (MapLibre + Ghana tiles), price-pill markers, clustering, user location.
-- [ ] Split view on desktop (map + list), toggle on mobile (map ↔ list) with a floating button.
-- [ ] Bottom-sheet listing preview on marker tap.
-- [ ] Filters: price (monthly equivalent) range slider, unit type, bedrooms, bathrooms, furnished, self-contained, meter type, water source, parking, security, kitchen, AC, pets, commercial types, available from, verified only, owner-only.
-- [ ] Sort: recommended, newest, price ↑/↓, nearest, recently confirmed.
+- [x] Map home (MapLibre + Ghana tiles), price-pill markers, clustering, user location. *At `/search` (the home page stays the pre-launch landing, with a "Browse places" button); see §16.13.*
+- [x] Split view on desktop (map + list), toggle on mobile (map ↔ list) with a floating button.
+- [x] Bottom-sheet listing preview on marker tap.
+- [x] Filters: price (monthly equivalent) range slider, unit type, bedrooms, bathrooms, furnished, self-contained, meter type, water source, parking, security, kitchen, AC, pets, commercial types, available from, verified only, owner-only. *Min/max inputs rather than a slider; see §16.13.*
+- [x] Sort: recommended, newest, price ↑/↓, nearest, recently confirmed.
 - [ ] Location search box with autocomplete (neighbourhoods, landmarks, POIs, universities).
 - [ ] Radius search ("within 3 km of KNUST").
-- [ ] URL-driven state; shareable searches.
-- [ ] Listing detail page: gallery + lightbox, video, key facts grid, amenities, **move-in cost breakdown**, approximate-area map, distances to nearby POIs (rounded), lister card with badges, freshness badge, similar listings nearby. *Slice 3a built everything except POI distances beyond KNUST (3c) and similar listings (3b); see §16.12.*
+- [x] URL-driven state; shareable searches.
+- [ ] Listing detail page: gallery + lightbox, video, key facts grid, amenities, **move-in cost breakdown**, approximate-area map, distances to nearby POIs (rounded), lister card with badges, freshness badge, similar listings nearby. *Slice 3a built the page, 3b added "Similar places nearby"; POI distances beyond KNUST come in 3c. See §16.12.*
 - [ ] Rich OpenGraph tags + generated share image (photo + price + area) so WhatsApp previews look great. *OG title/description/canonical/cover image done in 3a; the generated image is 3d.*
 - [ ] Anonymous favourites (cookie) and compare tray (up to 4).
 - [ ] SEO pages: `/kumasi/ayeduase/rooms-for-rent`, `/kumasi/knust/hostels` — server-rendered, indexable, with structured data.
-- [ ] Empty states that help ("No self-contained rooms under GHS 800 here — widen the area?" with one-tap actions).
+- [x] Empty states that help ("No self-contained rooms under GHS 800 here — widen the area?" with one-tap actions).
 
 **Exit:** a renter can find, filter, inspect and shortlist real properties without calling anybody.
 
@@ -1082,5 +1082,22 @@ Sky Mint is step 200 of its scale; Graphite is step 900. Darker mint steps exist
 | Distances | rounded, from approx point | "~2 km from KNUST" from the approximate point (`geo.PublicDistance`) | Other POIs arrive with place search (3c) |
 | Contact | — | Share on WhatsApp and Copy link; "Viewing requests and messages are coming soon" | Contact is Phase 4 |
 | Dev data | — | `cmd/seed` (`task db:seed`): about 60 live listings around KNUST through the real wizard service, with generated photos and some approved agent mandates; refuses outside development | Phase 3 needs a map full of realistic listings |
+
+### 16.13 Decisions taken while building Phase 3 (slice 3b — map search)
+
+| Area | Plan said | Built | Why |
+| --- | --- | --- | --- |
+| Where | map home | `/search`. The home page stays the pre-launch landing, with "Browse places near KNUST" and a "Find a place" nav link | Swap `/` to the map at launch, when there's enough supply |
+| Query | sqlc | One hand-built SQL query (`listings/search.go`), run through Ent's `QueryContext`: `count(*) OVER ()` for the total in the same round trip, then Ent loads the page by ID in order | sqlc isn't in the stack; one query covers every filter, and it's tested |
+| Privacy | filters on `approx_geog` | Every location condition (bbox, nearest, similar) uses `approx_geog`. The GeoJSON carries approximate points at 5 decimals. A test shows a tiny box around the exact pin finds nothing | §6.1: shrinking boxes must not reveal the building |
+| Price | monthly-equivalent slider | Min/max inputs in GHS per month (hostel and yearly rents converted), not a slider | Typing "800" is faster on a phone than dragging, and there are no JS widget dependencies. A slider can come later |
+| Types | unit types | Four chips (Rooms, Hostels, Apartments & houses, Shops & offices); each selects a family of unit types | 20 unit types is too many chips; the wizard keeps the detail |
+| Features | parking, security, AC, pets… | Security = gated OR watchman OR CCTV; plus parking, AC, Wi-Fi, pets, backup power, self-contained, furnished, own meter, own kitchen, water source, bedrooms/bathrooms, available by, ID-checked lister, owner only | The filters renters in Kumasi actually ask about |
+| Sync | `moveend` → htmx; `hx-push-url` | `search.js` owns the flow: map moves (350 ms debounce) replace the URL; filter changes push it; the list pane comes back via `htmx.ajax` (`render.Page` gives htmx just the pane), markers via `/search/markers.geojson` with the same query. Back/forward reload from the URL. No-JS: a plain GET form with the list | One URL is the source of truth for list, map and sharing |
+| Markers | price pills + clustering | MapLibre GeoJSON clustering (WebGL circles with counts); unclustered points are DOM "price pills" (₵650, ₵4.5k/yr), synced on render, with hover linked to the list cards; ≤2,000 markers per view | Crisp text and CSS states for pills; vector tiles (`ST_AsMVT`) only if a view ever needs more |
+| Preview | bottom sheet | Tap a pill → `/l/{id}/card`: a card over the map on desktop, a bottom card on phones | |
+| Phones | map ↔ list toggle | List first; the Map button loads MapLibre only when tapped. In data-saver mode the desktop map waits for "Show map" | Saves ~300 KB for renters who only read the list |
+| Nearest | — | "Nearest to map centre", KNN on `approx_geog` | Place search (3c) will add "near KNUST"-style centres |
+| Similar | "similar listings nearby" | Up to 4 on the listing page: same type family, nearest by approximate point, other properties only | |
 
 Phase 0 engineering status: repo skeleton, Compose dev stack (PostGIS + pgvector image, Mailpit, Valhalla behind a profile), config, slog, request IDs, graceful shutdown, `/healthz` + `/readyz`, Ent + migrations, design tokens + first components, landing page with waitlist, tests, CI and the production Dockerfile/Compose/Caddy are done. Still open: staging VPS + Cloudflare, i18n scaffolding, product/legal tasks.

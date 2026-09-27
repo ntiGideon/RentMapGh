@@ -1,0 +1,81 @@
+package partials
+
+import (
+	"strconv"
+
+	c "rentmapgh/internal/views/components"
+)
+
+// ResultCard is a live listing in search results, previews and "similar
+// places".
+type ResultCard struct {
+	ID, URL                 string
+	Small, Medium, Blurhash string
+	Photos                  int
+	Price, Per, MoveIn      string
+	Headline, Meta          string // Meta: "Chamber and hall · Bomso · ~2 km from KNUST"
+	Fresh                   string
+	FreshRecent             bool
+	Verified                bool
+	IsAgent                 bool
+	Authority               bool // agent listing with the owner's confirmation
+}
+
+templ ResultCardView(r ResultCard, eager bool) {
+	<article data-result-id={ r.ID } class="group/card relative min-w-0">
+		<a href={ templ.SafeURL(r.URL) } class="block rounded-card focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-focus">
+			<div class="relative aspect-[4/3] overflow-hidden rounded-card bg-surface ring-1 ring-line">
+				if r.Small != "" {
+					<img
+						src={ r.Small }
+						srcset={ r.Small + " 320w, " + r.Medium + " 800w" }
+						sizes="(min-width: 1280px) 18rem, (min-width: 1024px) 20vw, (min-width: 640px) 45vw, 92vw"
+						alt=""
+						if !eager {
+							loading="lazy"
+						}
+						decoding="async"
+						class="size-full object-cover transition-transform duration-300 group-hover/card:scale-[1.02]"
+					/>
+				} else {
+					<span class="grid size-full place-items-center text-fg-subtle">
+						@c.Icon("image", "size-6")
+					</span>
+				}
+				<div class="absolute left-2 top-2 flex gap-1">
+					if r.Verified {
+						<span class="inline-flex items-center gap-1 rounded-md bg-white/95 px-1.5 py-0.5 text-2xs font-semibold text-graphite-900 shadow-xs">
+							@c.Icon("badge-check", "size-3 text-verified")
+							Verified
+						</span>
+					}
+					if r.IsAgent {
+						<span class="rounded-md bg-graphite-900/80 px-1.5 py-0.5 text-2xs font-medium text-white">Agent</span>
+					}
+				</div>
+				if r.Photos > 1 {
+					<span class="absolute bottom-2 right-2 rounded-md bg-graphite-900/70 px-1.5 py-0.5 text-2xs font-medium tabular-nums text-white">{ strconv.Itoa(r.Photos) } photos</span>
+				}
+			</div>
+			<div class="mt-2.5 space-y-0.5 px-0.5">
+				<p class="text-base font-semibold tabular-nums text-fg">
+					{ r.Price }
+					<span class="text-sm font-normal text-fg-muted">/ { r.Per }</span>
+				</p>
+				<h3 class="truncate text-sm font-medium text-fg">{ r.Headline }</h3>
+				<p class="truncate text-sm text-fg-muted">{ r.Meta }</p>
+				<p class="truncate text-xs tabular-nums text-fg-muted">
+					if r.MoveIn != "" {
+						{ r.MoveIn } to move in
+					}
+					if r.MoveIn != "" && r.Fresh != "" {
+						<span class="text-fg-subtle">·</span>
+					}
+					if r.Fresh != "" {
+						<span class={ templ.KV("text-success dark:text-green-300", r.FreshRecent), templ.KV("text-fg-subtle", !r.FreshRecent) }>{ r.Fresh }</span>
+					}
+				</p>
+			</div>
+		</a>
+	</article>
+}
