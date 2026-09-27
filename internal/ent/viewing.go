@@ -49,7 +49,25 @@ type Viewing struct {
 	ConfirmedAt *time.Time `json:"confirmed_at,omitempty"`
 	// first time the renter opened the exact location
 	LocationSeenAt *time.Time `json:"location_seen_at,omitempty"`
-	selectValues   sql.SelectValues
+	// the lister's first answer (response-time badge)
+	RespondedAt *time.Time `json:"responded_at,omitempty"`
+	// Reminded24At holds the value of the "reminded_24_at" field.
+	Reminded24At *time.Time `json:"reminded_24_at,omitempty"`
+	// Reminded2At holds the value of the "reminded_2_at" field.
+	Reminded2At *time.Time `json:"reminded_2_at,omitempty"`
+	// FeedbackAskedAt holds the value of the "feedback_asked_at" field.
+	FeedbackAskedAt *time.Time `json:"feedback_asked_at,omitempty"`
+	// RenterOutcome holds the value of the "renter_outcome" field.
+	RenterOutcome *viewing.RenterOutcome `json:"renter_outcome,omitempty"`
+	// Accuracy holds the value of the "accuracy" field.
+	Accuracy *viewing.Accuracy `json:"accuracy,omitempty"`
+	// Interested holds the value of the "interested" field.
+	Interested *bool `json:"interested,omitempty"`
+	// FeedbackNote holds the value of the "feedback_note" field.
+	FeedbackNote string `json:"feedback_note,omitempty"`
+	// FeedbackAt holds the value of the "feedback_at" field.
+	FeedbackAt   *time.Time `json:"feedback_at,omitempty"`
+	selectValues sql.SelectValues
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -59,13 +77,13 @@ func (*Viewing) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case viewing.FieldClosedBy:
 			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
-		case viewing.FieldFeeAcknowledged:
+		case viewing.FieldFeeAcknowledged, viewing.FieldInterested:
 			values[i] = new(sql.NullBool)
 		case viewing.FieldDurationMin, viewing.FieldViewingFee:
 			values[i] = new(sql.NullInt64)
-		case viewing.FieldStatus, viewing.FieldNote, viewing.FieldDeclineReason:
+		case viewing.FieldStatus, viewing.FieldNote, viewing.FieldDeclineReason, viewing.FieldRenterOutcome, viewing.FieldAccuracy, viewing.FieldFeedbackNote:
 			values[i] = new(sql.NullString)
-		case viewing.FieldCreatedAt, viewing.FieldUpdatedAt, viewing.FieldStartsAt, viewing.FieldConfirmedAt, viewing.FieldLocationSeenAt:
+		case viewing.FieldCreatedAt, viewing.FieldUpdatedAt, viewing.FieldStartsAt, viewing.FieldConfirmedAt, viewing.FieldLocationSeenAt, viewing.FieldRespondedAt, viewing.FieldReminded24At, viewing.FieldReminded2At, viewing.FieldFeedbackAskedAt, viewing.FieldFeedbackAt:
 			values[i] = new(sql.NullTime)
 		case viewing.FieldID, viewing.FieldListingID, viewing.FieldRenterID, viewing.FieldListerID:
 			values[i] = new(uuid.UUID)
@@ -184,6 +202,68 @@ func (_m *Viewing) assignValues(columns []string, values []any) error {
 				_m.LocationSeenAt = new(time.Time)
 				*_m.LocationSeenAt = value.Time
 			}
+		case viewing.FieldRespondedAt:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field responded_at", values[i])
+			} else if value.Valid {
+				_m.RespondedAt = new(time.Time)
+				*_m.RespondedAt = value.Time
+			}
+		case viewing.FieldReminded24At:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field reminded_24_at", values[i])
+			} else if value.Valid {
+				_m.Reminded24At = new(time.Time)
+				*_m.Reminded24At = value.Time
+			}
+		case viewing.FieldReminded2At:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field reminded_2_at", values[i])
+			} else if value.Valid {
+				_m.Reminded2At = new(time.Time)
+				*_m.Reminded2At = value.Time
+			}
+		case viewing.FieldFeedbackAskedAt:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field feedback_asked_at", values[i])
+			} else if value.Valid {
+				_m.FeedbackAskedAt = new(time.Time)
+				*_m.FeedbackAskedAt = value.Time
+			}
+		case viewing.FieldRenterOutcome:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field renter_outcome", values[i])
+			} else if value.Valid {
+				_m.RenterOutcome = new(viewing.RenterOutcome)
+				*_m.RenterOutcome = viewing.RenterOutcome(value.String)
+			}
+		case viewing.FieldAccuracy:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field accuracy", values[i])
+			} else if value.Valid {
+				_m.Accuracy = new(viewing.Accuracy)
+				*_m.Accuracy = viewing.Accuracy(value.String)
+			}
+		case viewing.FieldInterested:
+			if value, ok := values[i].(*sql.NullBool); !ok {
+				return fmt.Errorf("unexpected type %T for field interested", values[i])
+			} else if value.Valid {
+				_m.Interested = new(bool)
+				*_m.Interested = value.Bool
+			}
+		case viewing.FieldFeedbackNote:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field feedback_note", values[i])
+			} else if value.Valid {
+				_m.FeedbackNote = value.String
+			}
+		case viewing.FieldFeedbackAt:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field feedback_at", values[i])
+			} else if value.Valid {
+				_m.FeedbackAt = new(time.Time)
+				*_m.FeedbackAt = value.Time
+			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
 		}
@@ -270,6 +350,49 @@ func (_m *Viewing) String() string {
 	builder.WriteString(", ")
 	if v := _m.LocationSeenAt; v != nil {
 		builder.WriteString("location_seen_at=")
+		builder.WriteString(v.Format(time.ANSIC))
+	}
+	builder.WriteString(", ")
+	if v := _m.RespondedAt; v != nil {
+		builder.WriteString("responded_at=")
+		builder.WriteString(v.Format(time.ANSIC))
+	}
+	builder.WriteString(", ")
+	if v := _m.Reminded24At; v != nil {
+		builder.WriteString("reminded_24_at=")
+		builder.WriteString(v.Format(time.ANSIC))
+	}
+	builder.WriteString(", ")
+	if v := _m.Reminded2At; v != nil {
+		builder.WriteString("reminded_2_at=")
+		builder.WriteString(v.Format(time.ANSIC))
+	}
+	builder.WriteString(", ")
+	if v := _m.FeedbackAskedAt; v != nil {
+		builder.WriteString("feedback_asked_at=")
+		builder.WriteString(v.Format(time.ANSIC))
+	}
+	builder.WriteString(", ")
+	if v := _m.RenterOutcome; v != nil {
+		builder.WriteString("renter_outcome=")
+		builder.WriteString(fmt.Sprintf("%v", *v))
+	}
+	builder.WriteString(", ")
+	if v := _m.Accuracy; v != nil {
+		builder.WriteString("accuracy=")
+		builder.WriteString(fmt.Sprintf("%v", *v))
+	}
+	builder.WriteString(", ")
+	if v := _m.Interested; v != nil {
+		builder.WriteString("interested=")
+		builder.WriteString(fmt.Sprintf("%v", *v))
+	}
+	builder.WriteString(", ")
+	builder.WriteString("feedback_note=")
+	builder.WriteString(_m.FeedbackNote)
+	builder.WriteString(", ")
+	if v := _m.FeedbackAt; v != nil {
+		builder.WriteString("feedback_at=")
 		builder.WriteString(v.Format(time.ANSIC))
 	}
 	builder.WriteByte(')')

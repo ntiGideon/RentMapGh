@@ -127,6 +127,41 @@ func LocationSeenAt(v time.Time) predicate.Viewing {
 	return predicate.Viewing(sql.FieldEQ(FieldLocationSeenAt, v))
 }
 
+// RespondedAt applies equality check predicate on the "responded_at" field. It's identical to RespondedAtEQ.
+func RespondedAt(v time.Time) predicate.Viewing {
+	return predicate.Viewing(sql.FieldEQ(FieldRespondedAt, v))
+}
+
+// Reminded24At applies equality check predicate on the "reminded_24_at" field. It's identical to Reminded24AtEQ.
+func Reminded24At(v time.Time) predicate.Viewing {
+	return predicate.Viewing(sql.FieldEQ(FieldReminded24At, v))
+}
+
+// Reminded2At applies equality check predicate on the "reminded_2_at" field. It's identical to Reminded2AtEQ.
+func Reminded2At(v time.Time) predicate.Viewing {
+	return predicate.Viewing(sql.FieldEQ(FieldReminded2At, v))
+}
+
+// FeedbackAskedAt applies equality check predicate on the "feedback_asked_at" field. It's identical to FeedbackAskedAtEQ.
+func FeedbackAskedAt(v time.Time) predicate.Viewing {
+	return predicate.Viewing(sql.FieldEQ(FieldFeedbackAskedAt, v))
+}
+
+// Interested applies equality check predicate on the "interested" field. It's identical to InterestedEQ.
+func Interested(v bool) predicate.Viewing {
+	return predicate.Viewing(sql.FieldEQ(FieldInterested, v))
+}
+
+// FeedbackNote applies equality check predicate on the "feedback_note" field. It's identical to FeedbackNoteEQ.
+func FeedbackNote(v string) predicate.Viewing {
+	return predicate.Viewing(sql.FieldEQ(FieldFeedbackNote, v))
+}
+
+// FeedbackAt applies equality check predicate on the "feedback_at" field. It's identical to FeedbackAtEQ.
+func FeedbackAt(v time.Time) predicate.Viewing {
+	return predicate.Viewing(sql.FieldEQ(FieldFeedbackAt, v))
+}
+
 // CreatedAtEQ applies the EQ predicate on the "created_at" field.
 func CreatedAtEQ(v time.Time) predicate.Viewing {
 	return predicate.Viewing(sql.FieldEQ(FieldCreatedAt, v))
@@ -799,6 +834,411 @@ func LocationSeenAtIsNil() predicate.Viewing {
 // LocationSeenAtNotNil applies the NotNil predicate on the "location_seen_at" field.
 func LocationSeenAtNotNil() predicate.Viewing {
 	return predicate.Viewing(sql.FieldNotNull(FieldLocationSeenAt))
+}
+
+// RespondedAtEQ applies the EQ predicate on the "responded_at" field.
+func RespondedAtEQ(v time.Time) predicate.Viewing {
+	return predicate.Viewing(sql.FieldEQ(FieldRespondedAt, v))
+}
+
+// RespondedAtNEQ applies the NEQ predicate on the "responded_at" field.
+func RespondedAtNEQ(v time.Time) predicate.Viewing {
+	return predicate.Viewing(sql.FieldNEQ(FieldRespondedAt, v))
+}
+
+// RespondedAtIn applies the In predicate on the "responded_at" field.
+func RespondedAtIn(vs ...time.Time) predicate.Viewing {
+	return predicate.Viewing(sql.FieldIn(FieldRespondedAt, vs...))
+}
+
+// RespondedAtNotIn applies the NotIn predicate on the "responded_at" field.
+func RespondedAtNotIn(vs ...time.Time) predicate.Viewing {
+	return predicate.Viewing(sql.FieldNotIn(FieldRespondedAt, vs...))
+}
+
+// RespondedAtGT applies the GT predicate on the "responded_at" field.
+func RespondedAtGT(v time.Time) predicate.Viewing {
+	return predicate.Viewing(sql.FieldGT(FieldRespondedAt, v))
+}
+
+// RespondedAtGTE applies the GTE predicate on the "responded_at" field.
+func RespondedAtGTE(v time.Time) predicate.Viewing {
+	return predicate.Viewing(sql.FieldGTE(FieldRespondedAt, v))
+}
+
+// RespondedAtLT applies the LT predicate on the "responded_at" field.
+func RespondedAtLT(v time.Time) predicate.Viewing {
+	return predicate.Viewing(sql.FieldLT(FieldRespondedAt, v))
+}
+
+// RespondedAtLTE applies the LTE predicate on the "responded_at" field.
+func RespondedAtLTE(v time.Time) predicate.Viewing {
+	return predicate.Viewing(sql.FieldLTE(FieldRespondedAt, v))
+}
+
+// RespondedAtIsNil applies the IsNil predicate on the "responded_at" field.
+func RespondedAtIsNil() predicate.Viewing {
+	return predicate.Viewing(sql.FieldIsNull(FieldRespondedAt))
+}
+
+// RespondedAtNotNil applies the NotNil predicate on the "responded_at" field.
+func RespondedAtNotNil() predicate.Viewing {
+	return predicate.Viewing(sql.FieldNotNull(FieldRespondedAt))
+}
+
+// Reminded24AtEQ applies the EQ predicate on the "reminded_24_at" field.
+func Reminded24AtEQ(v time.Time) predicate.Viewing {
+	return predicate.Viewing(sql.FieldEQ(FieldReminded24At, v))
+}
+
+// Reminded24AtNEQ applies the NEQ predicate on the "reminded_24_at" field.
+func Reminded24AtNEQ(v time.Time) predicate.Viewing {
+	return predicate.Viewing(sql.FieldNEQ(FieldReminded24At, v))
+}
+
+// Reminded24AtIn applies the In predicate on the "reminded_24_at" field.
+func Reminded24AtIn(vs ...time.Time) predicate.Viewing {
+	return predicate.Viewing(sql.FieldIn(FieldReminded24At, vs...))
+}
+
+// Reminded24AtNotIn applies the NotIn predicate on the "reminded_24_at" field.
+func Reminded24AtNotIn(vs ...time.Time) predicate.Viewing {
+	return predicate.Viewing(sql.FieldNotIn(FieldReminded24At, vs...))
+}
+
+// Reminded24AtGT applies the GT predicate on the "reminded_24_at" field.
+func Reminded24AtGT(v time.Time) predicate.Viewing {
+	return predicate.Viewing(sql.FieldGT(FieldReminded24At, v))
+}
+
+// Reminded24AtGTE applies the GTE predicate on the "reminded_24_at" field.
+func Reminded24AtGTE(v time.Time) predicate.Viewing {
+	return predicate.Viewing(sql.FieldGTE(FieldReminded24At, v))
+}
+
+// Reminded24AtLT applies the LT predicate on the "reminded_24_at" field.
+func Reminded24AtLT(v time.Time) predicate.Viewing {
+	return predicate.Viewing(sql.FieldLT(FieldReminded24At, v))
+}
+
+// Reminded24AtLTE applies the LTE predicate on the "reminded_24_at" field.
+func Reminded24AtLTE(v time.Time) predicate.Viewing {
+	return predicate.Viewing(sql.FieldLTE(FieldReminded24At, v))
+}
+
+// Reminded24AtIsNil applies the IsNil predicate on the "reminded_24_at" field.
+func Reminded24AtIsNil() predicate.Viewing {
+	return predicate.Viewing(sql.FieldIsNull(FieldReminded24At))
+}
+
+// Reminded24AtNotNil applies the NotNil predicate on the "reminded_24_at" field.
+func Reminded24AtNotNil() predicate.Viewing {
+	return predicate.Viewing(sql.FieldNotNull(FieldReminded24At))
+}
+
+// Reminded2AtEQ applies the EQ predicate on the "reminded_2_at" field.
+func Reminded2AtEQ(v time.Time) predicate.Viewing {
+	return predicate.Viewing(sql.FieldEQ(FieldReminded2At, v))
+}
+
+// Reminded2AtNEQ applies the NEQ predicate on the "reminded_2_at" field.
+func Reminded2AtNEQ(v time.Time) predicate.Viewing {
+	return predicate.Viewing(sql.FieldNEQ(FieldReminded2At, v))
+}
+
+// Reminded2AtIn applies the In predicate on the "reminded_2_at" field.
+func Reminded2AtIn(vs ...time.Time) predicate.Viewing {
+	return predicate.Viewing(sql.FieldIn(FieldReminded2At, vs...))
+}
+
+// Reminded2AtNotIn applies the NotIn predicate on the "reminded_2_at" field.
+func Reminded2AtNotIn(vs ...time.Time) predicate.Viewing {
+	return predicate.Viewing(sql.FieldNotIn(FieldReminded2At, vs...))
+}
+
+// Reminded2AtGT applies the GT predicate on the "reminded_2_at" field.
+func Reminded2AtGT(v time.Time) predicate.Viewing {
+	return predicate.Viewing(sql.FieldGT(FieldReminded2At, v))
+}
+
+// Reminded2AtGTE applies the GTE predicate on the "reminded_2_at" field.
+func Reminded2AtGTE(v time.Time) predicate.Viewing {
+	return predicate.Viewing(sql.FieldGTE(FieldReminded2At, v))
+}
+
+// Reminded2AtLT applies the LT predicate on the "reminded_2_at" field.
+func Reminded2AtLT(v time.Time) predicate.Viewing {
+	return predicate.Viewing(sql.FieldLT(FieldReminded2At, v))
+}
+
+// Reminded2AtLTE applies the LTE predicate on the "reminded_2_at" field.
+func Reminded2AtLTE(v time.Time) predicate.Viewing {
+	return predicate.Viewing(sql.FieldLTE(FieldReminded2At, v))
+}
+
+// Reminded2AtIsNil applies the IsNil predicate on the "reminded_2_at" field.
+func Reminded2AtIsNil() predicate.Viewing {
+	return predicate.Viewing(sql.FieldIsNull(FieldReminded2At))
+}
+
+// Reminded2AtNotNil applies the NotNil predicate on the "reminded_2_at" field.
+func Reminded2AtNotNil() predicate.Viewing {
+	return predicate.Viewing(sql.FieldNotNull(FieldReminded2At))
+}
+
+// FeedbackAskedAtEQ applies the EQ predicate on the "feedback_asked_at" field.
+func FeedbackAskedAtEQ(v time.Time) predicate.Viewing {
+	return predicate.Viewing(sql.FieldEQ(FieldFeedbackAskedAt, v))
+}
+
+// FeedbackAskedAtNEQ applies the NEQ predicate on the "feedback_asked_at" field.
+func FeedbackAskedAtNEQ(v time.Time) predicate.Viewing {
+	return predicate.Viewing(sql.FieldNEQ(FieldFeedbackAskedAt, v))
+}
+
+// FeedbackAskedAtIn applies the In predicate on the "feedback_asked_at" field.
+func FeedbackAskedAtIn(vs ...time.Time) predicate.Viewing {
+	return predicate.Viewing(sql.FieldIn(FieldFeedbackAskedAt, vs...))
+}
+
+// FeedbackAskedAtNotIn applies the NotIn predicate on the "feedback_asked_at" field.
+func FeedbackAskedAtNotIn(vs ...time.Time) predicate.Viewing {
+	return predicate.Viewing(sql.FieldNotIn(FieldFeedbackAskedAt, vs...))
+}
+
+// FeedbackAskedAtGT applies the GT predicate on the "feedback_asked_at" field.
+func FeedbackAskedAtGT(v time.Time) predicate.Viewing {
+	return predicate.Viewing(sql.FieldGT(FieldFeedbackAskedAt, v))
+}
+
+// FeedbackAskedAtGTE applies the GTE predicate on the "feedback_asked_at" field.
+func FeedbackAskedAtGTE(v time.Time) predicate.Viewing {
+	return predicate.Viewing(sql.FieldGTE(FieldFeedbackAskedAt, v))
+}
+
+// FeedbackAskedAtLT applies the LT predicate on the "feedback_asked_at" field.
+func FeedbackAskedAtLT(v time.Time) predicate.Viewing {
+	return predicate.Viewing(sql.FieldLT(FieldFeedbackAskedAt, v))
+}
+
+// FeedbackAskedAtLTE applies the LTE predicate on the "feedback_asked_at" field.
+func FeedbackAskedAtLTE(v time.Time) predicate.Viewing {
+	return predicate.Viewing(sql.FieldLTE(FieldFeedbackAskedAt, v))
+}
+
+// FeedbackAskedAtIsNil applies the IsNil predicate on the "feedback_asked_at" field.
+func FeedbackAskedAtIsNil() predicate.Viewing {
+	return predicate.Viewing(sql.FieldIsNull(FieldFeedbackAskedAt))
+}
+
+// FeedbackAskedAtNotNil applies the NotNil predicate on the "feedback_asked_at" field.
+func FeedbackAskedAtNotNil() predicate.Viewing {
+	return predicate.Viewing(sql.FieldNotNull(FieldFeedbackAskedAt))
+}
+
+// RenterOutcomeEQ applies the EQ predicate on the "renter_outcome" field.
+func RenterOutcomeEQ(v RenterOutcome) predicate.Viewing {
+	return predicate.Viewing(sql.FieldEQ(FieldRenterOutcome, v))
+}
+
+// RenterOutcomeNEQ applies the NEQ predicate on the "renter_outcome" field.
+func RenterOutcomeNEQ(v RenterOutcome) predicate.Viewing {
+	return predicate.Viewing(sql.FieldNEQ(FieldRenterOutcome, v))
+}
+
+// RenterOutcomeIn applies the In predicate on the "renter_outcome" field.
+func RenterOutcomeIn(vs ...RenterOutcome) predicate.Viewing {
+	return predicate.Viewing(sql.FieldIn(FieldRenterOutcome, vs...))
+}
+
+// RenterOutcomeNotIn applies the NotIn predicate on the "renter_outcome" field.
+func RenterOutcomeNotIn(vs ...RenterOutcome) predicate.Viewing {
+	return predicate.Viewing(sql.FieldNotIn(FieldRenterOutcome, vs...))
+}
+
+// RenterOutcomeIsNil applies the IsNil predicate on the "renter_outcome" field.
+func RenterOutcomeIsNil() predicate.Viewing {
+	return predicate.Viewing(sql.FieldIsNull(FieldRenterOutcome))
+}
+
+// RenterOutcomeNotNil applies the NotNil predicate on the "renter_outcome" field.
+func RenterOutcomeNotNil() predicate.Viewing {
+	return predicate.Viewing(sql.FieldNotNull(FieldRenterOutcome))
+}
+
+// AccuracyEQ applies the EQ predicate on the "accuracy" field.
+func AccuracyEQ(v Accuracy) predicate.Viewing {
+	return predicate.Viewing(sql.FieldEQ(FieldAccuracy, v))
+}
+
+// AccuracyNEQ applies the NEQ predicate on the "accuracy" field.
+func AccuracyNEQ(v Accuracy) predicate.Viewing {
+	return predicate.Viewing(sql.FieldNEQ(FieldAccuracy, v))
+}
+
+// AccuracyIn applies the In predicate on the "accuracy" field.
+func AccuracyIn(vs ...Accuracy) predicate.Viewing {
+	return predicate.Viewing(sql.FieldIn(FieldAccuracy, vs...))
+}
+
+// AccuracyNotIn applies the NotIn predicate on the "accuracy" field.
+func AccuracyNotIn(vs ...Accuracy) predicate.Viewing {
+	return predicate.Viewing(sql.FieldNotIn(FieldAccuracy, vs...))
+}
+
+// AccuracyIsNil applies the IsNil predicate on the "accuracy" field.
+func AccuracyIsNil() predicate.Viewing {
+	return predicate.Viewing(sql.FieldIsNull(FieldAccuracy))
+}
+
+// AccuracyNotNil applies the NotNil predicate on the "accuracy" field.
+func AccuracyNotNil() predicate.Viewing {
+	return predicate.Viewing(sql.FieldNotNull(FieldAccuracy))
+}
+
+// InterestedEQ applies the EQ predicate on the "interested" field.
+func InterestedEQ(v bool) predicate.Viewing {
+	return predicate.Viewing(sql.FieldEQ(FieldInterested, v))
+}
+
+// InterestedNEQ applies the NEQ predicate on the "interested" field.
+func InterestedNEQ(v bool) predicate.Viewing {
+	return predicate.Viewing(sql.FieldNEQ(FieldInterested, v))
+}
+
+// InterestedIsNil applies the IsNil predicate on the "interested" field.
+func InterestedIsNil() predicate.Viewing {
+	return predicate.Viewing(sql.FieldIsNull(FieldInterested))
+}
+
+// InterestedNotNil applies the NotNil predicate on the "interested" field.
+func InterestedNotNil() predicate.Viewing {
+	return predicate.Viewing(sql.FieldNotNull(FieldInterested))
+}
+
+// FeedbackNoteEQ applies the EQ predicate on the "feedback_note" field.
+func FeedbackNoteEQ(v string) predicate.Viewing {
+	return predicate.Viewing(sql.FieldEQ(FieldFeedbackNote, v))
+}
+
+// FeedbackNoteNEQ applies the NEQ predicate on the "feedback_note" field.
+func FeedbackNoteNEQ(v string) predicate.Viewing {
+	return predicate.Viewing(sql.FieldNEQ(FieldFeedbackNote, v))
+}
+
+// FeedbackNoteIn applies the In predicate on the "feedback_note" field.
+func FeedbackNoteIn(vs ...string) predicate.Viewing {
+	return predicate.Viewing(sql.FieldIn(FieldFeedbackNote, vs...))
+}
+
+// FeedbackNoteNotIn applies the NotIn predicate on the "feedback_note" field.
+func FeedbackNoteNotIn(vs ...string) predicate.Viewing {
+	return predicate.Viewing(sql.FieldNotIn(FieldFeedbackNote, vs...))
+}
+
+// FeedbackNoteGT applies the GT predicate on the "feedback_note" field.
+func FeedbackNoteGT(v string) predicate.Viewing {
+	return predicate.Viewing(sql.FieldGT(FieldFeedbackNote, v))
+}
+
+// FeedbackNoteGTE applies the GTE predicate on the "feedback_note" field.
+func FeedbackNoteGTE(v string) predicate.Viewing {
+	return predicate.Viewing(sql.FieldGTE(FieldFeedbackNote, v))
+}
+
+// FeedbackNoteLT applies the LT predicate on the "feedback_note" field.
+func FeedbackNoteLT(v string) predicate.Viewing {
+	return predicate.Viewing(sql.FieldLT(FieldFeedbackNote, v))
+}
+
+// FeedbackNoteLTE applies the LTE predicate on the "feedback_note" field.
+func FeedbackNoteLTE(v string) predicate.Viewing {
+	return predicate.Viewing(sql.FieldLTE(FieldFeedbackNote, v))
+}
+
+// FeedbackNoteContains applies the Contains predicate on the "feedback_note" field.
+func FeedbackNoteContains(v string) predicate.Viewing {
+	return predicate.Viewing(sql.FieldContains(FieldFeedbackNote, v))
+}
+
+// FeedbackNoteHasPrefix applies the HasPrefix predicate on the "feedback_note" field.
+func FeedbackNoteHasPrefix(v string) predicate.Viewing {
+	return predicate.Viewing(sql.FieldHasPrefix(FieldFeedbackNote, v))
+}
+
+// FeedbackNoteHasSuffix applies the HasSuffix predicate on the "feedback_note" field.
+func FeedbackNoteHasSuffix(v string) predicate.Viewing {
+	return predicate.Viewing(sql.FieldHasSuffix(FieldFeedbackNote, v))
+}
+
+// FeedbackNoteIsNil applies the IsNil predicate on the "feedback_note" field.
+func FeedbackNoteIsNil() predicate.Viewing {
+	return predicate.Viewing(sql.FieldIsNull(FieldFeedbackNote))
+}
+
+// FeedbackNoteNotNil applies the NotNil predicate on the "feedback_note" field.
+func FeedbackNoteNotNil() predicate.Viewing {
+	return predicate.Viewing(sql.FieldNotNull(FieldFeedbackNote))
+}
+
+// FeedbackNoteEqualFold applies the EqualFold predicate on the "feedback_note" field.
+func FeedbackNoteEqualFold(v string) predicate.Viewing {
+	return predicate.Viewing(sql.FieldEqualFold(FieldFeedbackNote, v))
+}
+
+// FeedbackNoteContainsFold applies the ContainsFold predicate on the "feedback_note" field.
+func FeedbackNoteContainsFold(v string) predicate.Viewing {
+	return predicate.Viewing(sql.FieldContainsFold(FieldFeedbackNote, v))
+}
+
+// FeedbackAtEQ applies the EQ predicate on the "feedback_at" field.
+func FeedbackAtEQ(v time.Time) predicate.Viewing {
+	return predicate.Viewing(sql.FieldEQ(FieldFeedbackAt, v))
+}
+
+// FeedbackAtNEQ applies the NEQ predicate on the "feedback_at" field.
+func FeedbackAtNEQ(v time.Time) predicate.Viewing {
+	return predicate.Viewing(sql.FieldNEQ(FieldFeedbackAt, v))
+}
+
+// FeedbackAtIn applies the In predicate on the "feedback_at" field.
+func FeedbackAtIn(vs ...time.Time) predicate.Viewing {
+	return predicate.Viewing(sql.FieldIn(FieldFeedbackAt, vs...))
+}
+
+// FeedbackAtNotIn applies the NotIn predicate on the "feedback_at" field.
+func FeedbackAtNotIn(vs ...time.Time) predicate.Viewing {
+	return predicate.Viewing(sql.FieldNotIn(FieldFeedbackAt, vs...))
+}
+
+// FeedbackAtGT applies the GT predicate on the "feedback_at" field.
+func FeedbackAtGT(v time.Time) predicate.Viewing {
+	return predicate.Viewing(sql.FieldGT(FieldFeedbackAt, v))
+}
+
+// FeedbackAtGTE applies the GTE predicate on the "feedback_at" field.
+func FeedbackAtGTE(v time.Time) predicate.Viewing {
+	return predicate.Viewing(sql.FieldGTE(FieldFeedbackAt, v))
+}
+
+// FeedbackAtLT applies the LT predicate on the "feedback_at" field.
+func FeedbackAtLT(v time.Time) predicate.Viewing {
+	return predicate.Viewing(sql.FieldLT(FieldFeedbackAt, v))
+}
+
+// FeedbackAtLTE applies the LTE predicate on the "feedback_at" field.
+func FeedbackAtLTE(v time.Time) predicate.Viewing {
+	return predicate.Viewing(sql.FieldLTE(FieldFeedbackAt, v))
+}
+
+// FeedbackAtIsNil applies the IsNil predicate on the "feedback_at" field.
+func FeedbackAtIsNil() predicate.Viewing {
+	return predicate.Viewing(sql.FieldIsNull(FieldFeedbackAt))
+}
+
+// FeedbackAtNotNil applies the NotNil predicate on the "feedback_at" field.
+func FeedbackAtNotNil() predicate.Viewing {
+	return predicate.Viewing(sql.FieldNotNull(FieldFeedbackAt))
 }
 
 // And groups predicates with the AND operator between them.

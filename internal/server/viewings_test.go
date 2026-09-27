@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"net/http"
 	"net/url"
 	"regexp"
@@ -9,6 +10,11 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"rentmapgh/internal/db"
+	"rentmapgh/internal/ent"
+	"rentmapgh/internal/ent/notification"
+	"rentmapgh/internal/ent/user"
 )
 
 var (
@@ -51,8 +57,7 @@ func TestViewingFlowOverHTTP(t *testing.T) {
 	vm := viewingRe.FindStringSubmatch(rec.Header().Get("Location"))
 	require.Len(t, vm, 2)
 	vURL := "/viewings/" + vm[1]
-	assert.Equal(t, "+233244000051", capture.Last().To, "the landlord gets an SMS")
-	assert.Contains(t, capture.Last().Body, "Kofi wants to view")
+	assert.Contains(t, lastNote(t, d, "+233244000051"), "Kofi wants to view", "the landlord is notified")
 
 	// Before confirmation: no address, no phone.
 	rec = renter.do("GET", vURL, nil, false)
@@ -71,8 +76,7 @@ func TestViewingFlowOverHTTP(t *testing.T) {
 	assert.Contains(t, ll.do("GET", "/viewings", nil, false).Body.String(), "Needs your answer")
 	rec = ll.do("POST", vURL+"/accept", url.Values{}, false)
 	require.Equal(t, http.StatusSeeOther, rec.Code, rec.Body.String())
-	assert.Equal(t, "+233244000052", capture.Last().To)
-	assert.Contains(t, capture.Last().Body, "is confirmed")
+	assert.Contains(t, lastNote(t, d, "+233244000052"), "Viewing confirmed")
 
 	// Confirmed: the renter gets the exact place, directions and the phone.
 	rec = renter.do("GET", vURL, nil, false)
@@ -94,9 +98,22 @@ func TestViewingFlowOverHTTP(t *testing.T) {
 	// The renter cancels; the landlord hears about it.
 	rec = renter.do("POST", vURL+"/cancel", url.Values{}, false)
 	require.Equal(t, http.StatusSeeOther, rec.Code)
-	assert.Equal(t, "+233244000051", capture.Last().To)
+	assert.Contains(t, lastNote(t, d, "+233244000051"), "Viewing cancelled")
 	assert.Contains(t, renter.do("GET", vURL, nil, false).Body.String(), "Cancelled")
 
 	// Landlords can't book their own place.
 	assert.Equal(t, http.StatusForbidden, ll.do("GET", "/l/"+id+"/viewing", nil, false).Code)
+}
+
+// lastNote is the newest notification title for the user with that phone
+// (SMS copies depend on quiet hours; the notification always exists).
+func lastNote(t *testing.T, d *db.DB, phone string) string {
+	t.Helper()
+	ctx := context.Background()
+	u := d.Ent.User.Query().Where(user.Phone(phone)).OnlyX(ctx)
+	n, err := d.Ent.Notification.Query().Where(notification.UserID(u.ID)).Order(ent.Desc(notification.FieldCreatedAt)).First(ctx)
+	if err != nil {
+		return ""
+	}
+	return n.Title
 }

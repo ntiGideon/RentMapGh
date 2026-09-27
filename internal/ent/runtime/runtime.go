@@ -13,6 +13,7 @@ import (
 	"rentmapgh/internal/ent/listingmedia"
 	"rentmapgh/internal/ent/listingterms"
 	"rentmapgh/internal/ent/message"
+	"rentmapgh/internal/ent/notification"
 	"rentmapgh/internal/ent/otpcode"
 	"rentmapgh/internal/ent/property"
 	"rentmapgh/internal/ent/report"
@@ -489,6 +490,47 @@ func init() {
 	messageDescID := messageMixinFields0[0].Descriptor()
 	// message.DefaultID holds the default value on creation for the id field.
 	message.DefaultID = messageDescID.Default.(func() uuid.UUID)
+	notificationMixin := schema.Notification{}.Mixin()
+	notificationMixinFields0 := notificationMixin[0].Fields()
+	_ = notificationMixinFields0
+	notificationMixinFields1 := notificationMixin[1].Fields()
+	_ = notificationMixinFields1
+	notificationFields := schema.Notification{}.Fields()
+	_ = notificationFields
+	// notificationDescCreatedAt is the schema descriptor for created_at field.
+	notificationDescCreatedAt := notificationMixinFields1[0].Descriptor()
+	// notification.DefaultCreatedAt holds the default value on creation for the created_at field.
+	notification.DefaultCreatedAt = notificationDescCreatedAt.Default.(func() time.Time)
+	// notificationDescUpdatedAt is the schema descriptor for updated_at field.
+	notificationDescUpdatedAt := notificationMixinFields1[1].Descriptor()
+	// notification.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	notification.DefaultUpdatedAt = notificationDescUpdatedAt.Default.(func() time.Time)
+	// notification.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	notification.UpdateDefaultUpdatedAt = notificationDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// notificationDescTopic is the schema descriptor for topic field.
+	notificationDescTopic := notificationFields[1].Descriptor()
+	// notification.TopicValidator is a validator for the "topic" field. It is called by the builders before save.
+	notification.TopicValidator = notificationDescTopic.Validators[0].(func(string) error)
+	// notificationDescKind is the schema descriptor for kind field.
+	notificationDescKind := notificationFields[2].Descriptor()
+	// notification.KindValidator is a validator for the "kind" field. It is called by the builders before save.
+	notification.KindValidator = notificationDescKind.Validators[0].(func(string) error)
+	// notificationDescTitle is the schema descriptor for title field.
+	notificationDescTitle := notificationFields[3].Descriptor()
+	// notification.TitleValidator is a validator for the "title" field. It is called by the builders before save.
+	notification.TitleValidator = notificationDescTitle.Validators[0].(func(string) error)
+	// notificationDescBody is the schema descriptor for body field.
+	notificationDescBody := notificationFields[4].Descriptor()
+	// notification.BodyValidator is a validator for the "body" field. It is called by the builders before save.
+	notification.BodyValidator = notificationDescBody.Validators[0].(func(string) error)
+	// notificationDescURL is the schema descriptor for url field.
+	notificationDescURL := notificationFields[5].Descriptor()
+	// notification.URLValidator is a validator for the "url" field. It is called by the builders before save.
+	notification.URLValidator = notificationDescURL.Validators[0].(func(string) error)
+	// notificationDescID is the schema descriptor for id field.
+	notificationDescID := notificationMixinFields0[0].Descriptor()
+	// notification.DefaultID holds the default value on creation for the id field.
+	notification.DefaultID = notificationDescID.Default.(func() uuid.UUID)
 	otpcodeMixin := schema.OTPCode{}.Mixin()
 	otpcodeMixinFields0 := otpcodeMixin[0].Fields()
 	_ = otpcodeMixinFields0
@@ -948,6 +990,10 @@ func init() {
 	viewingDescDeclineReason := viewingFields[9].Descriptor()
 	// viewing.DeclineReasonValidator is a validator for the "decline_reason" field. It is called by the builders before save.
 	viewing.DeclineReasonValidator = viewingDescDeclineReason.Validators[0].(func(string) error)
+	// viewingDescFeedbackNote is the schema descriptor for feedback_note field.
+	viewingDescFeedbackNote := viewingFields[20].Descriptor()
+	// viewing.FeedbackNoteValidator is a validator for the "feedback_note" field. It is called by the builders before save.
+	viewing.FeedbackNoteValidator = viewingDescFeedbackNote.Validators[0].(func(string) error)
 	// viewingDescID is the schema descriptor for id field.
 	viewingDescID := viewingMixinFields0[0].Descriptor()
 	// viewing.DefaultID holds the default value on creation for the id field.

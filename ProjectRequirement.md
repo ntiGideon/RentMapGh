@@ -552,14 +552,14 @@ Engineering:
 - [x] Account gate at first contact; anonymous favourites merge. *Slice 4a; see §16.16.*
 - [ ] Messaging (SSE realtime, read receipts, unread badges, attachment support). *4b built everything except attachments; see §16.17.*
 - [x] Scam-shield rules + inline warnings (§6.9).
-- [ ] Viewing slots, requests, accept/propose/decline, `.ics`, reminders (§6.8). *4a built everything except the 24 h / 2 h reminders (4d).*
+- [x] Viewing slots, requests, accept/propose/decline, `.ics`, reminders (§6.8). *Reminders in 4d.*
 - [x] Exact location unlock on confirmation + "Navigate" deep links.
-- [ ] Post-viewing feedback prompts.
+- [x] Post-viewing feedback prompts.
 - [x] Availability freshness engine + one-tap WhatsApp/SMS confirmations (§6.7). *SMS only; see §16.18.*
 - [x] "Mark as rented" flow (with optional "Rented through RentMap?" question — your key success metric).
-- [ ] Report listing / user / message flows. *Messages in 4b (with the moderator queue); listings and users in 4d.*
-- [ ] Notification centre (in-app) + SMS/WhatsApp/email channels + preferences.
-- [ ] Trust score v1 and badges.
+- [x] Report listing / user / message flows. *Messages (4b) and listings (4d); a user is reported through their messages or listing — see §16.19.*
+- [x] Notification centre (in-app) + SMS/WhatsApp/email channels + preferences. *In-app + SMS; WhatsApp/email later.*
+- [x] Trust score v1 and badges.
 
 **Exit:** end-to-end: discover → message → book viewing → attend → feedback → mark rented.
 
@@ -1158,5 +1158,17 @@ Sky Mint is step 200 of its scale; Graphite is step 900. Darker mint steps exist
 | Renter reports | "already rented" → Ageing, ask the lister | Signed-in renters (not the lister) tap "Already rented? Tell us" under the price: the listing loses its green badge at once ("A renter says it may be rented · waiting for the lister"), the report is stored, and the lister is texted (at most every 12 h, daytime). One report per renter per listing a month | Sign-in stops drive-by sabotage |
 | Rented | "Rented through RentMap?" | Every way of marking rented (the SMS page, "Mark rented" in Your listings) asks first — Yes, through RentMap / No, somewhere else / Rather not say — then changes the status. `rented_at` + `rented_via` stored; open viewings are declined and those renters texted | The key success metric, asked at the one moment the lister knows |
 | Your listings | — | Live listings that aren't fresh show an amber hint and a "Still available" button (`confirm`); resuming or relisting also counts as confirming and clears renter reports | |
+
+### 16.19 Decisions taken while building Phase 4 (slice 4d — reminders, feedback, notifications, trust)
+
+| Area | Plan said | Built | Why |
+| --- | --- | --- | --- |
+| Notify | one `Notify(user, kind, payload)`; prefs matrix; quiet hours; River jobs | `notify.Send(user, Note{Topic, Kind, Title, URL, SMS, Urgent})`: always an in-app notification (the bell, live over the SSE hub), plus an SMS when the user's `<topic>.sms` preference is on and it's not 21:00–07:00 (unless urgent, e.g. "in 2 hours"). Topics: viewings, messages, listings (new), alerts, news. Viewings and availability send through it; messages keep their own 6-hourly SMS throttle | One place for channel rules; WhatsApp and email slot in behind it |
+| Centre | in-app | Bell with a live count in the header; `/notifications` lists the latest 50 and marks them read; the signed-in header drops the marketing links to stay on one line | |
+| Reminders | 24 h and 2 h via WhatsApp/SMS | A 10-minute job (`viewings.Remind`) texts and notifies both sides at 24 h and 2 h (the 2 h one is urgent); each is claimed with a conditional update, so it goes out once even with overlapping runs | River isn't in the stack |
+| Feedback | attended? interested? accurate? | 2 h after the start: the renter is asked (in-app + SMS) — did it happen (yes / I couldn't go / the lister didn't show), was it as described (yes / mostly / no), interested; the lister is asked to record whether the renter came. "Happened" completes the viewing. Two "not as described" on a listing within 90 days open a moderation report automatically | §6.8 step 6 |
+| No-shows | tracked both ways, shown on profiles | Renter no-shows: the lister's "They didn't come" or the renter's own answer. Lister no-shows: the renter's "the lister didn't show". Listers see a renter's record on each request ("2 of 3 past viewings attended"); listers' record feeds badges | |
+| Trust | weighted sum; badges not a number; ranking | `listings.trust_score` recomputed hourly: ID checked 25, phone 10, account >90 days 5, authority 20 (owner's own listing, or agent licence 5 + confirmed mandate 15), replies within a day 10, reliable for viewings 10, as described 10, fresh 5; −10 per "not as described" (max 3), −15 per upheld report in a year. Recommended = promoted → fresh → trust + quality. Renters see badges: "Replies within a day" (≥3 requests, ≥80 % answered in 24 h — `responded_at`), "Reliable for viewings" (≥3 held, none missed), "As described" (≥2, no negatives) | §6.10. Response rate uses viewing requests; message response time can join later |
+| Reports | listing / user / message | "Report listing" on the lister card (reasons: scam, fake, wrong price, not theirs, discrimination, other), one open report per reporter per listing; the admin queue now shows listing reports with a link to the listing review. A user is reported through their messages or their listing (the report records the subject) | No separate "report user" page until profiles exist |
 
 Phase 0 engineering status: repo skeleton, Compose dev stack (PostGIS + pgvector image, Mailpit, Valhalla behind a profile), config, slog, request IDs, graceful shutdown, `/healthz` + `/readyz`, Ent + migrations, design tokens + first components, landing page with waitlist, tests, CI and the production Dockerfile/Compose/Caddy are done. Still open: staging VPS + Cloudflare, i18n scaffolding, product/legal tasks.

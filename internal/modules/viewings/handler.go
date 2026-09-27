@@ -169,6 +169,15 @@ func (h *Handler) renderShow(w http.ResponseWriter, r *http.Request, status int,
 	}
 	h.svc.SeeLocation(r.Context(), a, d)
 	v := h.detailView(d)
+	if d.Role == "lister" {
+		if rel, err := h.svc.ReliabilityOf(r.Context(), d.V.RenterID); err == nil && rel.Attended+rel.RenterMissed > 0 {
+			v.RenterRecord = strconv.Itoa(rel.Attended) + " of " + strconv.Itoa(rel.Attended+rel.RenterMissed) + " past viewings attended"
+		}
+	}
+	if d.Role == "renter" && !v.Upcoming && d.V.FeedbackAt == nil &&
+		(d.V.Status == viewing.StatusConfirmed || d.V.Status == viewing.StatusCompleted || d.V.Status == viewing.StatusNoShow) {
+		v.FeedbackURL = "/viewings/" + d.V.ID.String() + "/feedback"
+	}
 	v.Errors = errs
 	if r.URL.Query().Get("sent") == "1" && d.V.Status == viewing.StatusRequested {
 		v.Notice = "Request sent. We've texted the lister; you'll get an SMS when they reply."
@@ -386,4 +395,61 @@ func (h *Handler) detailView(d *Detail) pages.ViewingDetailView {
 		}
 	}
 	return dv
+}
+
+// ── Feedback ─────────────────────────────────────────────────────────────
+
+// FeedbackPage asks the renter how the viewing went.
+func (h *Handler) FeedbackPage(w http.ResponseWriter, r *http.Request) {
+	h.renderFeedback(w, r, http.StatusOK, nil, false)
+}
+
+func (h *Handler) renderFeedback(w http.ResponseWriter, r *http.Request, status int, errs ValidationError, done bool) {
+	id, err := uuid.Parse(chi.URLParam(r, "id"))
+	if err != nil {
+		render.Error(w, r, http.StatusNotFound)
+		return
+	}
+	d, err := h.svc.Load(r.Context(), actor(r), id)
+	if h.fail(w, r, err) {
+		return
+	}
+	if d.Role != "renter" {
+		render.Error(w, r, http.StatusNotFound)
+		return
+	}
+	v := pages.FeedbackView{ViewingID: id.String(), Headline: headline(d.Place), When: When(d.V.StartsAt),
+		Lister: firstName(d.Place.Lister), Done: done || d.V.FeedbackAt != nil, Errors: errs}
+	if v.Lister == "A renter" {
+		v.Lister = "the lister"
+	}
+	render.Component(w, r, status, pages.Feedback(layouts.Meta{Title: "How was the viewing?", NoIndex: true}, v))
+}
+
+// SaveFeedback stores the renter's answers.
+func (h *Handler) SaveFeedback(w http.ResponseWriter, r *http.Request) {
+	id, err := uuid.Parse(chi.URLParam(r, "id"))
+	if err != nil {
+		render.Error(w, r, http.StatusNotFound)
+		return
+	}
+	f := Feedback{Outcome: r.PostFormValue("outcome"), Accuracy: r.PostFormValue("accuracy"), Note: r.PostFormValue("note")}
+	switch r.PostFormValue("interested") {
+	case "yes":
+		t := true
+		f.Interested = &t
+	case "no":
+		no := false
+		f.Interested = &no
+	}
+	_, err = h.svc.GiveFeedback(r.Context(), actor(r), id, f)
+	var verr ValidationError
+	if errors.As(err, &verr) {
+		h.renderFeedback(w, r, http.StatusUnprocessableEntity, verr, false)
+		return
+	}
+	if h.fail(w, r, err) {
+		return
+	}
+	h.renderFeedback(w, r, http.StatusOK, nil, true)
 }

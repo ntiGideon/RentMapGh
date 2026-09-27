@@ -45,6 +45,24 @@ const (
 	FieldConfirmedAt = "confirmed_at"
 	// FieldLocationSeenAt holds the string denoting the location_seen_at field in the database.
 	FieldLocationSeenAt = "location_seen_at"
+	// FieldRespondedAt holds the string denoting the responded_at field in the database.
+	FieldRespondedAt = "responded_at"
+	// FieldReminded24At holds the string denoting the reminded_24_at field in the database.
+	FieldReminded24At = "reminded_24_at"
+	// FieldReminded2At holds the string denoting the reminded_2_at field in the database.
+	FieldReminded2At = "reminded_2_at"
+	// FieldFeedbackAskedAt holds the string denoting the feedback_asked_at field in the database.
+	FieldFeedbackAskedAt = "feedback_asked_at"
+	// FieldRenterOutcome holds the string denoting the renter_outcome field in the database.
+	FieldRenterOutcome = "renter_outcome"
+	// FieldAccuracy holds the string denoting the accuracy field in the database.
+	FieldAccuracy = "accuracy"
+	// FieldInterested holds the string denoting the interested field in the database.
+	FieldInterested = "interested"
+	// FieldFeedbackNote holds the string denoting the feedback_note field in the database.
+	FieldFeedbackNote = "feedback_note"
+	// FieldFeedbackAt holds the string denoting the feedback_at field in the database.
+	FieldFeedbackAt = "feedback_at"
 	// Table holds the table name of the viewing in the database.
 	Table = "viewings"
 )
@@ -67,6 +85,15 @@ var Columns = []string{
 	FieldClosedBy,
 	FieldConfirmedAt,
 	FieldLocationSeenAt,
+	FieldRespondedAt,
+	FieldReminded24At,
+	FieldReminded2At,
+	FieldFeedbackAskedAt,
+	FieldRenterOutcome,
+	FieldAccuracy,
+	FieldInterested,
+	FieldFeedbackNote,
+	FieldFeedbackAt,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -96,6 +123,8 @@ var (
 	DefaultFeeAcknowledged bool
 	// DeclineReasonValidator is a validator for the "decline_reason" field. It is called by the builders before save.
 	DeclineReasonValidator func(string) error
+	// FeedbackNoteValidator is a validator for the "feedback_note" field. It is called by the builders before save.
+	FeedbackNoteValidator func(string) error
 	// DefaultID holds the default value on creation for the "id" field.
 	DefaultID func() uuid.UUID
 )
@@ -128,6 +157,54 @@ func StatusValidator(s Status) error {
 		return nil
 	default:
 		return fmt.Errorf("viewing: invalid enum value for status field: %q", s)
+	}
+}
+
+// RenterOutcome defines the type for the "renter_outcome" enum field.
+type RenterOutcome string
+
+// RenterOutcome values.
+const (
+	RenterOutcomeHappened     RenterOutcome = "happened"
+	RenterOutcomeRenterMissed RenterOutcome = "renter_missed"
+	RenterOutcomeListerMissed RenterOutcome = "lister_missed"
+)
+
+func (ro RenterOutcome) String() string {
+	return string(ro)
+}
+
+// RenterOutcomeValidator is a validator for the "renter_outcome" field enum values. It is called by the builders before save.
+func RenterOutcomeValidator(ro RenterOutcome) error {
+	switch ro {
+	case RenterOutcomeHappened, RenterOutcomeRenterMissed, RenterOutcomeListerMissed:
+		return nil
+	default:
+		return fmt.Errorf("viewing: invalid enum value for renter_outcome field: %q", ro)
+	}
+}
+
+// Accuracy defines the type for the "accuracy" enum field.
+type Accuracy string
+
+// Accuracy values.
+const (
+	AccuracyAsDescribed    Accuracy = "as_described"
+	AccuracyMostly         Accuracy = "mostly"
+	AccuracyNotAsDescribed Accuracy = "not_as_described"
+)
+
+func (a Accuracy) String() string {
+	return string(a)
+}
+
+// AccuracyValidator is a validator for the "accuracy" field enum values. It is called by the builders before save.
+func AccuracyValidator(a Accuracy) error {
+	switch a {
+	case AccuracyAsDescribed, AccuracyMostly, AccuracyNotAsDescribed:
+		return nil
+	default:
+		return fmt.Errorf("viewing: invalid enum value for accuracy field: %q", a)
 	}
 }
 
@@ -212,4 +289,49 @@ func ByConfirmedAt(opts ...sql.OrderTermOption) OrderOption {
 // ByLocationSeenAt orders the results by the location_seen_at field.
 func ByLocationSeenAt(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldLocationSeenAt, opts...).ToFunc()
+}
+
+// ByRespondedAt orders the results by the responded_at field.
+func ByRespondedAt(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldRespondedAt, opts...).ToFunc()
+}
+
+// ByReminded24At orders the results by the reminded_24_at field.
+func ByReminded24At(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldReminded24At, opts...).ToFunc()
+}
+
+// ByReminded2At orders the results by the reminded_2_at field.
+func ByReminded2At(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldReminded2At, opts...).ToFunc()
+}
+
+// ByFeedbackAskedAt orders the results by the feedback_asked_at field.
+func ByFeedbackAskedAt(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldFeedbackAskedAt, opts...).ToFunc()
+}
+
+// ByRenterOutcome orders the results by the renter_outcome field.
+func ByRenterOutcome(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldRenterOutcome, opts...).ToFunc()
+}
+
+// ByAccuracy orders the results by the accuracy field.
+func ByAccuracy(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldAccuracy, opts...).ToFunc()
+}
+
+// ByInterested orders the results by the interested field.
+func ByInterested(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldInterested, opts...).ToFunc()
+}
+
+// ByFeedbackNote orders the results by the feedback_note field.
+func ByFeedbackNote(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldFeedbackNote, opts...).ToFunc()
+}
+
+// ByFeedbackAt orders the results by the feedback_at field.
+func ByFeedbackAt(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldFeedbackAt, opts...).ToFunc()
 }

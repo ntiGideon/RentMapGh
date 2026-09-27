@@ -16,6 +16,7 @@ import (
 	"rentmapgh/internal/ent"
 	"rentmapgh/internal/ent/conversation"
 	"rentmapgh/internal/ent/listing"
+	"rentmapgh/internal/ent/report"
 	"rentmapgh/internal/modules/auth"
 	"rentmapgh/internal/server/htmx"
 	"rentmapgh/internal/server/render"
@@ -366,7 +367,7 @@ func (h *Handler) AdminReports(w http.ResponseWriter, r *http.Request) {
 	var v pages.AdminReportsView
 	now := h.svc.now()
 	for _, rp := range rs {
-		row := pages.AdminReportRow{URL: "/admin/reports/" + rp.ID.String(), Reason: reasonLabel(rp.Reason), Kind: string(rp.TargetType), When: ago(rp.CreatedAt, now)}
+		row := pages.AdminReportRow{URL: "/admin/reports/" + rp.ID.String(), Reason: reasonLabel(rp.TargetType, rp.Reason), Kind: string(rp.TargetType), When: ago(rp.CreatedAt, now)}
 		if rp.SubjectID != nil {
 			if u, err := h.svc.db.User.Get(r.Context(), *rp.SubjectID); err == nil {
 				row.Subject = orText(u.Name, "RentMap user")
@@ -391,12 +392,15 @@ func (h *Handler) AdminReport(w http.ResponseWriter, r *http.Request) {
 	if h.fail(w, r, err) {
 		return
 	}
-	v := pages.AdminReportView{ID: id.String(), Reason: reasonLabel(rc.R.Reason), Note: rc.R.Note, Status: string(rc.R.Status),
+	v := pages.AdminReportView{ID: id.String(), Reason: reasonLabel(rc.R.TargetType, rc.R.Reason), Note: rc.R.Note, Status: string(rc.R.Status),
 		Reporter: userName(rc.Reporter), Subject: userName(rc.Subject)}
 	if rc.Listing != nil {
 		v.Listing, v.ListingURL = orText(rc.Listing.Headline, "Listing"), "/admin/listings/"+rc.Listing.ID.String()
 	}
 	for _, m := range rc.Thread {
+		if rc.Conv == nil {
+			break
+		}
 		who := "Renter"
 		if m.SenderID == rc.Conv.ListerID {
 			who = "Lister"
@@ -440,13 +444,67 @@ func reasonOpts() []pages.Opt {
 	return out
 }
 
-func reasonLabel(k string) string {
-	for _, r := range ReportReasons {
+// reasonLabel words a report reason; the lists differ by what was reported.
+func reasonLabel(target report.TargetType, k string) string {
+	list := ReportReasons
+	if target == report.TargetTypeListing {
+		list = ListingReportReasons
+	}
+	for _, r := range list {
 		if r.Key == k {
 			return r.Label
 		}
 	}
+	switch k {
+	case "not_as_described":
+		return "Renters say it isn't as described"
+	case "rented":
+		return "Renter says it's already rented"
+	}
 	return k
+}
+
+// ReportListingPage is /l/{id}/report.
+func (h *Handler) ReportListingPage(w http.ResponseWriter, r *http.Request) {
+	h.renderReportListing(w, r, http.StatusOK, nil, false)
+}
+
+func (h *Handler) renderReportListing(w http.ResponseWriter, r *http.Request, status int, errs ValidationError, done bool) {
+	id, err := uuid.Parse(chi.URLParam(r, "id"))
+	if err != nil {
+		render.Error(w, r, http.StatusNotFound)
+		return
+	}
+	l, err := h.svc.db.Listing.Get(r.Context(), id)
+	if err != nil {
+		render.Error(w, r, http.StatusNotFound)
+		return
+	}
+	v := pages.ReportListingView{ListingID: id.String(), Headline: orText(l.Headline, "This listing"), Done: done, Errors: errs,
+		Reason: r.PostFormValue("reason"), Note: r.PostFormValue("note")}
+	for _, rr := range ListingReportReasons {
+		v.Reasons = append(v.Reasons, pages.Opt{Value: rr.Key, Label: rr.Label})
+	}
+	render.Component(w, r, status, pages.ReportListing(layouts.Meta{Title: "Report a listing", NoIndex: true}, v))
+}
+
+// ReportListing files it.
+func (h *Handler) ReportListing(w http.ResponseWriter, r *http.Request) {
+	id, err := uuid.Parse(chi.URLParam(r, "id"))
+	if err != nil {
+		render.Error(w, r, http.StatusNotFound)
+		return
+	}
+	err = h.svc.ReportListing(r.Context(), actor(r), id, r.PostFormValue("reason"), r.PostFormValue("note"))
+	var verr ValidationError
+	if errors.As(err, &verr) {
+		h.renderReportListing(w, r, http.StatusUnprocessableEntity, verr, false)
+		return
+	}
+	if h.fail(w, r, err) {
+		return
+	}
+	h.renderReportListing(w, r, http.StatusOK, nil, true)
 }
 
 func orText(s, fallback string) string {

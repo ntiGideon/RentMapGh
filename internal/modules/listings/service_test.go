@@ -30,7 +30,7 @@ func setup(t *testing.T) (*Service, *ent.Client) {
 	d, err := db.Open(ctx, dsn, 4)
 	require.NoError(t, err)
 	t.Cleanup(d.Close)
-	_, err = d.SQL.ExecContext(ctx, "TRUNCATE reports, messages, conversations, viewings, saved_listings, agent_mandates, listing_media, listing_terms, listings, units, properties, audit_events, sessions, role_assignments, otp_codes, verification_files, verifications, agent_profiles, landlord_profiles, users")
+	_, err = d.SQL.ExecContext(ctx, "TRUNCATE notifications, reports, messages, conversations, viewings, saved_listings, agent_mandates, listing_media, listing_terms, listings, units, properties, audit_events, sessions, role_assignments, otp_codes, verification_files, verifications, agent_profiles, landlord_profiles, users")
 	require.NoError(t, err)
 	return NewService(d.Ent, audit.New(d.Ent), "test-location-secret", storage.NewMemory()), d.Ent
 }

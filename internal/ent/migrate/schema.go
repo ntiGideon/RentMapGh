@@ -323,6 +323,37 @@ var (
 			},
 		},
 	}
+	// NotificationsColumns holds the columns for the "notifications" table.
+	NotificationsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "user_id", Type: field.TypeUUID},
+		{Name: "topic", Type: field.TypeString, Size: 20},
+		{Name: "kind", Type: field.TypeString, Size: 40},
+		{Name: "title", Type: field.TypeString, Size: 140},
+		{Name: "body", Type: field.TypeString, Nullable: true, Size: 300},
+		{Name: "url", Type: field.TypeString, Nullable: true, Size: 300},
+		{Name: "read_at", Type: field.TypeTime, Nullable: true},
+	}
+	// NotificationsTable holds the schema information for the "notifications" table.
+	NotificationsTable = &schema.Table{
+		Name:       "notifications",
+		Columns:    NotificationsColumns,
+		PrimaryKey: []*schema.Column{NotificationsColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "notification_user_id_created_at",
+				Unique:  false,
+				Columns: []*schema.Column{NotificationsColumns[3], NotificationsColumns[1]},
+			},
+			{
+				Name:    "notification_user_id_read_at",
+				Unique:  false,
+				Columns: []*schema.Column{NotificationsColumns[3], NotificationsColumns[9]},
+			},
+		},
+	}
 	// OtpCodesColumns holds the columns for the "otp_codes" table.
 	OtpCodesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
@@ -701,6 +732,15 @@ var (
 		{Name: "closed_by", Type: field.TypeUUID, Nullable: true},
 		{Name: "confirmed_at", Type: field.TypeTime, Nullable: true},
 		{Name: "location_seen_at", Type: field.TypeTime, Nullable: true},
+		{Name: "responded_at", Type: field.TypeTime, Nullable: true},
+		{Name: "reminded_24_at", Type: field.TypeTime, Nullable: true},
+		{Name: "reminded_2_at", Type: field.TypeTime, Nullable: true},
+		{Name: "feedback_asked_at", Type: field.TypeTime, Nullable: true},
+		{Name: "renter_outcome", Type: field.TypeEnum, Nullable: true, Enums: []string{"happened", "renter_missed", "lister_missed"}},
+		{Name: "accuracy", Type: field.TypeEnum, Nullable: true, Enums: []string{"as_described", "mostly", "not_as_described"}},
+		{Name: "interested", Type: field.TypeBool, Nullable: true},
+		{Name: "feedback_note", Type: field.TypeString, Nullable: true, Size: 500},
+		{Name: "feedback_at", Type: field.TypeTime, Nullable: true},
 	}
 	// ViewingsTable holds the schema information for the "viewings" table.
 	ViewingsTable = &schema.Table{
@@ -771,6 +811,7 @@ var (
 		ListingMediaTable,
 		ListingTermsTable,
 		MessagesTable,
+		NotificationsTable,
 		OtpCodesTable,
 		PropertiesTable,
 		ReportsTable,

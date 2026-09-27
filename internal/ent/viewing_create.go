@@ -203,6 +203,132 @@ func (_c *ViewingCreate) SetNillableLocationSeenAt(v *time.Time) *ViewingCreate 
 	return _c
 }
 
+// SetRespondedAt sets the "responded_at" field.
+func (_c *ViewingCreate) SetRespondedAt(v time.Time) *ViewingCreate {
+	_c.mutation.SetRespondedAt(v)
+	return _c
+}
+
+// SetNillableRespondedAt sets the "responded_at" field if the given value is not nil.
+func (_c *ViewingCreate) SetNillableRespondedAt(v *time.Time) *ViewingCreate {
+	if v != nil {
+		_c.SetRespondedAt(*v)
+	}
+	return _c
+}
+
+// SetReminded24At sets the "reminded_24_at" field.
+func (_c *ViewingCreate) SetReminded24At(v time.Time) *ViewingCreate {
+	_c.mutation.SetReminded24At(v)
+	return _c
+}
+
+// SetNillableReminded24At sets the "reminded_24_at" field if the given value is not nil.
+func (_c *ViewingCreate) SetNillableReminded24At(v *time.Time) *ViewingCreate {
+	if v != nil {
+		_c.SetReminded24At(*v)
+	}
+	return _c
+}
+
+// SetReminded2At sets the "reminded_2_at" field.
+func (_c *ViewingCreate) SetReminded2At(v time.Time) *ViewingCreate {
+	_c.mutation.SetReminded2At(v)
+	return _c
+}
+
+// SetNillableReminded2At sets the "reminded_2_at" field if the given value is not nil.
+func (_c *ViewingCreate) SetNillableReminded2At(v *time.Time) *ViewingCreate {
+	if v != nil {
+		_c.SetReminded2At(*v)
+	}
+	return _c
+}
+
+// SetFeedbackAskedAt sets the "feedback_asked_at" field.
+func (_c *ViewingCreate) SetFeedbackAskedAt(v time.Time) *ViewingCreate {
+	_c.mutation.SetFeedbackAskedAt(v)
+	return _c
+}
+
+// SetNillableFeedbackAskedAt sets the "feedback_asked_at" field if the given value is not nil.
+func (_c *ViewingCreate) SetNillableFeedbackAskedAt(v *time.Time) *ViewingCreate {
+	if v != nil {
+		_c.SetFeedbackAskedAt(*v)
+	}
+	return _c
+}
+
+// SetRenterOutcome sets the "renter_outcome" field.
+func (_c *ViewingCreate) SetRenterOutcome(v viewing.RenterOutcome) *ViewingCreate {
+	_c.mutation.SetRenterOutcome(v)
+	return _c
+}
+
+// SetNillableRenterOutcome sets the "renter_outcome" field if the given value is not nil.
+func (_c *ViewingCreate) SetNillableRenterOutcome(v *viewing.RenterOutcome) *ViewingCreate {
+	if v != nil {
+		_c.SetRenterOutcome(*v)
+	}
+	return _c
+}
+
+// SetAccuracy sets the "accuracy" field.
+func (_c *ViewingCreate) SetAccuracy(v viewing.Accuracy) *ViewingCreate {
+	_c.mutation.SetAccuracy(v)
+	return _c
+}
+
+// SetNillableAccuracy sets the "accuracy" field if the given value is not nil.
+func (_c *ViewingCreate) SetNillableAccuracy(v *viewing.Accuracy) *ViewingCreate {
+	if v != nil {
+		_c.SetAccuracy(*v)
+	}
+	return _c
+}
+
+// SetInterested sets the "interested" field.
+func (_c *ViewingCreate) SetInterested(v bool) *ViewingCreate {
+	_c.mutation.SetInterested(v)
+	return _c
+}
+
+// SetNillableInterested sets the "interested" field if the given value is not nil.
+func (_c *ViewingCreate) SetNillableInterested(v *bool) *ViewingCreate {
+	if v != nil {
+		_c.SetInterested(*v)
+	}
+	return _c
+}
+
+// SetFeedbackNote sets the "feedback_note" field.
+func (_c *ViewingCreate) SetFeedbackNote(v string) *ViewingCreate {
+	_c.mutation.SetFeedbackNote(v)
+	return _c
+}
+
+// SetNillableFeedbackNote sets the "feedback_note" field if the given value is not nil.
+func (_c *ViewingCreate) SetNillableFeedbackNote(v *string) *ViewingCreate {
+	if v != nil {
+		_c.SetFeedbackNote(*v)
+	}
+	return _c
+}
+
+// SetFeedbackAt sets the "feedback_at" field.
+func (_c *ViewingCreate) SetFeedbackAt(v time.Time) *ViewingCreate {
+	_c.mutation.SetFeedbackAt(v)
+	return _c
+}
+
+// SetNillableFeedbackAt sets the "feedback_at" field if the given value is not nil.
+func (_c *ViewingCreate) SetNillableFeedbackAt(v *time.Time) *ViewingCreate {
+	if v != nil {
+		_c.SetFeedbackAt(*v)
+	}
+	return _c
+}
+
 // SetID sets the "id" field.
 func (_c *ViewingCreate) SetID(v uuid.UUID) *ViewingCreate {
 	_c.mutation.SetID(v)
@@ -327,6 +453,21 @@ func (_c *ViewingCreate) check() error {
 			return &ValidationError{Name: "decline_reason", err: fmt.Errorf(`ent: validator failed for field "Viewing.decline_reason": %w`, err)}
 		}
 	}
+	if v, ok := _c.mutation.RenterOutcome(); ok {
+		if err := viewing.RenterOutcomeValidator(v); err != nil {
+			return &ValidationError{Name: "renter_outcome", err: fmt.Errorf(`ent: validator failed for field "Viewing.renter_outcome": %w`, err)}
+		}
+	}
+	if v, ok := _c.mutation.Accuracy(); ok {
+		if err := viewing.AccuracyValidator(v); err != nil {
+			return &ValidationError{Name: "accuracy", err: fmt.Errorf(`ent: validator failed for field "Viewing.accuracy": %w`, err)}
+		}
+	}
+	if v, ok := _c.mutation.FeedbackNote(); ok {
+		if err := viewing.FeedbackNoteValidator(v); err != nil {
+			return &ValidationError{Name: "feedback_note", err: fmt.Errorf(`ent: validator failed for field "Viewing.feedback_note": %w`, err)}
+		}
+	}
 	return nil
 }
 
@@ -422,6 +563,42 @@ func (_c *ViewingCreate) createSpec() (*Viewing, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.LocationSeenAt(); ok {
 		_spec.SetField(viewing.FieldLocationSeenAt, field.TypeTime, value)
 		_node.LocationSeenAt = &value
+	}
+	if value, ok := _c.mutation.RespondedAt(); ok {
+		_spec.SetField(viewing.FieldRespondedAt, field.TypeTime, value)
+		_node.RespondedAt = &value
+	}
+	if value, ok := _c.mutation.Reminded24At(); ok {
+		_spec.SetField(viewing.FieldReminded24At, field.TypeTime, value)
+		_node.Reminded24At = &value
+	}
+	if value, ok := _c.mutation.Reminded2At(); ok {
+		_spec.SetField(viewing.FieldReminded2At, field.TypeTime, value)
+		_node.Reminded2At = &value
+	}
+	if value, ok := _c.mutation.FeedbackAskedAt(); ok {
+		_spec.SetField(viewing.FieldFeedbackAskedAt, field.TypeTime, value)
+		_node.FeedbackAskedAt = &value
+	}
+	if value, ok := _c.mutation.RenterOutcome(); ok {
+		_spec.SetField(viewing.FieldRenterOutcome, field.TypeEnum, value)
+		_node.RenterOutcome = &value
+	}
+	if value, ok := _c.mutation.Accuracy(); ok {
+		_spec.SetField(viewing.FieldAccuracy, field.TypeEnum, value)
+		_node.Accuracy = &value
+	}
+	if value, ok := _c.mutation.Interested(); ok {
+		_spec.SetField(viewing.FieldInterested, field.TypeBool, value)
+		_node.Interested = &value
+	}
+	if value, ok := _c.mutation.FeedbackNote(); ok {
+		_spec.SetField(viewing.FieldFeedbackNote, field.TypeString, value)
+		_node.FeedbackNote = value
+	}
+	if value, ok := _c.mutation.FeedbackAt(); ok {
+		_spec.SetField(viewing.FieldFeedbackAt, field.TypeTime, value)
+		_node.FeedbackAt = &value
 	}
 	return _node, _spec
 }
@@ -652,6 +829,168 @@ func (u *ViewingUpsert) UpdateLocationSeenAt() *ViewingUpsert {
 // ClearLocationSeenAt clears the value of the "location_seen_at" field.
 func (u *ViewingUpsert) ClearLocationSeenAt() *ViewingUpsert {
 	u.SetNull(viewing.FieldLocationSeenAt)
+	return u
+}
+
+// SetRespondedAt sets the "responded_at" field.
+func (u *ViewingUpsert) SetRespondedAt(v time.Time) *ViewingUpsert {
+	u.Set(viewing.FieldRespondedAt, v)
+	return u
+}
+
+// UpdateRespondedAt sets the "responded_at" field to the value that was provided on create.
+func (u *ViewingUpsert) UpdateRespondedAt() *ViewingUpsert {
+	u.SetExcluded(viewing.FieldRespondedAt)
+	return u
+}
+
+// ClearRespondedAt clears the value of the "responded_at" field.
+func (u *ViewingUpsert) ClearRespondedAt() *ViewingUpsert {
+	u.SetNull(viewing.FieldRespondedAt)
+	return u
+}
+
+// SetReminded24At sets the "reminded_24_at" field.
+func (u *ViewingUpsert) SetReminded24At(v time.Time) *ViewingUpsert {
+	u.Set(viewing.FieldReminded24At, v)
+	return u
+}
+
+// UpdateReminded24At sets the "reminded_24_at" field to the value that was provided on create.
+func (u *ViewingUpsert) UpdateReminded24At() *ViewingUpsert {
+	u.SetExcluded(viewing.FieldReminded24At)
+	return u
+}
+
+// ClearReminded24At clears the value of the "reminded_24_at" field.
+func (u *ViewingUpsert) ClearReminded24At() *ViewingUpsert {
+	u.SetNull(viewing.FieldReminded24At)
+	return u
+}
+
+// SetReminded2At sets the "reminded_2_at" field.
+func (u *ViewingUpsert) SetReminded2At(v time.Time) *ViewingUpsert {
+	u.Set(viewing.FieldReminded2At, v)
+	return u
+}
+
+// UpdateReminded2At sets the "reminded_2_at" field to the value that was provided on create.
+func (u *ViewingUpsert) UpdateReminded2At() *ViewingUpsert {
+	u.SetExcluded(viewing.FieldReminded2At)
+	return u
+}
+
+// ClearReminded2At clears the value of the "reminded_2_at" field.
+func (u *ViewingUpsert) ClearReminded2At() *ViewingUpsert {
+	u.SetNull(viewing.FieldReminded2At)
+	return u
+}
+
+// SetFeedbackAskedAt sets the "feedback_asked_at" field.
+func (u *ViewingUpsert) SetFeedbackAskedAt(v time.Time) *ViewingUpsert {
+	u.Set(viewing.FieldFeedbackAskedAt, v)
+	return u
+}
+
+// UpdateFeedbackAskedAt sets the "feedback_asked_at" field to the value that was provided on create.
+func (u *ViewingUpsert) UpdateFeedbackAskedAt() *ViewingUpsert {
+	u.SetExcluded(viewing.FieldFeedbackAskedAt)
+	return u
+}
+
+// ClearFeedbackAskedAt clears the value of the "feedback_asked_at" field.
+func (u *ViewingUpsert) ClearFeedbackAskedAt() *ViewingUpsert {
+	u.SetNull(viewing.FieldFeedbackAskedAt)
+	return u
+}
+
+// SetRenterOutcome sets the "renter_outcome" field.
+func (u *ViewingUpsert) SetRenterOutcome(v viewing.RenterOutcome) *ViewingUpsert {
+	u.Set(viewing.FieldRenterOutcome, v)
+	return u
+}
+
+// UpdateRenterOutcome sets the "renter_outcome" field to the value that was provided on create.
+func (u *ViewingUpsert) UpdateRenterOutcome() *ViewingUpsert {
+	u.SetExcluded(viewing.FieldRenterOutcome)
+	return u
+}
+
+// ClearRenterOutcome clears the value of the "renter_outcome" field.
+func (u *ViewingUpsert) ClearRenterOutcome() *ViewingUpsert {
+	u.SetNull(viewing.FieldRenterOutcome)
+	return u
+}
+
+// SetAccuracy sets the "accuracy" field.
+func (u *ViewingUpsert) SetAccuracy(v viewing.Accuracy) *ViewingUpsert {
+	u.Set(viewing.FieldAccuracy, v)
+	return u
+}
+
+// UpdateAccuracy sets the "accuracy" field to the value that was provided on create.
+func (u *ViewingUpsert) UpdateAccuracy() *ViewingUpsert {
+	u.SetExcluded(viewing.FieldAccuracy)
+	return u
+}
+
+// ClearAccuracy clears the value of the "accuracy" field.
+func (u *ViewingUpsert) ClearAccuracy() *ViewingUpsert {
+	u.SetNull(viewing.FieldAccuracy)
+	return u
+}
+
+// SetInterested sets the "interested" field.
+func (u *ViewingUpsert) SetInterested(v bool) *ViewingUpsert {
+	u.Set(viewing.FieldInterested, v)
+	return u
+}
+
+// UpdateInterested sets the "interested" field to the value that was provided on create.
+func (u *ViewingUpsert) UpdateInterested() *ViewingUpsert {
+	u.SetExcluded(viewing.FieldInterested)
+	return u
+}
+
+// ClearInterested clears the value of the "interested" field.
+func (u *ViewingUpsert) ClearInterested() *ViewingUpsert {
+	u.SetNull(viewing.FieldInterested)
+	return u
+}
+
+// SetFeedbackNote sets the "feedback_note" field.
+func (u *ViewingUpsert) SetFeedbackNote(v string) *ViewingUpsert {
+	u.Set(viewing.FieldFeedbackNote, v)
+	return u
+}
+
+// UpdateFeedbackNote sets the "feedback_note" field to the value that was provided on create.
+func (u *ViewingUpsert) UpdateFeedbackNote() *ViewingUpsert {
+	u.SetExcluded(viewing.FieldFeedbackNote)
+	return u
+}
+
+// ClearFeedbackNote clears the value of the "feedback_note" field.
+func (u *ViewingUpsert) ClearFeedbackNote() *ViewingUpsert {
+	u.SetNull(viewing.FieldFeedbackNote)
+	return u
+}
+
+// SetFeedbackAt sets the "feedback_at" field.
+func (u *ViewingUpsert) SetFeedbackAt(v time.Time) *ViewingUpsert {
+	u.Set(viewing.FieldFeedbackAt, v)
+	return u
+}
+
+// UpdateFeedbackAt sets the "feedback_at" field to the value that was provided on create.
+func (u *ViewingUpsert) UpdateFeedbackAt() *ViewingUpsert {
+	u.SetExcluded(viewing.FieldFeedbackAt)
+	return u
+}
+
+// ClearFeedbackAt clears the value of the "feedback_at" field.
+func (u *ViewingUpsert) ClearFeedbackAt() *ViewingUpsert {
+	u.SetNull(viewing.FieldFeedbackAt)
 	return u
 }
 
@@ -922,6 +1261,195 @@ func (u *ViewingUpsertOne) UpdateLocationSeenAt() *ViewingUpsertOne {
 func (u *ViewingUpsertOne) ClearLocationSeenAt() *ViewingUpsertOne {
 	return u.Update(func(s *ViewingUpsert) {
 		s.ClearLocationSeenAt()
+	})
+}
+
+// SetRespondedAt sets the "responded_at" field.
+func (u *ViewingUpsertOne) SetRespondedAt(v time.Time) *ViewingUpsertOne {
+	return u.Update(func(s *ViewingUpsert) {
+		s.SetRespondedAt(v)
+	})
+}
+
+// UpdateRespondedAt sets the "responded_at" field to the value that was provided on create.
+func (u *ViewingUpsertOne) UpdateRespondedAt() *ViewingUpsertOne {
+	return u.Update(func(s *ViewingUpsert) {
+		s.UpdateRespondedAt()
+	})
+}
+
+// ClearRespondedAt clears the value of the "responded_at" field.
+func (u *ViewingUpsertOne) ClearRespondedAt() *ViewingUpsertOne {
+	return u.Update(func(s *ViewingUpsert) {
+		s.ClearRespondedAt()
+	})
+}
+
+// SetReminded24At sets the "reminded_24_at" field.
+func (u *ViewingUpsertOne) SetReminded24At(v time.Time) *ViewingUpsertOne {
+	return u.Update(func(s *ViewingUpsert) {
+		s.SetReminded24At(v)
+	})
+}
+
+// UpdateReminded24At sets the "reminded_24_at" field to the value that was provided on create.
+func (u *ViewingUpsertOne) UpdateReminded24At() *ViewingUpsertOne {
+	return u.Update(func(s *ViewingUpsert) {
+		s.UpdateReminded24At()
+	})
+}
+
+// ClearReminded24At clears the value of the "reminded_24_at" field.
+func (u *ViewingUpsertOne) ClearReminded24At() *ViewingUpsertOne {
+	return u.Update(func(s *ViewingUpsert) {
+		s.ClearReminded24At()
+	})
+}
+
+// SetReminded2At sets the "reminded_2_at" field.
+func (u *ViewingUpsertOne) SetReminded2At(v time.Time) *ViewingUpsertOne {
+	return u.Update(func(s *ViewingUpsert) {
+		s.SetReminded2At(v)
+	})
+}
+
+// UpdateReminded2At sets the "reminded_2_at" field to the value that was provided on create.
+func (u *ViewingUpsertOne) UpdateReminded2At() *ViewingUpsertOne {
+	return u.Update(func(s *ViewingUpsert) {
+		s.UpdateReminded2At()
+	})
+}
+
+// ClearReminded2At clears the value of the "reminded_2_at" field.
+func (u *ViewingUpsertOne) ClearReminded2At() *ViewingUpsertOne {
+	return u.Update(func(s *ViewingUpsert) {
+		s.ClearReminded2At()
+	})
+}
+
+// SetFeedbackAskedAt sets the "feedback_asked_at" field.
+func (u *ViewingUpsertOne) SetFeedbackAskedAt(v time.Time) *ViewingUpsertOne {
+	return u.Update(func(s *ViewingUpsert) {
+		s.SetFeedbackAskedAt(v)
+	})
+}
+
+// UpdateFeedbackAskedAt sets the "feedback_asked_at" field to the value that was provided on create.
+func (u *ViewingUpsertOne) UpdateFeedbackAskedAt() *ViewingUpsertOne {
+	return u.Update(func(s *ViewingUpsert) {
+		s.UpdateFeedbackAskedAt()
+	})
+}
+
+// ClearFeedbackAskedAt clears the value of the "feedback_asked_at" field.
+func (u *ViewingUpsertOne) ClearFeedbackAskedAt() *ViewingUpsertOne {
+	return u.Update(func(s *ViewingUpsert) {
+		s.ClearFeedbackAskedAt()
+	})
+}
+
+// SetRenterOutcome sets the "renter_outcome" field.
+func (u *ViewingUpsertOne) SetRenterOutcome(v viewing.RenterOutcome) *ViewingUpsertOne {
+	return u.Update(func(s *ViewingUpsert) {
+		s.SetRenterOutcome(v)
+	})
+}
+
+// UpdateRenterOutcome sets the "renter_outcome" field to the value that was provided on create.
+func (u *ViewingUpsertOne) UpdateRenterOutcome() *ViewingUpsertOne {
+	return u.Update(func(s *ViewingUpsert) {
+		s.UpdateRenterOutcome()
+	})
+}
+
+// ClearRenterOutcome clears the value of the "renter_outcome" field.
+func (u *ViewingUpsertOne) ClearRenterOutcome() *ViewingUpsertOne {
+	return u.Update(func(s *ViewingUpsert) {
+		s.ClearRenterOutcome()
+	})
+}
+
+// SetAccuracy sets the "accuracy" field.
+func (u *ViewingUpsertOne) SetAccuracy(v viewing.Accuracy) *ViewingUpsertOne {
+	return u.Update(func(s *ViewingUpsert) {
+		s.SetAccuracy(v)
+	})
+}
+
+// UpdateAccuracy sets the "accuracy" field to the value that was provided on create.
+func (u *ViewingUpsertOne) UpdateAccuracy() *ViewingUpsertOne {
+	return u.Update(func(s *ViewingUpsert) {
+		s.UpdateAccuracy()
+	})
+}
+
+// ClearAccuracy clears the value of the "accuracy" field.
+func (u *ViewingUpsertOne) ClearAccuracy() *ViewingUpsertOne {
+	return u.Update(func(s *ViewingUpsert) {
+		s.ClearAccuracy()
+	})
+}
+
+// SetInterested sets the "interested" field.
+func (u *ViewingUpsertOne) SetInterested(v bool) *ViewingUpsertOne {
+	return u.Update(func(s *ViewingUpsert) {
+		s.SetInterested(v)
+	})
+}
+
+// UpdateInterested sets the "interested" field to the value that was provided on create.
+func (u *ViewingUpsertOne) UpdateInterested() *ViewingUpsertOne {
+	return u.Update(func(s *ViewingUpsert) {
+		s.UpdateInterested()
+	})
+}
+
+// ClearInterested clears the value of the "interested" field.
+func (u *ViewingUpsertOne) ClearInterested() *ViewingUpsertOne {
+	return u.Update(func(s *ViewingUpsert) {
+		s.ClearInterested()
+	})
+}
+
+// SetFeedbackNote sets the "feedback_note" field.
+func (u *ViewingUpsertOne) SetFeedbackNote(v string) *ViewingUpsertOne {
+	return u.Update(func(s *ViewingUpsert) {
+		s.SetFeedbackNote(v)
+	})
+}
+
+// UpdateFeedbackNote sets the "feedback_note" field to the value that was provided on create.
+func (u *ViewingUpsertOne) UpdateFeedbackNote() *ViewingUpsertOne {
+	return u.Update(func(s *ViewingUpsert) {
+		s.UpdateFeedbackNote()
+	})
+}
+
+// ClearFeedbackNote clears the value of the "feedback_note" field.
+func (u *ViewingUpsertOne) ClearFeedbackNote() *ViewingUpsertOne {
+	return u.Update(func(s *ViewingUpsert) {
+		s.ClearFeedbackNote()
+	})
+}
+
+// SetFeedbackAt sets the "feedback_at" field.
+func (u *ViewingUpsertOne) SetFeedbackAt(v time.Time) *ViewingUpsertOne {
+	return u.Update(func(s *ViewingUpsert) {
+		s.SetFeedbackAt(v)
+	})
+}
+
+// UpdateFeedbackAt sets the "feedback_at" field to the value that was provided on create.
+func (u *ViewingUpsertOne) UpdateFeedbackAt() *ViewingUpsertOne {
+	return u.Update(func(s *ViewingUpsert) {
+		s.UpdateFeedbackAt()
+	})
+}
+
+// ClearFeedbackAt clears the value of the "feedback_at" field.
+func (u *ViewingUpsertOne) ClearFeedbackAt() *ViewingUpsertOne {
+	return u.Update(func(s *ViewingUpsert) {
+		s.ClearFeedbackAt()
 	})
 }
 
@@ -1359,6 +1887,195 @@ func (u *ViewingUpsertBulk) UpdateLocationSeenAt() *ViewingUpsertBulk {
 func (u *ViewingUpsertBulk) ClearLocationSeenAt() *ViewingUpsertBulk {
 	return u.Update(func(s *ViewingUpsert) {
 		s.ClearLocationSeenAt()
+	})
+}
+
+// SetRespondedAt sets the "responded_at" field.
+func (u *ViewingUpsertBulk) SetRespondedAt(v time.Time) *ViewingUpsertBulk {
+	return u.Update(func(s *ViewingUpsert) {
+		s.SetRespondedAt(v)
+	})
+}
+
+// UpdateRespondedAt sets the "responded_at" field to the value that was provided on create.
+func (u *ViewingUpsertBulk) UpdateRespondedAt() *ViewingUpsertBulk {
+	return u.Update(func(s *ViewingUpsert) {
+		s.UpdateRespondedAt()
+	})
+}
+
+// ClearRespondedAt clears the value of the "responded_at" field.
+func (u *ViewingUpsertBulk) ClearRespondedAt() *ViewingUpsertBulk {
+	return u.Update(func(s *ViewingUpsert) {
+		s.ClearRespondedAt()
+	})
+}
+
+// SetReminded24At sets the "reminded_24_at" field.
+func (u *ViewingUpsertBulk) SetReminded24At(v time.Time) *ViewingUpsertBulk {
+	return u.Update(func(s *ViewingUpsert) {
+		s.SetReminded24At(v)
+	})
+}
+
+// UpdateReminded24At sets the "reminded_24_at" field to the value that was provided on create.
+func (u *ViewingUpsertBulk) UpdateReminded24At() *ViewingUpsertBulk {
+	return u.Update(func(s *ViewingUpsert) {
+		s.UpdateReminded24At()
+	})
+}
+
+// ClearReminded24At clears the value of the "reminded_24_at" field.
+func (u *ViewingUpsertBulk) ClearReminded24At() *ViewingUpsertBulk {
+	return u.Update(func(s *ViewingUpsert) {
+		s.ClearReminded24At()
+	})
+}
+
+// SetReminded2At sets the "reminded_2_at" field.
+func (u *ViewingUpsertBulk) SetReminded2At(v time.Time) *ViewingUpsertBulk {
+	return u.Update(func(s *ViewingUpsert) {
+		s.SetReminded2At(v)
+	})
+}
+
+// UpdateReminded2At sets the "reminded_2_at" field to the value that was provided on create.
+func (u *ViewingUpsertBulk) UpdateReminded2At() *ViewingUpsertBulk {
+	return u.Update(func(s *ViewingUpsert) {
+		s.UpdateReminded2At()
+	})
+}
+
+// ClearReminded2At clears the value of the "reminded_2_at" field.
+func (u *ViewingUpsertBulk) ClearReminded2At() *ViewingUpsertBulk {
+	return u.Update(func(s *ViewingUpsert) {
+		s.ClearReminded2At()
+	})
+}
+
+// SetFeedbackAskedAt sets the "feedback_asked_at" field.
+func (u *ViewingUpsertBulk) SetFeedbackAskedAt(v time.Time) *ViewingUpsertBulk {
+	return u.Update(func(s *ViewingUpsert) {
+		s.SetFeedbackAskedAt(v)
+	})
+}
+
+// UpdateFeedbackAskedAt sets the "feedback_asked_at" field to the value that was provided on create.
+func (u *ViewingUpsertBulk) UpdateFeedbackAskedAt() *ViewingUpsertBulk {
+	return u.Update(func(s *ViewingUpsert) {
+		s.UpdateFeedbackAskedAt()
+	})
+}
+
+// ClearFeedbackAskedAt clears the value of the "feedback_asked_at" field.
+func (u *ViewingUpsertBulk) ClearFeedbackAskedAt() *ViewingUpsertBulk {
+	return u.Update(func(s *ViewingUpsert) {
+		s.ClearFeedbackAskedAt()
+	})
+}
+
+// SetRenterOutcome sets the "renter_outcome" field.
+func (u *ViewingUpsertBulk) SetRenterOutcome(v viewing.RenterOutcome) *ViewingUpsertBulk {
+	return u.Update(func(s *ViewingUpsert) {
+		s.SetRenterOutcome(v)
+	})
+}
+
+// UpdateRenterOutcome sets the "renter_outcome" field to the value that was provided on create.
+func (u *ViewingUpsertBulk) UpdateRenterOutcome() *ViewingUpsertBulk {
+	return u.Update(func(s *ViewingUpsert) {
+		s.UpdateRenterOutcome()
+	})
+}
+
+// ClearRenterOutcome clears the value of the "renter_outcome" field.
+func (u *ViewingUpsertBulk) ClearRenterOutcome() *ViewingUpsertBulk {
+	return u.Update(func(s *ViewingUpsert) {
+		s.ClearRenterOutcome()
+	})
+}
+
+// SetAccuracy sets the "accuracy" field.
+func (u *ViewingUpsertBulk) SetAccuracy(v viewing.Accuracy) *ViewingUpsertBulk {
+	return u.Update(func(s *ViewingUpsert) {
+		s.SetAccuracy(v)
+	})
+}
+
+// UpdateAccuracy sets the "accuracy" field to the value that was provided on create.
+func (u *ViewingUpsertBulk) UpdateAccuracy() *ViewingUpsertBulk {
+	return u.Update(func(s *ViewingUpsert) {
+		s.UpdateAccuracy()
+	})
+}
+
+// ClearAccuracy clears the value of the "accuracy" field.
+func (u *ViewingUpsertBulk) ClearAccuracy() *ViewingUpsertBulk {
+	return u.Update(func(s *ViewingUpsert) {
+		s.ClearAccuracy()
+	})
+}
+
+// SetInterested sets the "interested" field.
+func (u *ViewingUpsertBulk) SetInterested(v bool) *ViewingUpsertBulk {
+	return u.Update(func(s *ViewingUpsert) {
+		s.SetInterested(v)
+	})
+}
+
+// UpdateInterested sets the "interested" field to the value that was provided on create.
+func (u *ViewingUpsertBulk) UpdateInterested() *ViewingUpsertBulk {
+	return u.Update(func(s *ViewingUpsert) {
+		s.UpdateInterested()
+	})
+}
+
+// ClearInterested clears the value of the "interested" field.
+func (u *ViewingUpsertBulk) ClearInterested() *ViewingUpsertBulk {
+	return u.Update(func(s *ViewingUpsert) {
+		s.ClearInterested()
+	})
+}
+
+// SetFeedbackNote sets the "feedback_note" field.
+func (u *ViewingUpsertBulk) SetFeedbackNote(v string) *ViewingUpsertBulk {
+	return u.Update(func(s *ViewingUpsert) {
+		s.SetFeedbackNote(v)
+	})
+}
+
+// UpdateFeedbackNote sets the "feedback_note" field to the value that was provided on create.
+func (u *ViewingUpsertBulk) UpdateFeedbackNote() *ViewingUpsertBulk {
+	return u.Update(func(s *ViewingUpsert) {
+		s.UpdateFeedbackNote()
+	})
+}
+
+// ClearFeedbackNote clears the value of the "feedback_note" field.
+func (u *ViewingUpsertBulk) ClearFeedbackNote() *ViewingUpsertBulk {
+	return u.Update(func(s *ViewingUpsert) {
+		s.ClearFeedbackNote()
+	})
+}
+
+// SetFeedbackAt sets the "feedback_at" field.
+func (u *ViewingUpsertBulk) SetFeedbackAt(v time.Time) *ViewingUpsertBulk {
+	return u.Update(func(s *ViewingUpsert) {
+		s.SetFeedbackAt(v)
+	})
+}
+
+// UpdateFeedbackAt sets the "feedback_at" field to the value that was provided on create.
+func (u *ViewingUpsertBulk) UpdateFeedbackAt() *ViewingUpsertBulk {
+	return u.Update(func(s *ViewingUpsert) {
+		s.UpdateFeedbackAt()
+	})
+}
+
+// ClearFeedbackAt clears the value of the "feedback_at" field.
+func (u *ViewingUpsertBulk) ClearFeedbackAt() *ViewingUpsertBulk {
+	return u.Update(func(s *ViewingUpsert) {
+		s.ClearFeedbackAt()
 	})
 }
 

@@ -16,6 +16,7 @@ import (
 	"rentmapgh/internal/ent/listingmedia"
 	"rentmapgh/internal/ent/listingterms"
 	"rentmapgh/internal/ent/message"
+	"rentmapgh/internal/ent/notification"
 	"rentmapgh/internal/ent/otpcode"
 	"rentmapgh/internal/ent/property"
 	"rentmapgh/internal/ent/report"
@@ -102,6 +103,7 @@ func checkColumn(t, c string) error {
 			listingmedia.Table:     listingmedia.ValidColumn,
 			listingterms.Table:     listingterms.ValidColumn,
 			message.Table:          message.ValidColumn,
+			notification.Table:     notification.ValidColumn,
 			otpcode.Table:          otpcode.ValidColumn,
 			property.Table:         property.ValidColumn,
 			report.Table:           report.ValidColumn,

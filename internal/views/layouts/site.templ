@@ -27,10 +27,13 @@ templ Site(m Meta) {
 				</a>
 				<nav class="hidden md:block" aria-label="Main">
 					<ul class="flex items-center gap-1">
-						for _, l := range siteNav {
-							<li>
-								<a href={ templ.SafeURL(l.href) } class="rounded-md px-2.5 py-1.5 text-sm font-medium text-fg-muted transition-colors hover:text-fg">{ l.label }</a>
-							</li>
+						for i, l := range siteNav {
+							// Signed-in users get the app, not the pitch: only "Find a place".
+							if i == 0 || reqctx.CurrentViewer(ctx) == nil {
+								<li>
+									<a href={ templ.SafeURL(l.href) } class="whitespace-nowrap rounded-md px-2.5 py-1.5 text-sm font-medium text-fg-muted transition-colors hover:text-fg">{ l.label }</a>
+								</li>
+							}
 						}
 					</ul>
 				</nav>
@@ -41,8 +44,12 @@ templ Site(m Meta) {
 					@ThemeToggle()
 					if v := reqctx.CurrentViewer(ctx); v != nil {
 						if v.HasAny("landlord", "agent") {
-							<a href="/listings" class="hidden h-8 items-center rounded-lg px-2.5 text-sm font-medium text-fg-muted transition-colors hover:bg-surface hover:text-fg sm:inline-flex">Your listings</a>
+							<a href="/listings" class="hidden h-8 items-center whitespace-nowrap rounded-lg px-2.5 text-sm font-medium text-fg-muted transition-colors hover:bg-surface hover:text-fg sm:inline-flex">Your listings</a>
 						}
+						<a href="/notifications" aria-label="Notifications" title="Notifications" class="relative grid size-8 place-items-center rounded-lg text-fg-muted transition-colors hover:bg-surface hover:text-fg">
+							@c.Icon("bell", "size-4")
+							<span data-badge="notifications" class={ "absolute -right-0.5 -top-0.5 min-w-4 place-items-center rounded-full bg-graphite-900 px-1 text-[0.625rem] font-semibold leading-4 tabular-nums text-white dark:bg-mint-200 dark:text-graphite-900", templ.KV("grid", reqctx.CurrentNavCounts(ctx).Notifications > 0), templ.KV("hidden", reqctx.CurrentNavCounts(ctx).Notifications == 0) }>{ strconv.Itoa(reqctx.CurrentNavCounts(ctx).Notifications) }</span>
+						</a>
 						@navLinkBadge("/messages", "Messages", reqctx.CurrentNavCounts(ctx).Messages, "unread")
 						@navLinkBadge("/viewings", "Viewings", reqctx.CurrentNavCounts(ctx).Viewings, "viewings")
 						if v.HasAny("moderator", "admin") {
@@ -74,7 +81,7 @@ templ Site(m Meta) {
 // navLinkBadge is a header link with a count; events.js keeps
 // data-badge="unread" current while the page is open.
 templ navLinkBadge(href, label string, n int, key string) {
-	<a href={ templ.SafeURL(href) } class="relative hidden h-8 items-center gap-1.5 rounded-lg px-2.5 text-sm font-medium text-fg-muted transition-colors hover:bg-surface hover:text-fg sm:inline-flex">
+	<a href={ templ.SafeURL(href) } class="relative hidden h-8 items-center gap-1.5 whitespace-nowrap rounded-lg px-2.5 text-sm font-medium text-fg-muted transition-colors hover:bg-surface hover:text-fg sm:inline-flex">
 		{ label }
 		<span data-badge={ key } class={ "min-w-5 place-items-center rounded-full bg-graphite-900 px-1.5 text-2xs font-semibold tabular-nums text-white dark:bg-mint-200 dark:text-graphite-900", templ.KV("grid", n > 0), templ.KV("hidden", n == 0) }>{ strconv.Itoa(n) }</span>
 	</a>

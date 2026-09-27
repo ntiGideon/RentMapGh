@@ -32,6 +32,8 @@ type Tx struct {
 	ListingTerms *ListingTermsClient
 	// Message is the client for interacting with the Message builders.
 	Message *MessageClient
+	// Notification is the client for interacting with the Notification builders.
+	Notification *NotificationClient
 	// OTPCode is the client for interacting with the OTPCode builders.
 	OTPCode *OTPCodeClient
 	// Property is the client for interacting with the Property builders.
@@ -196,6 +198,7 @@ func (tx *Tx) init() {
 	tx.ListingMedia = NewListingMediaClient(tx.config)
 	tx.ListingTerms = NewListingTermsClient(tx.config)
 	tx.Message = NewMessageClient(tx.config)
+	tx.Notification = NewNotificationClient(tx.config)
 	tx.OTPCode = NewOTPCodeClient(tx.config)
 	tx.Property = NewPropertyClient(tx.config)
 	tx.Report = NewReportClient(tx.config)

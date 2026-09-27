@@ -28,6 +28,7 @@ import (
 	"rentmapgh/internal/ent/report"
 	"rentmapgh/internal/modules/audit"
 	"rentmapgh/internal/modules/listings"
+	"rentmapgh/internal/modules/notify"
 	"rentmapgh/internal/modules/viewings"
 	"rentmapgh/internal/platform/sms"
 )
@@ -62,6 +63,7 @@ type Actor struct {
 }
 
 type Service struct {
+	notify   *notify.Service
 	db       *ent.Client
 	audit    *audit.Log
 	sms      sms.Sender
@@ -70,6 +72,9 @@ type Service struct {
 	baseURL  string
 	now      func() time.Time
 }
+
+// SetNotifier routes lister messages through the notification centre.
+func (s *Service) SetNotifier(n *notify.Service) { s.notify = n }
 
 func NewService(db *ent.Client, log *audit.Log, sender sms.Sender, v *viewings.Service, secret, baseURL string) *Service {
 	return &Service{db: db, audit: log, sms: sender, viewings: v, secret: []byte(secret), baseURL: strings.TrimRight(baseURL, "/"),
@@ -201,9 +206,16 @@ func (s *Service) textLister(ctx context.Context, l *ent.Listing, format string)
 		}
 		what = "\"" + string(h) + "\""
 	}
+	body := fmt.Sprintf(format, what, s.Link(l.ID))
+	if s.notify != nil {
+		// Quiet hours are handled by the sweep itself; the link page is the "URL".
+		s.notify.SendTo(ctx, u, notify.Note{Topic: "listings", Kind: "listing.check", Title: "Is " + what + " still available?",
+			URL: "/listings", SMS: body, Urgent: true})
+		return
+	}
 	sendCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 12*time.Second)
 	defer cancel()
-	if err := s.sms.Send(sendCtx, sms.Message{To: *u.Phone, Body: fmt.Sprintf(format, what, s.Link(l.ID))}); err != nil {
+	if err := s.sms.Send(sendCtx, sms.Message{To: *u.Phone, Body: body}); err != nil {
 		slog.WarnContext(ctx, "availability: sms", "err", err)
 	}
 }

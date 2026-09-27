@@ -64,6 +64,8 @@ type ListerCard struct {
 	PhoneVerified, IDVerified, LicenceVerified  bool
 	IsAgent                                     bool
 	Authority, AuthorityLabel                   string
+	RepliesFast, ShowsUp, Accurate              bool // earned from viewings
+	ListingID                                   string
 }
 
 templ ListingPage(m layouts.Meta, v ListingPageView) {
@@ -415,6 +417,30 @@ templ listerCard(l ListerCard) {
 					}
 				</li>
 			}
+			if l.RepliesFast {
+				<li>
+					@c.Badge(c.Success) {
+						@c.Icon("clock", "size-3")
+						Replies within a day
+					}
+				</li>
+			}
+			if l.ShowsUp {
+				<li>
+					@c.Badge(c.Success) {
+						@c.Icon("calendar-check", "size-3")
+						Reliable for viewings
+					}
+				</li>
+			}
+			if l.Accurate {
+				<li>
+					@c.Badge(c.Success) {
+						@c.Icon("check", "size-3")
+						As described
+					}
+				</li>
+			}
 		</ul>
 		if l.IsAgent {
 			<p class={ "mt-3 flex items-start gap-2 rounded-lg px-3 py-2 text-sm", templ.KV("bg-green-50 text-success dark:bg-green-400/10 dark:text-green-300", l.Authority == "approved"), templ.KV("bg-surface text-fg-muted", l.Authority != "approved") }>
@@ -426,7 +452,12 @@ templ listerCard(l ListerCard) {
 				{ l.AuthorityLabel }
 			</p>
 		}
-		<p class="mt-3 text-xs text-fg-subtle">{ l.Since }</p>
+		<div class="mt-3 flex items-center justify-between gap-2 text-xs text-fg-subtle">
+			<span>{ l.Since }</span>
+			if l.ListingID != "" {
+				<a href={ templ.SafeURL("/l/" + l.ListingID + "/report") } class="underline-offset-4 hover:text-fg hover:underline">Report listing</a>
+			}
+		</div>
 	</div>
 }
 

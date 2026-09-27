@@ -159,6 +159,8 @@ type ViewingDetailView struct {
 	OtherPhone, OtherTel, OtherWhatsApp string
 	Notice                             string
 	Errors                             map[string]string
+	RenterRecord                       string // for the lister: the renter's attendance
+	FeedbackURL                        string // for the renter, after the time
 }
 
 func (v ViewingDetailView) other() string {
@@ -248,6 +250,15 @@ templ ViewingDetail(m layouts.Meta, v ViewingDetailView) {
 					</div>
 				}
 			</dl>
+			if v.FeedbackURL != "" {
+				<a href={ templ.SafeURL(v.FeedbackURL) } class="mt-6 flex items-center justify-between gap-3 rounded-card border border-line bg-surface-raised px-4 py-3 text-sm hover:bg-surface">
+					<span><span class="font-semibold text-fg">How was the viewing?</span> <span class="text-fg-muted">Tell us in 20 seconds.</span></span>
+					@c.Icon("arrow-right", "size-4 text-fg-muted")
+				</a>
+			}
+			if v.RenterRecord != "" {
+				<p class="mt-3 text-sm text-fg-muted">{ v.RenterName }: { v.RenterRecord }.</p>
+			}
 			if v.Unlocked {
 				@unlocked(v)
 			} else if v.Role == "renter" && (v.Status == "requested" || v.Status == "proposed") {

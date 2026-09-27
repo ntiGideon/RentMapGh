@@ -32,6 +32,8 @@ type Topic struct{ Key, Label, Hint string }
 
 var Topics = []Topic{
 	{"viewings", "Viewings", "Requests, confirmations and reminders"},
+	{"messages", "Messages", "When someone writes to you and you haven't read it"},
+	{"listings", "Your listings", "\"Still available?\" checks for places you list"},
 	{"alerts", "New places", "Listings that match your saved searches"},
 	{"news", "RentMap news", "Launch updates and occasional offers"},
 }
@@ -43,6 +45,8 @@ var Channels = []string{"sms", "whatsapp"}
 // DefaultPrefs: transactional on, marketing off (opt-in under Act 843).
 var DefaultPrefs = map[string]bool{
 	"viewings.sms": true, "viewings.whatsapp": true,
+	"messages.sms": true, "messages.whatsapp": true,
+	"listings.sms": true, "listings.whatsapp": true,
 	"alerts.sms": false, "alerts.whatsapp": true,
 	"news.sms": false, "news.whatsapp": false,
 }

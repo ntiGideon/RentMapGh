@@ -105,7 +105,7 @@ func CurrentAdminCounts(ctx context.Context) AdminCounts {
 }
 
 // NavCounts are the badges in the site header for a signed-in user.
-type NavCounts struct{ Messages, Viewings int }
+type NavCounts struct{ Messages, Viewings, Notifications int }
 
 type navCountsKey struct{}
 

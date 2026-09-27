@@ -22,6 +22,8 @@ import (
 	"rentmapgh/internal/modules/listings"
 	"rentmapgh/internal/modules/mandates"
 	"rentmapgh/internal/modules/messages"
+	"rentmapgh/internal/modules/notify"
+	"rentmapgh/internal/modules/trust"
 	"rentmapgh/internal/modules/users"
 	"rentmapgh/internal/modules/verification"
 	"rentmapgh/internal/modules/viewings"
@@ -99,26 +101,34 @@ func StartJobs(ctx context.Context, d Deps) {
 	if d.Listings != nil {
 		go d.Listings.RunVideoWorker(ctx)
 	}
-	// Availability: expire unconfirmed listings and text "still available?"
-	// nudges, hourly (texts only in the daytime).
-	avail := newAvailability(d, viewings.NewService(d.DB.Ent, audit.New(d.DB.Ent), d.SMS, d.Cfg.BaseURL))
-	go func() {
-		t := time.NewTimer(2 * time.Minute)
-		defer t.Stop()
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case <-t.C:
-				if exp, nudged, err := avail.Sweep(ctx); err != nil {
-					slog.ErrorContext(ctx, "jobs: availability", "err", err)
-				} else if exp+nudged > 0 {
-					slog.InfoContext(ctx, "jobs: availability", "expired", exp, "nudged", nudged)
-				}
-				t.Reset(time.Hour)
-			}
+	notes := notify.NewService(d.DB.Ent, d.SMS, d.Hub) // Hub may be nil (tests): no live bell updates
+	vs2 := viewings.NewService(d.DB.Ent, audit.New(d.DB.Ent), d.SMS, d.Cfg.BaseURL)
+	vs2.SetNotifier(notes)
+	avail := newAvailability(d, vs2)
+	avail.SetNotifier(notes)
+	trustSvc := trust.NewService(d.DB.Ent, vs2, mandates.NewService(d.DB.Ent, audit.New(d.DB.Ent), d.SMS, d.Cfg.AuthSecret, d.Cfg.BaseURL))
+	// Hourly: expire unconfirmed listings and text "still available?" nudges
+	// (daytime only), then refresh trust scores.
+	every(ctx, 2*time.Minute, time.Hour, func() {
+		if exp, nudged, err := avail.Sweep(ctx); err != nil {
+			slog.ErrorContext(ctx, "jobs: availability", "err", err)
+		} else if exp+nudged > 0 {
+			slog.InfoContext(ctx, "jobs: availability", "expired", exp, "nudged", nudged)
 		}
-	}()
+		if n, err := trustSvc.RefreshAll(ctx); err != nil {
+			slog.ErrorContext(ctx, "jobs: trust", "err", err)
+		} else if n > 0 {
+			slog.InfoContext(ctx, "jobs: trust scores changed", "count", n)
+		}
+	})
+	// Every 10 minutes: viewing reminders (24 h, 2 h) and feedback prompts.
+	every(ctx, time.Minute, 10*time.Minute, func() {
+		if n, err := vs2.Remind(ctx); err != nil {
+			slog.ErrorContext(ctx, "jobs: reminders", "err", err)
+		} else if n > 0 {
+			slog.InfoContext(ctx, "jobs: reminders sent", "count", n)
+		}
+	})
 	go func() {
 		t := time.NewTimer(time.Minute)
 		defer t.Stop()
@@ -133,6 +143,23 @@ func StartJobs(ctx context.Context, d Deps) {
 					slog.InfoContext(ctx, "jobs: purged verification evidence", "count", n)
 				}
 				t.Reset(6 * time.Hour)
+			}
+		}
+	}()
+}
+
+// every runs fn after first, then every interval, until ctx ends.
+func every(ctx context.Context, first, interval time.Duration, fn func()) {
+	go func() {
+		t := time.NewTimer(first)
+		defer t.Stop()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-t.C:
+				fn()
+				t.Reset(interval)
 			}
 		}
 	}()
@@ -159,8 +186,17 @@ func New(d Deps) http.Handler {
 		hub = messages.NewHub()
 	}
 	messagesSvc := messages.NewService(d.DB.Ent, auditLog, d.SMS, hub, d.Cfg.BaseURL)
+	notifySvc := notify.NewService(d.DB.Ent, d.SMS, hub)
+	viewingsSvc.SetNotifier(notifySvc)
 	listingsH := listings.NewHandler(listingsSvc, mandatesSvc, listings.HandlerConfig{
 		BaseURL: d.Cfg.BaseURL, Secret: d.Cfg.AuthSecret, Secure: d.Cfg.IsHTTPS(),
+		Reliability: func(ctx context.Context, lister uuid.UUID) listings.Badges {
+			r, err := viewingsSvc.ReliabilityOf(ctx, lister)
+			if err != nil {
+				return listings.Badges{}
+			}
+			return listings.Badges{RepliesFast: r.RepliesFast(), ShowsUp: r.ShowsUp(), Accurate: r.Accurate()}
+		},
 		OpenViewing: func(ctx context.Context, renter, listingID uuid.UUID) (string, string) {
 			v, err := viewingsSvc.OpenFor(ctx, renter, listingID)
 			if err != nil || v == nil {
@@ -175,7 +211,10 @@ func New(d Deps) http.Handler {
 	}
 	viewingsH := viewings.NewHandler(viewingsSvc, cover)
 	messagesH := messages.NewHandler(messagesSvc, cover, hub.Done())
-	availH := availability.NewHandler(newAvailability(d, viewingsSvc))
+	availSvc := newAvailability(d, viewingsSvc)
+	availSvc.SetNotifier(notifySvc)
+	availH := availability.NewHandler(availSvc)
+	notifyH := notify.NewHandler(notifySvc)
 	mandatesH := mandates.NewHandler(mandatesSvc)
 	usersH := users.NewHandler(users.NewService(d.DB.Ent, auditLog, d.Files, verifySvc.PurgeUser), authH, verifySvc, auditLog)
 
@@ -190,7 +229,7 @@ func New(d Deps) http.Handler {
 	r.Use(crossOrigin)
 	r.Use(mw.DataSaver)
 	r.Use(authH.LoadViewer)
-	r.Use(navCounts(messagesSvc, viewingsSvc))
+	r.Use(navCounts(messagesSvc, viewingsSvc, notifySvc))
 	r.Use(func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			next.ServeHTTP(w, r.WithContext(reqctx.WithAssets(r.Context(), d.Assets)))
@@ -330,6 +369,11 @@ func New(d Deps) http.Handler {
 		r.With(rateLimit(20, time.Hour)).Post("/messages/{id}/report/{msgID}", messagesH.Report)
 		r.Get("/events", messagesH.Events)
 		r.With(rateLimit(10, time.Hour)).Post("/l/{id}/rented-report", availH.ReportRented)
+		r.Get("/l/{id}/report", messagesH.ReportListingPage)
+		r.With(rateLimit(10, time.Hour)).Post("/l/{id}/report", messagesH.ReportListing)
+		r.Get("/viewings/{id}/feedback", viewingsH.FeedbackPage)
+		r.With(rateLimit(20, time.Hour)).Post("/viewings/{id}/feedback", viewingsH.SaveFeedback)
+		r.Get("/notifications", notifyH.Page)
 	})
 
 	// Back office: moderators and admins only.
@@ -374,7 +418,7 @@ func adminCounts(v *verification.Service, l *listings.Service, m *messages.Servi
 
 // navCounts puts the signed-in user's header badges (unread messages,
 // viewings waiting for them) on the request. Anonymous requests skip it.
-func navCounts(m *messages.Service, v *viewings.Service) func(http.Handler) http.Handler {
+func navCounts(m *messages.Service, v *viewings.Service, n *notify.Service) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			vw := reqctx.CurrentViewer(r.Context())
@@ -386,6 +430,7 @@ func navCounts(m *messages.Service, v *viewings.Service) func(http.Handler) http
 			var c reqctx.NavCounts
 			c.Messages, _ = m.Unread(r.Context(), vw.UserID)
 			c.Viewings, _ = v.Pending(r.Context(), vw.UserID)
+			c.Notifications, _ = n.Unread(r.Context(), vw.UserID)
 			next.ServeHTTP(w, r.WithContext(reqctx.WithNavCounts(r.Context(), c)))
 		})
 	}

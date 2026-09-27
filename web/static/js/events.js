@@ -14,6 +14,18 @@ if (window.EventSource && !window.__rmEvents) {
     });
   }
 
+  es.addEventListener("notification", (e) => {
+    let n = 0;
+    try {
+      n = JSON.parse(e.data).unread || 0;
+    } catch (_) {}
+    document.querySelectorAll('[data-badge="notifications"]').forEach((b) => {
+      b.textContent = n;
+      b.classList.toggle("hidden", n === 0);
+      b.classList.toggle("grid", n > 0);
+    });
+  });
+
   for (const kind of ["unread", "message", "read"]) {
     es.addEventListener(kind, (e) => {
       let data = {};

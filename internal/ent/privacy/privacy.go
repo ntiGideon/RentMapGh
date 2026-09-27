@@ -327,6 +327,30 @@ func (f MessageMutationRuleFunc) EvalMutation(ctx context.Context, m ent.Mutatio
 	return Denyf("ent/privacy: unexpected mutation type %T, expect *ent.MessageMutation", m)
 }
 
+// The NotificationQueryRuleFunc type is an adapter to allow the use of ordinary
+// functions as a query rule.
+type NotificationQueryRuleFunc func(context.Context, *ent.NotificationQuery) error
+
+// EvalQuery return f(ctx, q).
+func (f NotificationQueryRuleFunc) EvalQuery(ctx context.Context, q ent.Query) error {
+	if q, ok := q.(*ent.NotificationQuery); ok {
+		return f(ctx, q)
+	}
+	return Denyf("ent/privacy: unexpected query type %T, expect *ent.NotificationQuery", q)
+}
+
+// The NotificationMutationRuleFunc type is an adapter to allow the use of ordinary
+// functions as a mutation rule.
+type NotificationMutationRuleFunc func(context.Context, *ent.NotificationMutation) error
+
+// EvalMutation calls f(ctx, m).
+func (f NotificationMutationRuleFunc) EvalMutation(ctx context.Context, m ent.Mutation) error {
+	if m, ok := m.(*ent.NotificationMutation); ok {
+		return f(ctx, m)
+	}
+	return Denyf("ent/privacy: unexpected mutation type %T, expect *ent.NotificationMutation", m)
+}
+
 // The OTPCodeQueryRuleFunc type is an adapter to allow the use of ordinary
 // functions as a query rule.
 type OTPCodeQueryRuleFunc func(context.Context, *ent.OTPCodeQuery) error
@@ -668,6 +692,8 @@ func queryFilter(q ent.Query) (Filter, error) {
 		return q.Filter(), nil
 	case *ent.MessageQuery:
 		return q.Filter(), nil
+	case *ent.NotificationQuery:
+		return q.Filter(), nil
 	case *ent.OTPCodeQuery:
 		return q.Filter(), nil
 	case *ent.PropertyQuery:
@@ -716,6 +742,8 @@ func mutationFilter(m ent.Mutation) (Filter, error) {
 	case *ent.ListingTermsMutation:
 		return m.Filter(), nil
 	case *ent.MessageMutation:
+		return m.Filter(), nil
+	case *ent.NotificationMutation:
 		return m.Filter(), nil
 	case *ent.OTPCodeMutation:
 		return m.Filter(), nil

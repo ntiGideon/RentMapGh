@@ -22,6 +22,7 @@ import (
 	"rentmapgh/internal/ent/user"
 	"rentmapgh/internal/ent/viewing"
 	"rentmapgh/internal/modules/audit"
+	"rentmapgh/internal/modules/notify"
 	"rentmapgh/internal/platform/money"
 	"rentmapgh/internal/platform/sms"
 	"rentmapgh/internal/platform/weekly"
@@ -71,10 +72,14 @@ type Actor struct {
 type Service struct {
 	db      *ent.Client
 	audit   *audit.Log
-	sms     sms.Sender
+	sms     sms.Sender      // used directly only when no notifier is set (tests)
+	notify  *notify.Service // in-app + SMS per the user's preferences
 	baseURL string
 	now     func() time.Time
 }
+
+// SetNotifier routes messages through the notification centre.
+func (s *Service) SetNotifier(n *notify.Service) { s.notify = n }
 
 func NewService(db *ent.Client, log *audit.Log, sender sms.Sender, baseURL string) *Service {
 	return &Service{db: db, audit: log, sms: sender, baseURL: strings.TrimRight(baseURL, "/"), now: func() time.Time { return time.Now().UTC() }}
@@ -255,8 +260,8 @@ func (s *Service) Ask(ctx context.Context, a Actor, listingID uuid.UUID, req Req
 	}
 	s.record(ctx, a, "viewing.requested", v, nil)
 	renter, _ := s.db.User.Get(ctx, a.UserID)
-	s.text(ctx, p.Lister, fmt.Sprintf("RentMap: %s wants to view %s on %s. Reply: %s",
-		firstName(renter), unitLabel(p), When(v.StartsAt), s.link(v)))
+	s.tell(ctx, p.Lister, "viewing.requested", firstName(renter)+" wants to view "+headline(p)+" on "+When(v.StartsAt), s.path(v), false,
+		fmt.Sprintf("RentMap: %s wants to view %s on %s. Reply: %s", firstName(renter), unitLabel(p), When(v.StartsAt), s.link(v)))
 	return v, nil
 }
 
@@ -428,7 +433,8 @@ func (s *Service) Act(ctx context.Context, a Actor, id uuid.UUID, act Action, an
 	upcoming := v.StartsAt.After(now)
 	up := s.db.Viewing.Update().Where(viewing.ID(v.ID), viewing.StatusEQ(v.Status)) // only from the state we showed
 	var tell *ent.User
-	var msg string
+	var msg, title string
+	answered := d.Role == "lister" && v.RespondedAt == nil && (act == Accept || act == Propose || act == Decline)
 	switch {
 	case act == Accept && d.Role == "lister" && v.Status == viewing.StatusRequested && upcoming:
 		if err := s.checkFree(ctx, v, v.StartsAt); err != nil {
@@ -436,24 +442,28 @@ func (s *Service) Act(ctx context.Context, a Actor, id uuid.UUID, act Action, an
 		}
 		up.SetStatus(viewing.StatusConfirmed).SetConfirmedAt(now)
 		tell, msg = d.Renter, fmt.Sprintf("RentMap: your viewing of %s on %s is confirmed. Address and directions: %s", unitLabel(d.Place), When(v.StartsAt), s.link(v))
+		title = "Viewing confirmed: " + When(v.StartsAt) + " · address unlocked"
 	case act == AcceptProposal && d.Role == "renter" && v.Status == viewing.StatusProposed && upcoming:
 		if err := s.checkFree(ctx, v, v.StartsAt); err != nil {
 			return nil, err
 		}
 		up.SetStatus(viewing.StatusConfirmed).SetConfirmedAt(now)
 		tell, msg = d.Place.Lister, fmt.Sprintf("RentMap: %s accepted %s for %s. Details: %s", firstName(d.Renter), When(v.StartsAt), unitLabel(d.Place), s.link(v))
+		title = firstName(d.Renter) + " accepted " + When(v.StartsAt)
 	case act == Propose && d.Role == "lister" && (v.Status == viewing.StatusRequested || v.Status == viewing.StatusProposed):
 		if err := s.checkTime(ctx, d.Place, ans.StartsAt, false); err != nil {
 			return nil, err
 		}
 		up.SetStatus(viewing.StatusProposed).SetStartsAt(ans.StartsAt.UTC())
 		tell, msg = d.Renter, fmt.Sprintf("RentMap: the lister of %s suggests %s instead. Accept or decline: %s", unitLabel(d.Place), When(ans.StartsAt), s.link(v))
+		title = "New time suggested: " + When(ans.StartsAt)
 	case act == Decline && d.Role == "lister" && (v.Status == viewing.StatusRequested || v.Status == viewing.StatusProposed):
 		reason := ans.Reason
 		if !slices.ContainsFunc(DeclineReasons, func(r struct{ Key, Label string }) bool { return r.Key == reason }) {
 			reason = "other"
 		}
 		up.SetStatus(viewing.StatusDeclined).SetDeclineReason(reason).SetClosedBy(a.UserID)
+		title = "Viewing declined: " + ReasonLabel(reason)
 		tell, msg = d.Renter, fmt.Sprintf("RentMap: the viewing of %s on %s can't go ahead (%s). Find similar places: %s/search",
 			unitLabel(d.Place), When(v.StartsAt), strings.ToLower(ReasonLabel(reason)), s.baseURL)
 	case act == Cancel && slices.Contains(openStates, v.Status) && upcoming:
@@ -462,6 +472,7 @@ func (s *Service) Act(ctx context.Context, a Actor, id uuid.UUID, act Action, an
 		if d.Role == "lister" {
 			tell = d.Renter
 		}
+		title = "Viewing cancelled: " + When(v.StartsAt)
 		if v.Status != viewing.StatusRequested || d.Role == "lister" { // a bare request withdrawn needs no text
 			msg = fmt.Sprintf("RentMap: the viewing of %s on %s was cancelled. %s", unitLabel(d.Place), When(v.StartsAt), s.link(v))
 		}
@@ -473,6 +484,9 @@ func (s *Service) Act(ctx context.Context, a Actor, id uuid.UUID, act Action, an
 		up.SetStatus(st)
 	default:
 		return nil, ValidationError{"form": "That can't be done now. The page may be out of date — refresh it."}
+	}
+	if answered {
+		up.SetRespondedAt(now)
 	}
 	n, err := up.Save(ctx)
 	if err != nil {
@@ -487,7 +501,7 @@ func (s *Service) Act(ctx context.Context, a Actor, id uuid.UUID, act Action, an
 	}
 	s.record(ctx, a, "viewing."+strings.ReplaceAll(string(act), "-", "_"), d.V, nil)
 	if tell != nil && msg != "" {
-		s.text(ctx, tell, msg)
+		s.tell(ctx, tell, "viewing."+strings.ReplaceAll(string(act), "-", "_"), title, s.path(v), false, msg)
 	}
 	return d, nil
 }
@@ -564,6 +578,21 @@ func unitLabel(p *Place) string {
 
 func (s *Service) link(v *ent.Viewing) string { return s.baseURL + "/viewings/" + v.ID.String() }
 
+func (s *Service) path(v *ent.Viewing) string { return "/viewings/" + v.ID.String() }
+
+// tell notifies a user: through the notification centre when set (in-app +
+// SMS per preferences), else by SMS directly.
+func (s *Service) tell(ctx context.Context, to *ent.User, kind, title, url string, urgent bool, smsBody string) {
+	if to == nil {
+		return
+	}
+	if s.notify != nil {
+		s.notify.SendTo(ctx, to, notify.Note{Topic: "viewings", Kind: kind, Title: title, URL: url, SMS: smsBody, Urgent: urgent})
+		return
+	}
+	s.text(ctx, to, smsBody)
+}
+
 func (s *Service) text(ctx context.Context, to *ent.User, body string) {
 	if to == nil || to.Phone == nil {
 		return
@@ -608,8 +637,9 @@ func (s *Service) CloseForListing(ctx context.Context, listingID uuid.UUID, reas
 		}
 		n++
 		if renter, err := s.db.User.Get(ctx, v.RenterID); err == nil {
-			s.text(ctx, renter, fmt.Sprintf("RentMap: the viewing of %s on %s is off — %s. Find similar places: %s/search",
-				unitLabel(p), When(v.StartsAt), strings.ToLower(ReasonLabel(reason)), s.baseURL))
+			s.tell(ctx, renter, "viewing.declined", "Viewing off: "+ReasonLabel(reason), s.path(v), false,
+				fmt.Sprintf("RentMap: the viewing of %s on %s is off — %s. Find similar places: %s/search",
+					unitLabel(p), When(v.StartsAt), strings.ToLower(ReasonLabel(reason)), s.baseURL))
 		}
 		s.audit.Record(ctx, audit.Event{Action: "viewing.auto_declined", TargetType: "viewing", TargetID: v.ID.String(),
 			Meta: map[string]any{"listing": listingID.String(), "reason": reason}})

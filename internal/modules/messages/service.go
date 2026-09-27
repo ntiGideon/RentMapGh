@@ -413,13 +413,24 @@ type ReportContext struct {
 // ForReview loads a message report with context for moderators.
 func (s *Service) ForReview(ctx context.Context, id uuid.UUID) (*ReportContext, error) {
 	r, err := s.db.Report.Get(ctx, id)
-	if ent.IsNotFound(err) || (err == nil && r.TargetType != report.TargetTypeMessage) {
+	if ent.IsNotFound(err) {
 		return nil, ErrNotFound
 	}
 	if err != nil {
 		return nil, fmt.Errorf("messages: review: %w", err)
 	}
 	rc := &ReportContext{R: r}
+	rc.Reporter, _ = s.db.User.Get(ctx, r.ReporterID)
+	if r.SubjectID != nil {
+		rc.Subject, _ = s.db.User.Get(ctx, *r.SubjectID)
+	}
+	if r.TargetType == report.TargetTypeListing {
+		rc.Listing, _ = s.db.Listing.Get(ctx, r.TargetID)
+		return rc, nil
+	}
+	if r.TargetType != report.TargetTypeMessage {
+		return nil, ErrNotFound
+	}
 	if rc.Message, err = s.db.Message.Get(ctx, r.TargetID); err != nil {
 		return nil, fmt.Errorf("messages: review message: %w", err)
 	}
@@ -427,10 +438,6 @@ func (s *Service) ForReview(ctx context.Context, id uuid.UUID) (*ReportContext, 
 		return nil, fmt.Errorf("messages: review conv: %w", err)
 	}
 	rc.Thread, _ = s.db.Message.Query().Where(message.ConversationID(rc.Conv.ID)).Order(ent.Asc(message.FieldID)).Limit(100).All(ctx)
-	rc.Reporter, _ = s.db.User.Get(ctx, r.ReporterID)
-	if r.SubjectID != nil {
-		rc.Subject, _ = s.db.User.Get(ctx, *r.SubjectID)
-	}
 	rc.Listing, _ = s.db.Listing.Get(ctx, rc.Conv.ListingID)
 	return rc, nil
 }
@@ -451,5 +458,56 @@ func (s *Service) Resolve(ctx context.Context, moderator Actor, id uuid.UUID, ac
 	}
 	s.audit.Record(ctx, audit.Event{Actor: &moderator.UserID, Action: "report." + string(st), TargetType: "report", TargetID: id.String(),
 		IP: moderator.IP, UserAgent: moderator.UserAgent})
+	return nil
+}
+
+// ListingReportReasons are the choices when reporting a listing.
+var ListingReportReasons = []struct{ Key, Label string }{
+	{"scam", "Asks for money before a viewing, or looks like a scam"},
+	{"fake", "Photos or details aren't real"},
+	{"wrong_price", "The price or fees are wrong"},
+	{"not_theirs", "The lister doesn't own or manage it"},
+	{"discrimination", "Discriminates against renters"},
+	{"other", "Something else"},
+}
+
+// ReportListing files a report about a listing (not the reporter's own).
+func (s *Service) ReportListing(ctx context.Context, a Actor, listingID uuid.UUID, reason, note string) error {
+	l, err := s.db.Listing.Get(ctx, listingID)
+	if ent.IsNotFound(err) {
+		return ErrNotFound
+	}
+	if err != nil {
+		return fmt.Errorf("messages: report listing: %w", err)
+	}
+	if l.ListerID == a.UserID {
+		return ErrForbidden
+	}
+	valid := false
+	for _, r := range ListingReportReasons {
+		valid = valid || r.Key == reason
+	}
+	if !valid {
+		return ValidationError{"reason": "Choose what's wrong."}
+	}
+	note = strings.TrimSpace(note)
+	if utf8.RuneCountInString(note) > ReportNoteLimit {
+		note = string([]rune(note)[:ReportNoteLimit])
+	}
+	dup, err := s.db.Report.Query().Where(report.ReporterID(a.UserID), report.TargetTypeEQ(report.TargetTypeListing),
+		report.TargetID(listingID), report.StatusEQ(report.StatusOpen)).Exist(ctx)
+	if err != nil {
+		return fmt.Errorf("messages: report listing dup: %w", err)
+	}
+	if dup {
+		return nil
+	}
+	r, err := s.db.Report.Create().SetReporterID(a.UserID).SetTargetType(report.TargetTypeListing).SetTargetID(listingID).
+		SetSubjectID(l.ListerID).SetReason(reason).SetNote(note).Save(ctx)
+	if err != nil {
+		return fmt.Errorf("messages: report listing: %w", err)
+	}
+	s.audit.Record(ctx, audit.Event{Actor: &a.UserID, Action: "listing.reported", TargetType: "report", TargetID: r.ID.String(),
+		IP: a.IP, UserAgent: a.UserAgent, Meta: map[string]any{"listing": listingID.String(), "reason": reason}})
 	return nil
 }

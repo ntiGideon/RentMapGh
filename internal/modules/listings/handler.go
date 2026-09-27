@@ -29,7 +29,11 @@ type Handler struct {
 	baseURL     string            // for absolute links (share, canonical, og:image)
 	saved       savedCodec
 	openViewing func(ctx context.Context, renter, listing uuid.UUID) (url, when string)
+	reliability func(ctx context.Context, lister uuid.UUID) Badges
 }
+
+// Badges are the reliability badges a lister has earned (viewings).
+type Badges struct{ RepliesFast, ShowsUp, Accurate bool }
 
 // HandlerConfig is what the public pages need from the app config.
 type HandlerConfig struct {
@@ -39,11 +43,13 @@ type HandlerConfig struct {
 	// OpenViewing finds the renter's pending or confirmed viewing of a
 	// listing ("" if none), for the listing page's call to action.
 	OpenViewing func(ctx context.Context, renter, listing uuid.UUID) (url, when string)
+	// Reliability gives the lister's viewing badges for the listing page.
+	Reliability func(ctx context.Context, lister uuid.UUID) Badges
 }
 
 func NewHandler(svc *Service, m *mandates.Service, cfg HandlerConfig) *Handler {
 	return &Handler{svc: svc, mandates: m, baseURL: strings.TrimRight(cfg.BaseURL, "/"),
-		saved: savedCodec{secret: []byte(cfg.Secret), secure: cfg.Secure}, openViewing: cfg.OpenViewing}
+		saved: savedCodec{secret: []byte(cfg.Secret), secure: cfg.Secure}, openViewing: cfg.OpenViewing, reliability: cfg.Reliability}
 }
 
 // Service exposes the service (admin wiring).

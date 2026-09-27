@@ -381,10 +381,10 @@ func (f Filter) orderBy(args *[]any) string {
 		n := len(*args)
 		return fmt.Sprintf("p.approx_geog <-> ST_SetSRID(ST_MakePoint($%d, $%d), 4326)::geography, l.id", n-1, n)
 	}
-	// Recommended: promoted first, then quality, then freshness.
+	// Recommended: promoted first, then fresh ones, then trust + quality.
 	return "(l.promoted_until > now()) DESC NULLS LAST, " +
 		"(l.last_confirmed_at > now() - interval '3 days' AND (l.stale_reported_at IS NULL OR l.stale_reported_at < l.last_confirmed_at)) DESC NULLS LAST, " +
-		"l.quality_score DESC, l.last_confirmed_at DESC NULLS LAST, l.id DESC"
+		"(l.trust_score + l.quality_score) DESC, l.last_confirmed_at DESC NULLS LAST, l.id DESC"
 }
 
 // Results is one page of a search.

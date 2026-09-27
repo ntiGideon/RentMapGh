@@ -35,6 +35,16 @@ func (Viewing) Fields() []ent.Field {
 		field.UUID("closed_by", uuid.UUID{}).Optional().Nillable().Comment("who declined or cancelled"),
 		field.Time("confirmed_at").Optional().Nillable(),
 		field.Time("location_seen_at").Optional().Nillable().Comment("first time the renter opened the exact location"),
+		field.Time("responded_at").Optional().Nillable().Comment("the lister's first answer (response-time badge)"),
+		// Reminders and feedback (ProjectRequirement §6.8).
+		field.Time("reminded_24_at").Optional().Nillable(),
+		field.Time("reminded_2_at").Optional().Nillable(),
+		field.Time("feedback_asked_at").Optional().Nillable(),
+		field.Enum("renter_outcome").Values("happened", "renter_missed", "lister_missed").Optional().Nillable(),
+		field.Enum("accuracy").Values("as_described", "mostly", "not_as_described").Optional().Nillable(),
+		field.Bool("interested").Optional().Nillable(),
+		field.String("feedback_note").MaxLen(500).Optional(),
+		field.Time("feedback_at").Optional().Nillable(),
 	}
 }
 

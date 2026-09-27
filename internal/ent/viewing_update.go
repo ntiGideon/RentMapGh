@@ -226,6 +226,186 @@ func (_u *ViewingUpdate) ClearLocationSeenAt() *ViewingUpdate {
 	return _u
 }
 
+// SetRespondedAt sets the "responded_at" field.
+func (_u *ViewingUpdate) SetRespondedAt(v time.Time) *ViewingUpdate {
+	_u.mutation.SetRespondedAt(v)
+	return _u
+}
+
+// SetNillableRespondedAt sets the "responded_at" field if the given value is not nil.
+func (_u *ViewingUpdate) SetNillableRespondedAt(v *time.Time) *ViewingUpdate {
+	if v != nil {
+		_u.SetRespondedAt(*v)
+	}
+	return _u
+}
+
+// ClearRespondedAt clears the value of the "responded_at" field.
+func (_u *ViewingUpdate) ClearRespondedAt() *ViewingUpdate {
+	_u.mutation.ClearRespondedAt()
+	return _u
+}
+
+// SetReminded24At sets the "reminded_24_at" field.
+func (_u *ViewingUpdate) SetReminded24At(v time.Time) *ViewingUpdate {
+	_u.mutation.SetReminded24At(v)
+	return _u
+}
+
+// SetNillableReminded24At sets the "reminded_24_at" field if the given value is not nil.
+func (_u *ViewingUpdate) SetNillableReminded24At(v *time.Time) *ViewingUpdate {
+	if v != nil {
+		_u.SetReminded24At(*v)
+	}
+	return _u
+}
+
+// ClearReminded24At clears the value of the "reminded_24_at" field.
+func (_u *ViewingUpdate) ClearReminded24At() *ViewingUpdate {
+	_u.mutation.ClearReminded24At()
+	return _u
+}
+
+// SetReminded2At sets the "reminded_2_at" field.
+func (_u *ViewingUpdate) SetReminded2At(v time.Time) *ViewingUpdate {
+	_u.mutation.SetReminded2At(v)
+	return _u
+}
+
+// SetNillableReminded2At sets the "reminded_2_at" field if the given value is not nil.
+func (_u *ViewingUpdate) SetNillableReminded2At(v *time.Time) *ViewingUpdate {
+	if v != nil {
+		_u.SetReminded2At(*v)
+	}
+	return _u
+}
+
+// ClearReminded2At clears the value of the "reminded_2_at" field.
+func (_u *ViewingUpdate) ClearReminded2At() *ViewingUpdate {
+	_u.mutation.ClearReminded2At()
+	return _u
+}
+
+// SetFeedbackAskedAt sets the "feedback_asked_at" field.
+func (_u *ViewingUpdate) SetFeedbackAskedAt(v time.Time) *ViewingUpdate {
+	_u.mutation.SetFeedbackAskedAt(v)
+	return _u
+}
+
+// SetNillableFeedbackAskedAt sets the "feedback_asked_at" field if the given value is not nil.
+func (_u *ViewingUpdate) SetNillableFeedbackAskedAt(v *time.Time) *ViewingUpdate {
+	if v != nil {
+		_u.SetFeedbackAskedAt(*v)
+	}
+	return _u
+}
+
+// ClearFeedbackAskedAt clears the value of the "feedback_asked_at" field.
+func (_u *ViewingUpdate) ClearFeedbackAskedAt() *ViewingUpdate {
+	_u.mutation.ClearFeedbackAskedAt()
+	return _u
+}
+
+// SetRenterOutcome sets the "renter_outcome" field.
+func (_u *ViewingUpdate) SetRenterOutcome(v viewing.RenterOutcome) *ViewingUpdate {
+	_u.mutation.SetRenterOutcome(v)
+	return _u
+}
+
+// SetNillableRenterOutcome sets the "renter_outcome" field if the given value is not nil.
+func (_u *ViewingUpdate) SetNillableRenterOutcome(v *viewing.RenterOutcome) *ViewingUpdate {
+	if v != nil {
+		_u.SetRenterOutcome(*v)
+	}
+	return _u
+}
+
+// ClearRenterOutcome clears the value of the "renter_outcome" field.
+func (_u *ViewingUpdate) ClearRenterOutcome() *ViewingUpdate {
+	_u.mutation.ClearRenterOutcome()
+	return _u
+}
+
+// SetAccuracy sets the "accuracy" field.
+func (_u *ViewingUpdate) SetAccuracy(v viewing.Accuracy) *ViewingUpdate {
+	_u.mutation.SetAccuracy(v)
+	return _u
+}
+
+// SetNillableAccuracy sets the "accuracy" field if the given value is not nil.
+func (_u *ViewingUpdate) SetNillableAccuracy(v *viewing.Accuracy) *ViewingUpdate {
+	if v != nil {
+		_u.SetAccuracy(*v)
+	}
+	return _u
+}
+
+// ClearAccuracy clears the value of the "accuracy" field.
+func (_u *ViewingUpdate) ClearAccuracy() *ViewingUpdate {
+	_u.mutation.ClearAccuracy()
+	return _u
+}
+
+// SetInterested sets the "interested" field.
+func (_u *ViewingUpdate) SetInterested(v bool) *ViewingUpdate {
+	_u.mutation.SetInterested(v)
+	return _u
+}
+
+// SetNillableInterested sets the "interested" field if the given value is not nil.
+func (_u *ViewingUpdate) SetNillableInterested(v *bool) *ViewingUpdate {
+	if v != nil {
+		_u.SetInterested(*v)
+	}
+	return _u
+}
+
+// ClearInterested clears the value of the "interested" field.
+func (_u *ViewingUpdate) ClearInterested() *ViewingUpdate {
+	_u.mutation.ClearInterested()
+	return _u
+}
+
+// SetFeedbackNote sets the "feedback_note" field.
+func (_u *ViewingUpdate) SetFeedbackNote(v string) *ViewingUpdate {
+	_u.mutation.SetFeedbackNote(v)
+	return _u
+}
+
+// SetNillableFeedbackNote sets the "feedback_note" field if the given value is not nil.
+func (_u *ViewingUpdate) SetNillableFeedbackNote(v *string) *ViewingUpdate {
+	if v != nil {
+		_u.SetFeedbackNote(*v)
+	}
+	return _u
+}
+
+// ClearFeedbackNote clears the value of the "feedback_note" field.
+func (_u *ViewingUpdate) ClearFeedbackNote() *ViewingUpdate {
+	_u.mutation.ClearFeedbackNote()
+	return _u
+}
+
+// SetFeedbackAt sets the "feedback_at" field.
+func (_u *ViewingUpdate) SetFeedbackAt(v time.Time) *ViewingUpdate {
+	_u.mutation.SetFeedbackAt(v)
+	return _u
+}
+
+// SetNillableFeedbackAt sets the "feedback_at" field if the given value is not nil.
+func (_u *ViewingUpdate) SetNillableFeedbackAt(v *time.Time) *ViewingUpdate {
+	if v != nil {
+		_u.SetFeedbackAt(*v)
+	}
+	return _u
+}
+
+// ClearFeedbackAt clears the value of the "feedback_at" field.
+func (_u *ViewingUpdate) ClearFeedbackAt() *ViewingUpdate {
+	_u.mutation.ClearFeedbackAt()
+	return _u
+}
+
 // Mutation returns the ViewingMutation object of the builder.
 func (_u *ViewingUpdate) Mutation() *ViewingMutation {
 	return _u.mutation
@@ -287,6 +467,21 @@ func (_u *ViewingUpdate) check() error {
 	if v, ok := _u.mutation.DeclineReason(); ok {
 		if err := viewing.DeclineReasonValidator(v); err != nil {
 			return &ValidationError{Name: "decline_reason", err: fmt.Errorf(`ent: validator failed for field "Viewing.decline_reason": %w`, err)}
+		}
+	}
+	if v, ok := _u.mutation.RenterOutcome(); ok {
+		if err := viewing.RenterOutcomeValidator(v); err != nil {
+			return &ValidationError{Name: "renter_outcome", err: fmt.Errorf(`ent: validator failed for field "Viewing.renter_outcome": %w`, err)}
+		}
+	}
+	if v, ok := _u.mutation.Accuracy(); ok {
+		if err := viewing.AccuracyValidator(v); err != nil {
+			return &ValidationError{Name: "accuracy", err: fmt.Errorf(`ent: validator failed for field "Viewing.accuracy": %w`, err)}
+		}
+	}
+	if v, ok := _u.mutation.FeedbackNote(); ok {
+		if err := viewing.FeedbackNoteValidator(v); err != nil {
+			return &ValidationError{Name: "feedback_note", err: fmt.Errorf(`ent: validator failed for field "Viewing.feedback_note": %w`, err)}
 		}
 	}
 	return nil
@@ -360,6 +555,60 @@ func (_u *ViewingUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	}
 	if _u.mutation.LocationSeenAtCleared() {
 		_spec.ClearField(viewing.FieldLocationSeenAt, field.TypeTime)
+	}
+	if value, ok := _u.mutation.RespondedAt(); ok {
+		_spec.SetField(viewing.FieldRespondedAt, field.TypeTime, value)
+	}
+	if _u.mutation.RespondedAtCleared() {
+		_spec.ClearField(viewing.FieldRespondedAt, field.TypeTime)
+	}
+	if value, ok := _u.mutation.Reminded24At(); ok {
+		_spec.SetField(viewing.FieldReminded24At, field.TypeTime, value)
+	}
+	if _u.mutation.Reminded24AtCleared() {
+		_spec.ClearField(viewing.FieldReminded24At, field.TypeTime)
+	}
+	if value, ok := _u.mutation.Reminded2At(); ok {
+		_spec.SetField(viewing.FieldReminded2At, field.TypeTime, value)
+	}
+	if _u.mutation.Reminded2AtCleared() {
+		_spec.ClearField(viewing.FieldReminded2At, field.TypeTime)
+	}
+	if value, ok := _u.mutation.FeedbackAskedAt(); ok {
+		_spec.SetField(viewing.FieldFeedbackAskedAt, field.TypeTime, value)
+	}
+	if _u.mutation.FeedbackAskedAtCleared() {
+		_spec.ClearField(viewing.FieldFeedbackAskedAt, field.TypeTime)
+	}
+	if value, ok := _u.mutation.RenterOutcome(); ok {
+		_spec.SetField(viewing.FieldRenterOutcome, field.TypeEnum, value)
+	}
+	if _u.mutation.RenterOutcomeCleared() {
+		_spec.ClearField(viewing.FieldRenterOutcome, field.TypeEnum)
+	}
+	if value, ok := _u.mutation.Accuracy(); ok {
+		_spec.SetField(viewing.FieldAccuracy, field.TypeEnum, value)
+	}
+	if _u.mutation.AccuracyCleared() {
+		_spec.ClearField(viewing.FieldAccuracy, field.TypeEnum)
+	}
+	if value, ok := _u.mutation.Interested(); ok {
+		_spec.SetField(viewing.FieldInterested, field.TypeBool, value)
+	}
+	if _u.mutation.InterestedCleared() {
+		_spec.ClearField(viewing.FieldInterested, field.TypeBool)
+	}
+	if value, ok := _u.mutation.FeedbackNote(); ok {
+		_spec.SetField(viewing.FieldFeedbackNote, field.TypeString, value)
+	}
+	if _u.mutation.FeedbackNoteCleared() {
+		_spec.ClearField(viewing.FieldFeedbackNote, field.TypeString)
+	}
+	if value, ok := _u.mutation.FeedbackAt(); ok {
+		_spec.SetField(viewing.FieldFeedbackAt, field.TypeTime, value)
+	}
+	if _u.mutation.FeedbackAtCleared() {
+		_spec.ClearField(viewing.FieldFeedbackAt, field.TypeTime)
 	}
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -577,6 +826,186 @@ func (_u *ViewingUpdateOne) ClearLocationSeenAt() *ViewingUpdateOne {
 	return _u
 }
 
+// SetRespondedAt sets the "responded_at" field.
+func (_u *ViewingUpdateOne) SetRespondedAt(v time.Time) *ViewingUpdateOne {
+	_u.mutation.SetRespondedAt(v)
+	return _u
+}
+
+// SetNillableRespondedAt sets the "responded_at" field if the given value is not nil.
+func (_u *ViewingUpdateOne) SetNillableRespondedAt(v *time.Time) *ViewingUpdateOne {
+	if v != nil {
+		_u.SetRespondedAt(*v)
+	}
+	return _u
+}
+
+// ClearRespondedAt clears the value of the "responded_at" field.
+func (_u *ViewingUpdateOne) ClearRespondedAt() *ViewingUpdateOne {
+	_u.mutation.ClearRespondedAt()
+	return _u
+}
+
+// SetReminded24At sets the "reminded_24_at" field.
+func (_u *ViewingUpdateOne) SetReminded24At(v time.Time) *ViewingUpdateOne {
+	_u.mutation.SetReminded24At(v)
+	return _u
+}
+
+// SetNillableReminded24At sets the "reminded_24_at" field if the given value is not nil.
+func (_u *ViewingUpdateOne) SetNillableReminded24At(v *time.Time) *ViewingUpdateOne {
+	if v != nil {
+		_u.SetReminded24At(*v)
+	}
+	return _u
+}
+
+// ClearReminded24At clears the value of the "reminded_24_at" field.
+func (_u *ViewingUpdateOne) ClearReminded24At() *ViewingUpdateOne {
+	_u.mutation.ClearReminded24At()
+	return _u
+}
+
+// SetReminded2At sets the "reminded_2_at" field.
+func (_u *ViewingUpdateOne) SetReminded2At(v time.Time) *ViewingUpdateOne {
+	_u.mutation.SetReminded2At(v)
+	return _u
+}
+
+// SetNillableReminded2At sets the "reminded_2_at" field if the given value is not nil.
+func (_u *ViewingUpdateOne) SetNillableReminded2At(v *time.Time) *ViewingUpdateOne {
+	if v != nil {
+		_u.SetReminded2At(*v)
+	}
+	return _u
+}
+
+// ClearReminded2At clears the value of the "reminded_2_at" field.
+func (_u *ViewingUpdateOne) ClearReminded2At() *ViewingUpdateOne {
+	_u.mutation.ClearReminded2At()
+	return _u
+}
+
+// SetFeedbackAskedAt sets the "feedback_asked_at" field.
+func (_u *ViewingUpdateOne) SetFeedbackAskedAt(v time.Time) *ViewingUpdateOne {
+	_u.mutation.SetFeedbackAskedAt(v)
+	return _u
+}
+
+// SetNillableFeedbackAskedAt sets the "feedback_asked_at" field if the given value is not nil.
+func (_u *ViewingUpdateOne) SetNillableFeedbackAskedAt(v *time.Time) *ViewingUpdateOne {
+	if v != nil {
+		_u.SetFeedbackAskedAt(*v)
+	}
+	return _u
+}
+
+// ClearFeedbackAskedAt clears the value of the "feedback_asked_at" field.
+func (_u *ViewingUpdateOne) ClearFeedbackAskedAt() *ViewingUpdateOne {
+	_u.mutation.ClearFeedbackAskedAt()
+	return _u
+}
+
+// SetRenterOutcome sets the "renter_outcome" field.
+func (_u *ViewingUpdateOne) SetRenterOutcome(v viewing.RenterOutcome) *ViewingUpdateOne {
+	_u.mutation.SetRenterOutcome(v)
+	return _u
+}
+
+// SetNillableRenterOutcome sets the "renter_outcome" field if the given value is not nil.
+func (_u *ViewingUpdateOne) SetNillableRenterOutcome(v *viewing.RenterOutcome) *ViewingUpdateOne {
+	if v != nil {
+		_u.SetRenterOutcome(*v)
+	}
+	return _u
+}
+
+// ClearRenterOutcome clears the value of the "renter_outcome" field.
+func (_u *ViewingUpdateOne) ClearRenterOutcome() *ViewingUpdateOne {
+	_u.mutation.ClearRenterOutcome()
+	return _u
+}
+
+// SetAccuracy sets the "accuracy" field.
+func (_u *ViewingUpdateOne) SetAccuracy(v viewing.Accuracy) *ViewingUpdateOne {
+	_u.mutation.SetAccuracy(v)
+	return _u
+}
+
+// SetNillableAccuracy sets the "accuracy" field if the given value is not nil.
+func (_u *ViewingUpdateOne) SetNillableAccuracy(v *viewing.Accuracy) *ViewingUpdateOne {
+	if v != nil {
+		_u.SetAccuracy(*v)
+	}
+	return _u
+}
+
+// ClearAccuracy clears the value of the "accuracy" field.
+func (_u *ViewingUpdateOne) ClearAccuracy() *ViewingUpdateOne {
+	_u.mutation.ClearAccuracy()
+	return _u
+}
+
+// SetInterested sets the "interested" field.
+func (_u *ViewingUpdateOne) SetInterested(v bool) *ViewingUpdateOne {
+	_u.mutation.SetInterested(v)
+	return _u
+}
+
+// SetNillableInterested sets the "interested" field if the given value is not nil.
+func (_u *ViewingUpdateOne) SetNillableInterested(v *bool) *ViewingUpdateOne {
+	if v != nil {
+		_u.SetInterested(*v)
+	}
+	return _u
+}
+
+// ClearInterested clears the value of the "interested" field.
+func (_u *ViewingUpdateOne) ClearInterested() *ViewingUpdateOne {
+	_u.mutation.ClearInterested()
+	return _u
+}
+
+// SetFeedbackNote sets the "feedback_note" field.
+func (_u *ViewingUpdateOne) SetFeedbackNote(v string) *ViewingUpdateOne {
+	_u.mutation.SetFeedbackNote(v)
+	return _u
+}
+
+// SetNillableFeedbackNote sets the "feedback_note" field if the given value is not nil.
+func (_u *ViewingUpdateOne) SetNillableFeedbackNote(v *string) *ViewingUpdateOne {
+	if v != nil {
+		_u.SetFeedbackNote(*v)
+	}
+	return _u
+}
+
+// ClearFeedbackNote clears the value of the "feedback_note" field.
+func (_u *ViewingUpdateOne) ClearFeedbackNote() *ViewingUpdateOne {
+	_u.mutation.ClearFeedbackNote()
+	return _u
+}
+
+// SetFeedbackAt sets the "feedback_at" field.
+func (_u *ViewingUpdateOne) SetFeedbackAt(v time.Time) *ViewingUpdateOne {
+	_u.mutation.SetFeedbackAt(v)
+	return _u
+}
+
+// SetNillableFeedbackAt sets the "feedback_at" field if the given value is not nil.
+func (_u *ViewingUpdateOne) SetNillableFeedbackAt(v *time.Time) *ViewingUpdateOne {
+	if v != nil {
+		_u.SetFeedbackAt(*v)
+	}
+	return _u
+}
+
+// ClearFeedbackAt clears the value of the "feedback_at" field.
+func (_u *ViewingUpdateOne) ClearFeedbackAt() *ViewingUpdateOne {
+	_u.mutation.ClearFeedbackAt()
+	return _u
+}
+
 // Mutation returns the ViewingMutation object of the builder.
 func (_u *ViewingUpdateOne) Mutation() *ViewingMutation {
 	return _u.mutation
@@ -651,6 +1080,21 @@ func (_u *ViewingUpdateOne) check() error {
 	if v, ok := _u.mutation.DeclineReason(); ok {
 		if err := viewing.DeclineReasonValidator(v); err != nil {
 			return &ValidationError{Name: "decline_reason", err: fmt.Errorf(`ent: validator failed for field "Viewing.decline_reason": %w`, err)}
+		}
+	}
+	if v, ok := _u.mutation.RenterOutcome(); ok {
+		if err := viewing.RenterOutcomeValidator(v); err != nil {
+			return &ValidationError{Name: "renter_outcome", err: fmt.Errorf(`ent: validator failed for field "Viewing.renter_outcome": %w`, err)}
+		}
+	}
+	if v, ok := _u.mutation.Accuracy(); ok {
+		if err := viewing.AccuracyValidator(v); err != nil {
+			return &ValidationError{Name: "accuracy", err: fmt.Errorf(`ent: validator failed for field "Viewing.accuracy": %w`, err)}
+		}
+	}
+	if v, ok := _u.mutation.FeedbackNote(); ok {
+		if err := viewing.FeedbackNoteValidator(v); err != nil {
+			return &ValidationError{Name: "feedback_note", err: fmt.Errorf(`ent: validator failed for field "Viewing.feedback_note": %w`, err)}
 		}
 	}
 	return nil
@@ -741,6 +1185,60 @@ func (_u *ViewingUpdateOne) sqlSave(ctx context.Context) (_node *Viewing, err er
 	}
 	if _u.mutation.LocationSeenAtCleared() {
 		_spec.ClearField(viewing.FieldLocationSeenAt, field.TypeTime)
+	}
+	if value, ok := _u.mutation.RespondedAt(); ok {
+		_spec.SetField(viewing.FieldRespondedAt, field.TypeTime, value)
+	}
+	if _u.mutation.RespondedAtCleared() {
+		_spec.ClearField(viewing.FieldRespondedAt, field.TypeTime)
+	}
+	if value, ok := _u.mutation.Reminded24At(); ok {
+		_spec.SetField(viewing.FieldReminded24At, field.TypeTime, value)
+	}
+	if _u.mutation.Reminded24AtCleared() {
+		_spec.ClearField(viewing.FieldReminded24At, field.TypeTime)
+	}
+	if value, ok := _u.mutation.Reminded2At(); ok {
+		_spec.SetField(viewing.FieldReminded2At, field.TypeTime, value)
+	}
+	if _u.mutation.Reminded2AtCleared() {
+		_spec.ClearField(viewing.FieldReminded2At, field.TypeTime)
+	}
+	if value, ok := _u.mutation.FeedbackAskedAt(); ok {
+		_spec.SetField(viewing.FieldFeedbackAskedAt, field.TypeTime, value)
+	}
+	if _u.mutation.FeedbackAskedAtCleared() {
+		_spec.ClearField(viewing.FieldFeedbackAskedAt, field.TypeTime)
+	}
+	if value, ok := _u.mutation.RenterOutcome(); ok {
+		_spec.SetField(viewing.FieldRenterOutcome, field.TypeEnum, value)
+	}
+	if _u.mutation.RenterOutcomeCleared() {
+		_spec.ClearField(viewing.FieldRenterOutcome, field.TypeEnum)
+	}
+	if value, ok := _u.mutation.Accuracy(); ok {
+		_spec.SetField(viewing.FieldAccuracy, field.TypeEnum, value)
+	}
+	if _u.mutation.AccuracyCleared() {
+		_spec.ClearField(viewing.FieldAccuracy, field.TypeEnum)
+	}
+	if value, ok := _u.mutation.Interested(); ok {
+		_spec.SetField(viewing.FieldInterested, field.TypeBool, value)
+	}
+	if _u.mutation.InterestedCleared() {
+		_spec.ClearField(viewing.FieldInterested, field.TypeBool)
+	}
+	if value, ok := _u.mutation.FeedbackNote(); ok {
+		_spec.SetField(viewing.FieldFeedbackNote, field.TypeString, value)
+	}
+	if _u.mutation.FeedbackNoteCleared() {
+		_spec.ClearField(viewing.FieldFeedbackNote, field.TypeString)
+	}
+	if value, ok := _u.mutation.FeedbackAt(); ok {
+		_spec.SetField(viewing.FieldFeedbackAt, field.TypeTime, value)
+	}
+	if _u.mutation.FeedbackAtCleared() {
+		_spec.ClearField(viewing.FieldFeedbackAt, field.TypeTime)
 	}
 	_node = &Viewing{config: _u.config}
 	_spec.Assign = _node.assignValues
