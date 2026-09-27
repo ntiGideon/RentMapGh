@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 
 	"github.com/a-h/templ"
@@ -24,9 +25,12 @@ import (
 type Handler struct {
 	svc      *Service
 	mandates *mandates.Service // owner authority for agent listings (nil: off)
+	baseURL  string            // for absolute links (share, canonical, og:image)
 }
 
-func NewHandler(svc *Service, m *mandates.Service) *Handler { return &Handler{svc: svc, mandates: m} }
+func NewHandler(svc *Service, m *mandates.Service, baseURL string) *Handler {
+	return &Handler{svc: svc, mandates: m, baseURL: strings.TrimRight(baseURL, "/")}
+}
 
 // Service exposes the service (admin wiring).
 func (h *Handler) Service() *Service { return h.svc }

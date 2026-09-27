@@ -537,8 +537,8 @@ Engineering:
 - [ ] Location search box with autocomplete (neighbourhoods, landmarks, POIs, universities).
 - [ ] Radius search ("within 3 km of KNUST").
 - [ ] URL-driven state; shareable searches.
-- [ ] Listing detail page: gallery + lightbox, video, key facts grid, amenities, **move-in cost breakdown**, approximate-area map, distances to nearby POIs (rounded), lister card with badges, freshness badge, similar listings nearby.
-- [ ] Rich OpenGraph tags + generated share image (photo + price + area) so WhatsApp previews look great.
+- [ ] Listing detail page: gallery + lightbox, video, key facts grid, amenities, **move-in cost breakdown**, approximate-area map, distances to nearby POIs (rounded), lister card with badges, freshness badge, similar listings nearby. *Slice 3a built everything except POI distances beyond KNUST (3c) and similar listings (3b); see §16.12.*
+- [ ] Rich OpenGraph tags + generated share image (photo + price + area) so WhatsApp previews look great. *OG title/description/canonical/cover image done in 3a; the generated image is 3d.*
 - [ ] Anonymous favourites (cookie) and compare tray (up to 4).
 - [ ] SEO pages: `/kumasi/ayeduase/rooms-for-rent`, `/kumasi/knust/hostels` — server-rendered, indexable, with structured data.
 - [ ] Empty states that help ("No self-contained rooms under GHS 800 here — widen the area?" with one-tap actions).
@@ -1069,5 +1069,18 @@ Sky Mint is step 200 of its scale; Graphite is step 900. Darker mint steps exist
 | Abuse | — | ≤10 mandate texts per agent per 24 h, 3 sends per request, 10 min between them; not to the agent's own phone; 7-day cool-off after a decline; conditional update so a double tap can't record two answers; per-IP limits on `/m/`; every step audited | Mandate texts cost money and reach people who didn't sign up |
 | Effects | trust score input | Approve sets `property.owner_id` when the landlord has an account; the agent gets an SMS about every answer; "Owner confirmed / asked / not confirmed" badges on Your listings, the review step and the admin review (with the "doesn't know this agent" warning). Public pages (Phase 3) use `mandates.Label` | Trust score itself is Phase 5 |
 | Channel | SMS/WhatsApp | SMS only | WhatsApp Business needs an approved template and account; add it as a second sender later |
+
+### 16.12 Decisions taken while building Phase 3 (slice 3a — public listing page)
+
+| Area | Plan said | Built | Why |
+| --- | --- | --- | --- |
+| URL | — | `/l/{id}/{slug}`; any other slug (or none) 301s to the canonical one | Short enough to paste in WhatsApp, and a headline edit doesn't break shared links |
+| Visibility | — | Active: public, cached 60 s for anonymous visitors. Paused, rented and expired: still reachable with an "unavailable" note and `noindex`. Drafts and in-review listings: 404, except to their lister, who sees a "Preview" banner. Removed: 404 | Shared links shouldn't dead-end, but only live listings get indexed |
+| Privacy | only `approx_*` public | The view model has no exact-location field. The landmark, street and digital address are private too: "behind the police station" beats a 150–400 m offset. The property name is shown only for hostels and commercial places. A test builds a listing with all of these and greps the HTML | §6.1; landmarks will unlock with a confirmed viewing (Phase 4) |
+| Map | soft ~300 m circle | Circle around the approximate point, no pin, zoom capped at 15.5, `cooperativeGestures`. MapLibre is loaded lazily when the map nears the viewport, and not at all in data-saver mode | Keeps the ~300 KB off phones that never scroll there |
+| Gallery | Gallery/Lightbox | One list: a swipe strip on phones, a 1 + 4 grid from `md` up; every photo links to its 1600 px size (works without JS); `<dialog>` lightbox with arrows, keys and swipe | No second copy of the images in the DOM |
+| Distances | rounded, from approx point | "~2 km from KNUST" from the approximate point (`geo.PublicDistance`) | Other POIs arrive with place search (3c) |
+| Contact | — | Share on WhatsApp and Copy link; "Viewing requests and messages are coming soon" | Contact is Phase 4 |
+| Dev data | — | `cmd/seed` (`task db:seed`): about 60 live listings around KNUST through the real wizard service, with generated photos and some approved agent mandates; refuses outside development | Phase 3 needs a map full of realistic listings |
 
 Phase 0 engineering status: repo skeleton, Compose dev stack (PostGIS + pgvector image, Mailpit, Valhalla behind a profile), config, slog, request IDs, graceful shutdown, `/healthz` + `/readyz`, Ent + migrations, design tokens + first components, landing page with waitlist, tests, CI and the production Dockerfile/Compose/Caddy are done. Still open: staging VPS + Cloudflare, i18n scaffolding, product/legal tasks.

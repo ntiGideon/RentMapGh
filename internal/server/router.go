@@ -119,7 +119,7 @@ func New(d Deps) http.Handler {
 		listingsSvc = listings.NewService(d.DB.Ent, auditLog, d.Cfg.LocationSecret, d.Media)
 	}
 	mandatesSvc := mandates.NewService(d.DB.Ent, auditLog, d.SMS, d.Cfg.AuthSecret, d.Cfg.BaseURL)
-	listingsH := listings.NewHandler(listingsSvc, mandatesSvc)
+	listingsH := listings.NewHandler(listingsSvc, mandatesSvc, d.Cfg.BaseURL)
 	mandatesH := mandates.NewHandler(mandatesSvc)
 	usersH := users.NewHandler(users.NewService(d.DB.Ent, auditLog, d.Files, verifySvc.PurgeUser), authH, verifySvc, auditLog)
 
@@ -172,6 +172,8 @@ func New(d Deps) http.Handler {
 	r.Post("/logout", authH.Logout)
 	r.Get("/u/{id}/avatar.jpg", usersH.Avatar)
 	r.Get("/media/{id}/{file}", listingsH.Media)
+	r.Get("/l/{id}", listingsH.ListingPage)
+	r.Get("/l/{id}/{slug}", listingsH.ListingPage)
 	// A landlord's answer to an agent's request: the SMS link is the key.
 	r.With(rateLimit(30, time.Minute), noStore).Get("/m/{token}", mandatesH.Offer)
 	r.With(rateLimit(10, time.Minute), noStore).Post("/m/{token}", mandatesH.Decide)

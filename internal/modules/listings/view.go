@@ -334,6 +334,10 @@ func cardView(d *Item, now time.Time) partials.ListingCardView {
 	case Expired:
 		cv.Actions = []partials.ListingAction{{Event: string(EvResume), Label: "Still available"}}
 	}
+	switch st {
+	case Active, Paused, Rented, Expired:
+		cv.ViewURL = PublicPath(d)
+	}
 	cv.CanAddUnit = d.P.Lat != nil
 	if c := d.Cover(); c != nil {
 		cv.CoverURL = MediaURL(c.ID, "w320.jpg")

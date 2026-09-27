@@ -9,9 +9,19 @@ type Meta struct {
 	NoIndex     bool
 	Styles      []string // extra stylesheets (static paths), e.g. the map's CSS
 	Modules     []string // extra ES modules, loaded only on pages that need them
+	URL         string   // absolute canonical URL (rel=canonical, og:url)
+	Image       string   // absolute og:image URL; WhatsApp and Facebook show it large
+	Type        string   // og:type, "website" by default
 }
 
 const siteName = "RentMap Ghana"
+
+func orWebsite(t string) string {
+	if t == "" {
+		return "website"
+	}
+	return t
+}
 
 func (m Meta) fullTitle() string {
 	if m.Title == "" {
@@ -42,7 +52,15 @@ templ Base(m Meta) {
 			<meta property="og:site_name" content={ siteName }/>
 			<meta property="og:title" content={ m.fullTitle() }/>
 			<meta property="og:description" content={ m.Description }/>
-			<meta property="og:type" content="website"/>
+			<meta property="og:type" content={ orWebsite(m.Type) }/>
+			if m.URL != "" {
+				<link rel="canonical" href={ m.URL }/>
+				<meta property="og:url" content={ m.URL }/>
+			}
+			if m.Image != "" {
+				<meta property="og:image" content={ m.Image }/>
+				<meta name="twitter:card" content="summary_large_image"/>
+			}
 			<meta property="og:locale" content="en_GH"/>
 			<!-- Blocking on purpose (~200 B, cached forever): sets dark mode before first paint. -->
 			<script src={ reqctx.Asset(ctx, "js/theme.js") }></script>

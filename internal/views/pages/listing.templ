@@ -1,0 +1,379 @@
+package pages
+
+import (
+	"strconv"
+
+	c "rentmapgh/internal/views/components"
+	"rentmapgh/internal/views/layouts"
+	"rentmapgh/internal/views/partials"
+)
+
+// ListingPageView is the public listing page. It carries the approximate
+// point only (ApproxLat/Lng); the exact location has no field here.
+type ListingPageView struct {
+	ID, Path, Title, Headline, Description string
+	PropertyName                           string // hostels and commercial places only
+	Status, Unavailable                    string
+	Preview                                bool // the lister viewing a page that isn't public yet
+	Area, City, UnitType, Distance         string
+	Price, Per, Monthly, MoveInTotal       string
+	Negotiable                             bool
+	MoveIn                                 partials.MoveInView
+	Tags                                   []string
+	Fresh                                  string
+	FreshRecent                            bool
+	Photos                                 []partials.PhotoTile
+	Video                                  partials.VideoView
+	Facts                                  []Fact
+	Amenities                              []AmenityGroup
+	ApproxLat, ApproxLng                   string
+	Lister                                 ListerCard
+	ShareURL, PageURL                      string
+}
+
+type Fact struct{ Label, Value, Icon string }
+
+func whereText(v ListingPageView) string {
+	s := "In the " + v.Area + " area"
+	if v.Distance != "" {
+		s += ", " + v.Distance
+	}
+	return s + ". The exact address is shared when a viewing is confirmed."
+}
+
+type AmenityGroup struct {
+	Title string
+	Items []AmenityItem
+}
+
+type AmenityItem struct{ Label, Icon string }
+
+type ListerCard struct {
+	Name, Initial, Kind, Agency, Since          string
+	PhoneVerified, IDVerified, LicenceVerified  bool
+	IsAgent                                     bool
+	Authority, AuthorityLabel                   string
+}
+
+templ ListingPage(m layouts.Meta, v ListingPageView) {
+	@layouts.Site(m) {
+		<div class="mx-auto max-w-6xl px-4 pb-28 pt-4 sm:px-6 lg:pb-16">
+			if v.Preview {
+				@notice("Preview — renters can't see this page until the listing is live.", false)
+			}
+			if v.Unavailable != "" {
+				@notice(v.Unavailable, true)
+			}
+			<nav aria-label="Breadcrumb" class="text-sm text-fg-muted">
+				<ol class="flex items-center gap-1.5">
+					<li>{ v.City }</li>
+					<li aria-hidden="true" class="text-fg-subtle">/</li>
+					<li>{ v.Area }</li>
+				</ol>
+			</nav>
+			<header class="mt-2 flex flex-wrap items-end justify-between gap-x-6 gap-y-2">
+				<div class="min-w-0">
+					<h1 class="text-2xl font-semibold tracking-tight text-fg sm:text-[1.75rem]">{ v.Headline }</h1>
+					<p class="mt-1 text-base text-fg-muted">
+						{ v.UnitType }
+						if v.PropertyName != "" {
+							{ " · " + v.PropertyName }
+						}
+						{ " · " + v.Area }
+						if v.Distance != "" {
+							{ " · " + v.Distance }
+						}
+					</p>
+				</div>
+				if v.Fresh != "" {
+					if v.FreshRecent {
+						@c.Badge(c.Success) {
+							<span class="size-1.5 rounded-full bg-current"></span>
+							{ v.Fresh }
+						}
+					} else {
+						@c.Badge(c.Neutral) {
+							{ v.Fresh }
+						}
+					}
+				}
+			</header>
+			@gallery(v)
+			<div class="mt-8 grid gap-10 lg:grid-cols-[minmax(0,1fr)_22rem]">
+				<div class="min-w-0 space-y-10">
+					if len(v.Tags) > 0 {
+						<ul class="-mt-2 flex flex-wrap gap-1.5">
+							for _, t := range v.Tags {
+								<li class="rounded-md border border-line px-2 py-1 text-sm text-fg">{ t }</li>
+							}
+						</ul>
+					}
+					<section aria-labelledby="facts-h">
+						<h2 id="facts-h" class="text-lg font-semibold text-fg">Key facts</h2>
+						<dl class="mt-4 grid gap-x-8 gap-y-4 sm:grid-cols-2">
+							for _, f := range v.Facts {
+								<div class="flex gap-3">
+									<span class="mt-0.5 grid size-8 shrink-0 place-items-center rounded-lg bg-surface text-fg-muted ring-1 ring-line">
+										@c.Icon(f.Icon, "size-4")
+									</span>
+									<div class="min-w-0">
+										<dt class="text-sm text-fg-muted">{ f.Label }</dt>
+										<dd class="text-base font-medium text-fg">{ f.Value }</dd>
+									</div>
+								</div>
+							}
+						</dl>
+					</section>
+					if v.Description != "" {
+						<section aria-labelledby="about-h">
+							<h2 id="about-h" class="text-lg font-semibold text-fg">About this place</h2>
+							<p class="mt-3 whitespace-pre-line text-base leading-relaxed text-fg">{ v.Description }</p>
+						</section>
+					}
+					if len(v.Amenities) > 0 {
+						<section aria-labelledby="amen-h">
+							<h2 id="amen-h" class="text-lg font-semibold text-fg">What's included</h2>
+							<div class="mt-4 grid gap-6 sm:grid-cols-2">
+								for _, g := range v.Amenities {
+									<div>
+										<h3 class="text-sm font-medium text-fg-muted">{ g.Title }</h3>
+										<ul class="mt-2 space-y-2">
+											for _, a := range g.Items {
+												<li class="flex items-center gap-2.5 text-base text-fg">
+													@c.Icon("check", "size-4 text-success dark:text-green-300")
+													{ a.Label }
+												</li>
+											}
+										</ul>
+									</div>
+								}
+							</div>
+						</section>
+					}
+					if v.Video.State == "ready" {
+						<section aria-labelledby="video-h">
+							<h2 id="video-h" class="text-lg font-semibold text-fg">Walk-through</h2>
+							<video controls playsinline preload="none" poster={ v.Video.Poster } width={ strconv.Itoa(v.Video.Width) } height={ strconv.Itoa(v.Video.Height) } class="mt-4 max-h-[32rem] w-full rounded-card bg-graphite-900 object-contain">
+								if !v.Video.DataSaver {
+									<source src={ v.Video.Src720 } type="video/mp4"/>
+								}
+								<source src={ v.Video.Src480 } type="video/mp4"/>
+							</video>
+						</section>
+					}
+					<section aria-labelledby="where-h">
+						<h2 id="where-h" class="text-lg font-semibold text-fg">Where it is</h2>
+						<p class="mt-1 text-base text-fg-muted">{ whereText(v) }</p>
+						if v.ApproxLat != "" {
+							<div data-area-map data-lat={ v.ApproxLat } data-lng={ v.ApproxLng } class="relative mt-4 aspect-[16/9] overflow-hidden rounded-card border border-line bg-surface sm:aspect-[2/1]">
+								<div data-map class="size-full"></div>
+								<p data-map-fallback class="absolute inset-0 grid place-items-center text-sm text-fg-subtle">Map of the { v.Area } area</p>
+							</div>
+						}
+					</section>
+				</div>
+				<aside class="space-y-4 lg:sticky lg:top-20 lg:self-start">
+					@priceCard(v)
+					@listerCard(v.Lister)
+					@shareRow(v)
+				</aside>
+			</div>
+		</div>
+		if v.Price != "" {
+			<div class="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-bg/95 px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur lg:hidden">
+				<div class="flex items-center justify-between gap-3">
+					<div>
+						<p class="text-lg font-semibold tabular-nums text-fg">{ v.Price } <span class="text-sm font-normal text-fg-muted">/ { v.Per }</span></p>
+						if v.MoveInTotal != "" {
+							<p class="text-xs tabular-nums text-fg-muted">{ v.MoveInTotal } to move in</p>
+						}
+					</div>
+					<a href={ templ.SafeURL(v.ShareURL) } target="_blank" rel="noopener" class="inline-flex h-11 items-center gap-1.5 rounded-lg bg-primary px-4 text-base font-medium text-on-primary shadow-btn">
+						@c.Icon("message", "size-4")
+						Share
+					</a>
+				</div>
+			</div>
+		}
+		<dialog data-lightbox aria-label="Photos" class="m-0 h-dvh max-h-none w-screen max-w-none bg-graphite-900/95 p-0 text-white backdrop:bg-graphite-900/80">
+			<div class="relative flex h-full flex-col">
+				<div class="flex items-center justify-between px-4 py-3">
+					<span data-lightbox-count class="text-sm tabular-nums text-white/80"></span>
+					<button type="button" data-lightbox-close aria-label="Close" class="grid size-10 place-items-center rounded-lg hover:bg-white/10">
+						@c.Icon("x", "size-5")
+					</button>
+				</div>
+				<div class="relative flex min-h-0 flex-1 items-center justify-center px-2 pb-6">
+					<img data-lightbox-img alt="" class="max-h-full max-w-full select-none object-contain"/>
+					<button type="button" data-lightbox-prev aria-label="Previous photo" class="absolute left-2 top-1/2 grid size-11 -translate-y-1/2 place-items-center rounded-full bg-white/10 hover:bg-white/20 sm:left-4">
+						@c.Icon("chevron-left", "size-5")
+					</button>
+					<button type="button" data-lightbox-next aria-label="Next photo" class="absolute right-2 top-1/2 grid size-11 -translate-y-1/2 place-items-center rounded-full bg-white/10 hover:bg-white/20 sm:right-4">
+						@c.Icon("chevron-right", "size-5")
+					</button>
+				</div>
+			</div>
+		</dialog>
+	}
+}
+
+templ notice(msg string, warn bool) {
+	<div class={ "mb-4 flex items-center gap-2 rounded-lg border px-3 py-2.5 text-sm", templ.KV("border-amber-500/30 bg-amber-50 text-amber-900 dark:bg-amber-400/10 dark:text-amber-200", warn), templ.KV("border-line bg-surface text-fg", !warn) } role="status">
+		@c.Icon("alert", "size-4 shrink-0")
+		{ msg }
+	</div>
+}
+
+// gallery: a swipeable strip on phones, a 1 + 4 grid from md up. Each photo
+// links to the large size, so it works without the lightbox script.
+templ gallery(v ListingPageView) {
+	if len(v.Photos) == 0 {
+		<div class="mt-5 grid aspect-[16/7] place-items-center rounded-card border border-line bg-surface text-fg-subtle">
+			@c.Icon("image", "size-8")
+		</div>
+	} else {
+		<div class="relative -mx-4 mt-5 sm:mx-0">
+			<ul data-gallery class="flex snap-x snap-mandatory overflow-x-auto [scrollbar-width:none] sm:gap-2 md:grid md:h-[27rem] md:grid-cols-4 md:grid-rows-2 md:overflow-visible md:rounded-card">
+				for i, p := range v.Photos {
+					<li class={ "relative w-full shrink-0 snap-center bg-surface sm:w-[85%] md:w-auto", templ.KV("md:col-span-2 md:row-span-2", i == 0), templ.KV("md:hidden", i > 4) }>
+						<a href={ templ.SafeURL(p.Large) } data-index={ strconv.Itoa(i) } class="block aspect-[4/3] size-full overflow-hidden sm:rounded-lg md:aspect-auto md:rounded-none">
+							<img
+								src={ p.Medium }
+								if i == 0 {
+									srcset={ p.Medium + " 800w, " + p.Large + " 1600w" }
+									sizes="(min-width: 768px) 50vw, 100vw"
+									fetchpriority="high"
+								} else {
+									srcset={ p.Small + " 320w, " + p.Medium + " 800w" }
+									sizes="(min-width: 768px) 25vw, 100vw"
+									loading="lazy"
+								}
+								width={ strconv.Itoa(p.Width) }
+								height={ strconv.Itoa(p.Height) }
+								alt={ "Photo " + strconv.Itoa(i+1) + " of " + v.Headline }
+								decoding="async"
+								class="size-full object-cover transition-opacity hover:opacity-95"
+							/>
+						</a>
+						if i == 4 && len(v.Photos) > 5 {
+							<span class="pointer-events-none absolute inset-0 hidden place-items-center bg-graphite-900/45 text-base font-semibold text-white md:grid">+{ strconv.Itoa(len(v.Photos) - 5) } photos</span>
+						}
+					</li>
+				}
+			</ul>
+			<span class="pointer-events-none absolute bottom-3 right-3 rounded-md bg-graphite-900/75 px-2 py-0.5 text-xs font-medium tabular-nums text-white md:hidden">
+				{ strconv.Itoa(len(v.Photos)) } photos
+			</span>
+		</div>
+	}
+}
+
+templ priceCard(v ListingPageView) {
+	<div class="overflow-hidden rounded-card border border-line bg-surface-raised shadow-card">
+		<div class="px-5 pt-5">
+			if v.Price != "" {
+				<p class="text-2xl font-semibold tabular-nums tracking-tight text-fg">
+					{ v.Price }
+					<span class="text-base font-normal text-fg-muted">/ { v.Per }</span>
+				</p>
+				if v.Monthly != "" {
+					<p class="mt-0.5 text-sm tabular-nums text-fg-muted">About { v.Monthly } a month</p>
+				}
+				if v.Negotiable {
+					<div class="mt-2">
+						@c.Badge(c.Brand) {
+							Negotiable
+						}
+					</div>
+				}
+			}
+		</div>
+		if len(v.MoveIn.Lines) > 0 {
+			<div class="mt-4 border-t border-line px-5 py-4">
+				<p class="text-sm font-medium text-fg">What you pay to move in</p>
+				<dl class="mt-2 space-y-1.5 text-sm tabular-nums">
+					for _, l := range v.MoveIn.Lines {
+						<div class="flex items-center justify-between gap-3">
+							<dt class="text-fg-muted">{ l.Label }</dt>
+							<dd class="text-fg">{ l.Amount }</dd>
+						</div>
+					}
+				</dl>
+			</div>
+			if v.MoveInTotal != "" {
+				<div class="flex items-center justify-between bg-mint-200 px-5 py-3 text-graphite-900">
+					<span class="text-sm font-medium">Total to move in</span>
+					<span class="text-lg font-semibold tabular-nums">{ v.MoveInTotal }</span>
+				</div>
+			}
+		}
+		<p class="px-5 py-3 text-xs text-fg-muted">Every fee is listed. Pay nothing before you've seen the place in person.</p>
+	</div>
+}
+
+templ listerCard(l ListerCard) {
+	<div class="rounded-card border border-line bg-surface-raised p-5 shadow-xs">
+		<div class="flex items-center gap-3">
+			<span class="grid size-11 shrink-0 place-items-center rounded-full bg-mint-200 text-base font-semibold text-graphite-900">{ l.Initial }</span>
+			<div class="min-w-0">
+				<p class="truncate font-semibold text-fg">{ l.Name }</p>
+				<p class="truncate text-sm text-fg-muted">
+					{ l.Kind }
+					if l.Agency != "" {
+						{ " · " + l.Agency }
+					}
+				</p>
+			</div>
+		</div>
+		<ul class="mt-4 flex flex-wrap gap-1.5">
+			if l.IDVerified {
+				<li>
+					@c.Badge(c.Verified) {
+						@c.Icon("badge-check", "size-3")
+						ID checked
+					}
+				</li>
+			}
+			if l.LicenceVerified {
+				<li>
+					@c.Badge(c.Verified) {
+						@c.Icon("badge-check", "size-3")
+						Licensed agent
+					}
+				</li>
+			}
+			if l.PhoneVerified {
+				<li>
+					@c.Badge(c.Neutral) {
+						@c.Icon("smartphone", "size-3")
+						Phone verified
+					}
+				</li>
+			}
+		</ul>
+		if l.IsAgent {
+			<p class={ "mt-3 flex items-start gap-2 rounded-lg px-3 py-2 text-sm", templ.KV("bg-green-50 text-success dark:bg-green-400/10 dark:text-green-300", l.Authority == "approved"), templ.KV("bg-surface text-fg-muted", l.Authority != "approved") }>
+				if l.Authority == "approved" {
+					@c.Icon("shield-check", "mt-0.5 size-4 shrink-0")
+				} else {
+					@c.Icon("alert", "mt-0.5 size-4 shrink-0")
+				}
+				{ l.AuthorityLabel }
+			</p>
+		}
+		<p class="mt-3 text-xs text-fg-subtle">{ l.Since }</p>
+		<p class="mt-3 border-t border-line pt-3 text-sm text-fg-muted">Viewing requests and messages are coming soon.</p>
+	</div>
+}
+
+templ shareRow(v ListingPageView) {
+	<div class="flex gap-2">
+		<a href={ templ.SafeURL(v.ShareURL) } target="_blank" rel="noopener" class="inline-flex h-11 flex-1 items-center justify-center gap-1.5 rounded-lg border border-line bg-surface-raised text-base font-medium text-fg shadow-xs hover:bg-surface">
+			@c.Icon("message", "size-4")
+			Share on WhatsApp
+		</a>
+		<button type="button" data-copy={ v.PageURL } class="inline-flex h-11 items-center justify-center gap-1.5 rounded-lg border border-line bg-surface-raised px-4 text-base font-medium text-fg shadow-xs hover:bg-surface">
+			Copy link
+		</button>
+	</div>
+}

@@ -113,6 +113,10 @@ tasks:
       - go generate ./internal/ent
       - go run ./cmd/migrate diff {{.NAME}}
 
+  db:seed:
+    desc: "Add live demo listings around KNUST (dev only): task db:seed N=60"
+    cmds: ["go run ./cmd/seed -n {{.N | default 60}}"]
+
   db:hash:
     desc: Re-hash migrations after hand-editing a SQL file
     cmds: ["go run ./cmd/migrate hash"]
