@@ -49,7 +49,7 @@ var Sorts = []Option{
 	{"newest", "Newest"},
 	{"price_asc", "Price: low to high"},
 	{"price_desc", "Price: high to low"},
-	{"nearest", "Nearest to map centre"},
+	{"nearest", "Nearest"},
 	{"confirmed", "Recently confirmed"},
 }
 
@@ -98,6 +98,26 @@ type Filter struct {
 	From      string   // available by, YYYY-MM-DD
 	Sort      string
 	Page      int // 1-based
+	// Near is a geo.Places slug. With Radius (km) it's a radius search that
+	// replaces the map box; alone it only sets the centre for "nearest" and
+	// for the distances on cards.
+	Near   string
+	Radius int
+}
+
+// Radii the "within" menu offers, in km.
+var Radii = []int{1, 2, 3, 5, 10}
+
+// Place is the filter's centre place, if any.
+func (f Filter) Place() (geo.Place, bool) { return geo.PlaceBySlug(f.Near) }
+
+// Ref is where distances on cards are measured from: the chosen place, else KNUST.
+func (f Filter) Ref() geo.Place {
+	if p, ok := f.Place(); ok {
+		return p
+	}
+	p, _ := geo.PlaceBySlug("knust")
+	return p
 }
 
 // ParseFilter reads a filter from query parameters, ignoring anything it
@@ -153,6 +173,17 @@ func ParseFilter(q url.Values) Filter {
 		f.Sort = s
 	}
 	f.Page = max(1, atoi("page", 1, 100))
+	if _, ok := geo.PlaceBySlug(q.Get("near")); ok {
+		f.Near = q.Get("near")
+	} else if ps := geo.SearchPlaces(q.Get("q"), 1); len(ps) > 0 {
+		// The no-script form sends the typed words: take the best match.
+		f.Near, f.Radius = ps[0].Slug, 3
+	}
+	if f.Near != "" {
+		if r := atoi("radius", 1, 10); slices.Contains(Radii, r) {
+			f.Radius = r
+		}
+	}
 	return f
 }
 
@@ -223,6 +254,12 @@ func (f Filter) Query() url.Values {
 	if f.Sort != "recommended" && f.Sort != "" {
 		q.Set("sort", f.Sort)
 	}
+	if f.Near != "" {
+		q.Set("near", f.Near)
+		if f.Radius > 0 {
+			q.Set("radius", strconv.Itoa(f.Radius))
+		}
+	}
 	if f.Page > 1 {
 		q.Set("page", strconv.Itoa(f.Page))
 	}
@@ -249,9 +286,14 @@ func (f Filter) where() (string, []any) {
 		args = append(args, v)
 		return "$" + strconv.Itoa(len(args))
 	}
-	conds = append(conds, "l.status = 'active'", "p.approx_geog IS NOT NULL",
-		fmt.Sprintf("p.approx_geog && ST_MakeEnvelope(%s, %s, %s, %s, 4326)::geography",
+	conds = append(conds, "l.status = 'active'", "p.approx_geog IS NOT NULL")
+	if pl, ok := f.Place(); ok && f.Radius > 0 {
+		conds = append(conds, fmt.Sprintf("ST_DWithin(p.approx_geog, ST_SetSRID(ST_MakePoint(%s, %s), 4326)::geography, %s)",
+			arg(pl.Point.Lng), arg(pl.Point.Lat), arg(float64(f.Radius)*1000)))
+	} else {
+		conds = append(conds, fmt.Sprintf("p.approx_geog && ST_MakeEnvelope(%s, %s, %s, %s, 4326)::geography",
 			arg(f.BBox.MinLng), arg(f.BBox.MinLat), arg(f.BBox.MaxLng), arg(f.BBox.MaxLat)))
+	}
 	if f.MinPrice > 0 {
 		conds = append(conds, "t.monthly_equivalent >= "+arg(int64(f.MinPrice)*100))
 	}
@@ -320,6 +362,9 @@ JOIN listing_terms t ON t.listing_id = l.id`
 
 func (f Filter) orderBy(args *[]any) string {
 	c := f.BBox.Centre()
+	if pl, ok := f.Place(); ok {
+		c = pl.Point
+	}
 	switch f.Sort {
 	case "newest":
 		return "l.published_at DESC NULLS LAST, l.id DESC"

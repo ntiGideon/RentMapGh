@@ -84,6 +84,25 @@ func TestSearchOverHTTP(t *testing.T) {
 	assert.Contains(t, rec.Body.String(), "data-close-preview")
 	assert.Equal(t, http.StatusNotFound, anon.do("GET", "/l/"+draft+"/card", nil, true).Code)
 
+	// Place suggestions and radius search.
+	rec = anon.do("GET", "/places?q=kath", nil, true)
+	require.Equal(t, http.StatusOK, rec.Code)
+	assert.Contains(t, rec.Body.String(), `data-place="kath"`)
+	assert.Contains(t, rec.Body.String(), "Komfo Anokye Teaching Hospital")
+	assert.Contains(t, anon.do("GET", "/places?q=zzzz", nil, true).Body.String(), "No matching place")
+	rec = anon.do("GET", "/search?near=knust&radius=3", nil, false)
+	assert.Contains(t, rec.Body.String(), "1 place within 3 km of KNUST")
+	assert.Contains(t, rec.Body.String(), `value="KNUST"`, "the box shows the place")
+	rec = anon.do("GET", "/search?near=kejetia&radius=1", nil, true)
+	assert.Contains(t, rec.Body.String(), "No places within 1 km of Kejetia Market")
+	rec = anon.do("GET", "/search?near=ayeduase", nil, true)
+	assert.Contains(t, rec.Body.String(), "from Ayeduase", "cards measure from the chosen place")
+
+	// The listing page lists rounded distances to nearby places.
+	rec = anon.do("GET", "/l/"+live, nil, false)
+	rec = anon.do("GET", rec.Header().Get("Location"), nil, false)
+	assert.Contains(t, rec.Body.String(), "KNUST Hospital")
+
 	// Home and the site header link to search.
 	rec = anon.do("GET", "/", nil, false)
 	assert.Contains(t, rec.Body.String(), `href="/search"`)

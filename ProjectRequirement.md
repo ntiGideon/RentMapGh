@@ -534,10 +534,10 @@ Engineering:
 - [x] Bottom-sheet listing preview on marker tap.
 - [x] Filters: price (monthly equivalent) range slider, unit type, bedrooms, bathrooms, furnished, self-contained, meter type, water source, parking, security, kitchen, AC, pets, commercial types, available from, verified only, owner-only. *Min/max inputs rather than a slider; see §16.13.*
 - [x] Sort: recommended, newest, price ↑/↓, nearest, recently confirmed.
-- [ ] Location search box with autocomplete (neighbourhoods, landmarks, POIs, universities).
-- [ ] Radius search ("within 3 km of KNUST").
+- [x] Location search box with autocomplete (neighbourhoods, landmarks, POIs, universities). *In-memory place list, not pg_trgm yet; see §16.14.*
+- [x] Radius search ("within 3 km of KNUST").
 - [x] URL-driven state; shareable searches.
-- [ ] Listing detail page: gallery + lightbox, video, key facts grid, amenities, **move-in cost breakdown**, approximate-area map, distances to nearby POIs (rounded), lister card with badges, freshness badge, similar listings nearby. *Slice 3a built the page, 3b added "Similar places nearby"; POI distances beyond KNUST come in 3c. See §16.12.*
+- [ ] Listing detail page: gallery + lightbox, video, key facts grid, amenities, **move-in cost breakdown**, approximate-area map, distances to nearby POIs (rounded), lister card with badges, freshness badge, similar listings nearby. *Slice 3a built the page, 3b added "Similar places nearby", 3c the rounded distances to nearby places. See §16.12–16.14.*
 - [ ] Rich OpenGraph tags + generated share image (photo + price + area) so WhatsApp previews look great. *OG title/description/canonical/cover image done in 3a; the generated image is 3d.*
 - [ ] Anonymous favourites (cookie) and compare tray (up to 4).
 - [ ] SEO pages: `/kumasi/ayeduase/rooms-for-rent`, `/kumasi/knust/hostels` — server-rendered, indexable, with structured data.
@@ -1099,5 +1099,14 @@ Sky Mint is step 200 of its scale; Graphite is step 900. Darker mint steps exist
 | Phones | map ↔ list toggle | List first; the Map button loads MapLibre only when tapped. In data-saver mode the desktop map waits for "Show map" | Saves ~300 KB for renters who only read the list |
 | Nearest | — | "Nearest to map centre", KNN on `approx_geog` | Place search (3c) will add "near KNUST"-style centres |
 | Similar | "similar listings nearby" | Up to 4 on the listing page: same type family, nearest by approximate point, other properties only | |
+
+### 16.14 Decisions taken while building Phase 3 (slice 3c — place search)
+
+| Area | Plan said | Built | Why |
+| --- | --- | --- | --- |
+| Places | `pg_trgm` on neighbourhood/landmark aliases | `geo.Places` in Go: the 23 neighbourhoods plus 14 landmarks (KNUST, Tech Junction, KsTU, AAMUSTED, CSUC, KATH, KNUST Hospital, Kejetia, City Mall, Baba Yara, Manhyia, the airport, Anloga Junction, Sofoline), each with the names people type ("Tech", "KATH", "Kumasi Poly"). Matching ignores case and accents, and ranks exact name/alias, then prefix, then word | ~40 places don't need a database index. Move to a table + `pg_trgm` when listers or staff add places. **Open item:** the landmark coordinates are landmark-level (±300 m) and must be checked on the ground before launch |
+| Search box | autocomplete | `/places?q=` returns HTML options (debounced 180 ms); arrow keys, Enter and Esc work; the no-script form sends the words as `q` and the server takes the best match | Same HTML-over-the-wire approach as the rest of the app |
+| Radius | "within 3 km of KNUST" | Picking a place sets `near` (+ `radius`, 3 km by default; 1/2/3/5/10). A radius search replaces the map box (`ST_DWithin` on `approx_geog`); the map frames it and draws a dashed circle. Dragging the map drops the radius and goes back to searching the view, but keeps the place as the centre for "Nearest" and for distances | Two competing areas (box and circle) would confuse; the chip says which one applies |
+| Distances | from the approx point, rounded | Result cards measure from the chosen place ("~1.5 km from KATH"), otherwise from KNUST. Listing pages list up to 4 landmarks within 5 km, all via `geo.PublicDistance` from the approximate point | §6.1 rule 6 |
 
 Phase 0 engineering status: repo skeleton, Compose dev stack (PostGIS + pgvector image, Mailpit, Valhalla behind a profile), config, slog, request IDs, graceful shutdown, `/healthz` + `/readyz`, Ent + migrations, design tokens + first components, landing page with waitlist, tests, CI and the production Dockerfile/Compose/Caddy are done. Still open: staging VPS + Cloudflare, i18n scaffolding, product/legal tasks.

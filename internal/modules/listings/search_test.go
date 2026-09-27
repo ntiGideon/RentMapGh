@@ -144,6 +144,17 @@ func TestSearch(t *testing.T) {
 	n, err := s.Count(ctx, ParseFilter(url.Values{"max": {"600"}}))
 	require.NoError(t, err)
 	assert.Equal(t, 2, n)
+
+	// Radius search around a place replaces the map box: Adum is outside the
+	// default view, but inside 2 km of Kejetia.
+	assert.ElementsMatch(t, []uuid.UUID{far}, search("near=kejetia&radius=2"))
+	assert.ElementsMatch(t, []uuid.UUID{far}, search("q=kejetia&radius=2"), "the no-script form sends words")
+	assert.ElementsMatch(t, []uuid.UUID{cheap, mid, hostel}, search("near=knust&radius=5"), "Adum is ~6 km out")
+	assert.NotContains(t, search("near=knust&radius=2"), hostel, "Kotei is ~2.4 km from KNUST")
+	// near without radius only moves the centre: the view still decides.
+	assert.Len(t, search("near=kejetia"), 3)
+	assert.Equal(t, cheap, search("near=ayeduase&sort=nearest")[0])
+	assert.ElementsMatch(t, []uuid.UUID{cheap, mid, hostel}, search("near=atlantis&radius=2"), "unknown places are ignored")
 }
 
 func TestFilterRoundTrip(t *testing.T) {
@@ -153,6 +164,14 @@ func TestFilterRoundTrip(t *testing.T) {
 	assert.Equal(t, q.Encode(), f.Query().Encode())
 	assert.Equal(t, 9, f.ActiveCount())
 	assert.Empty(t, ParseFilter(url.Values{}).Query(), "defaults encode to nothing")
+
+	f = ParseFilter(url.Values{"q": {"Tech"}})
+	assert.Equal(t, "knust", f.Near, "typed words pick the best place")
+	assert.Equal(t, 3, f.Radius, "with a 3 km radius")
+	assert.Equal(t, "near=knust&radius=3", f.Query().Encode())
+	assert.Equal(t, 0, ParseFilter(url.Values{"near": {"knust"}, "radius": {"4"}}).Radius, "only the offered radii")
+	assert.Equal(t, "KNUST", ParseFilter(url.Values{}).Ref().Name)
+	assert.Equal(t, "Kejetia Market", ParseFilter(url.Values{"near": {"kejetia"}}).Ref().Name)
 }
 
 func TestPriceLabel(t *testing.T) {

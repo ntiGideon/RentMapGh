@@ -58,7 +58,7 @@ func (h *Handler) ListingPage(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			slog.ErrorContext(r.Context(), "listing page: similar", "err", err)
 		}
-		v.Similar = h.cards(r.Context(), sim)
+		v.Similar = h.cards(r.Context(), sim, Filter{}.Ref())
 	}
 	v.ShareURL = shareURL(v, v.PageURL)
 

@@ -175,6 +175,7 @@ func New(d Deps) http.Handler {
 	r.With(rateLimit(240, time.Minute)).Get("/search", listingsH.Search)
 	r.With(rateLimit(240, time.Minute)).Get("/search/markers.geojson", listingsH.Markers)
 	r.Get("/l/{id}/card", listingsH.Preview)
+	r.With(rateLimit(240, time.Minute)).Get("/places", listingsH.Places)
 	r.Get("/l/{id}", listingsH.ListingPage)
 	r.Get("/l/{id}/{slug}", listingsH.ListingPage)
 	// A landlord's answer to an agent's request: the SMS link is the key.

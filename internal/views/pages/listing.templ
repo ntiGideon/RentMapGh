@@ -30,10 +30,14 @@ type ListingPageView struct {
 	Lister                                 ListerCard
 	ShareURL, PageURL                      string
 	AreaURL                                string // search around the area
+	Nearby                                 []NearbyPlace
 	Similar                                []partials.ResultCard
 }
 
 type Fact struct{ Label, Value, Icon string }
+
+// NearbyPlace is a landmark and its rounded distance from the approximate point.
+type NearbyPlace struct{ Name, Kind, Distance string }
 
 func whereText(v ListingPageView) string {
 	s := "In the " + v.Area + " area"
@@ -166,6 +170,19 @@ templ ListingPage(m layouts.Meta, v ListingPageView) {
 					<section aria-labelledby="where-h">
 						<h2 id="where-h" class="text-lg font-semibold text-fg">Where it is</h2>
 						<p class="mt-1 text-base text-fg-muted">{ whereText(v) }</p>
+						if len(v.Nearby) > 0 {
+							<ul class="mt-4 grid gap-x-8 gap-y-2 sm:grid-cols-2">
+								for _, n := range v.Nearby {
+									<li class="flex items-baseline justify-between gap-3 border-b border-line pb-2 text-sm">
+										<span class="min-w-0 truncate text-fg">
+											{ n.Name }
+											<span class="text-fg-subtle">· { n.Kind }</span>
+										</span>
+										<span class="shrink-0 tabular-nums text-fg-muted">{ n.Distance }</span>
+									</li>
+								}
+							</ul>
+						}
 						if v.ApproxLat != "" {
 							<div data-area-map data-lat={ v.ApproxLat } data-lng={ v.ApproxLng } class="relative mt-4 aspect-[16/9] overflow-hidden rounded-card border border-line bg-surface sm:aspect-[2/1]">
 								<div data-map class="size-full"></div>

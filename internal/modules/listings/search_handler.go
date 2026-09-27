@@ -98,7 +98,7 @@ func (h *Handler) Preview(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
-	cards := h.cards(r.Context(), items)
+	cards := h.cards(r.Context(), items, Filter{}.Ref())
 	w.Header().Set("Cache-Control", "public, max-age=30")
 	render.Component(w, r, http.StatusOK, pages.ListingPreview(cards[0]))
 }
@@ -106,7 +106,7 @@ func (h *Handler) Preview(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) searchView(ctx context.Context, f Filter, res Results) pages.SearchView {
 	v := pages.SearchView{
 		Total: res.Total, Page: f.Page, Pages: (res.Total + PageSize - 1) / PageSize,
-		Results: h.cards(ctx, res.Items), BBox: f.BBox.String(), DefaultBBox: DefaultBBox.String(), Sort: f.Sort, Active: f.ActiveCount(),
+		Results: h.cards(ctx, res.Items, f.Ref()), BBox: f.BBox.String(), DefaultBBox: DefaultBBox.String(), Sort: f.Sort, Active: f.ActiveCount(),
 		SC: f.SC, Furnished: f.Furnished, OwnMeter: f.OwnMeter, Kitchen: f.Kitchen != "", Verified: f.Verified, Owner: f.Owner,
 		Water: f.Water, From: f.From,
 	}
@@ -159,7 +159,30 @@ func (h *Handler) searchView(ctx context.Context, f Filter, res Results) pages.S
 	clear := Filter{BBox: f.BBox, HasBBox: f.HasBBox, Sort: "recommended", Page: 1}
 	v.ClearURL = "/search?" + clear.Query().Encode()
 	v.EmptyText = emptyText(f)
+	v.Where = "in this area"
+	if pl, ok := f.Place(); ok {
+		v.Near, v.PlaceName = pl.Slug, pl.Name
+		v.NearLat, v.NearLng = strconv.FormatFloat(pl.Point.Lat, 'f', 5, 64), strconv.FormatFloat(pl.Point.Lng, 'f', 5, 64)
+		if f.Radius > 0 {
+			v.Radius = strconv.Itoa(f.Radius)
+			v.Where = "within " + v.Radius + " km of " + pl.Name
+		}
+	}
+	for _, km := range Radii {
+		v.RadiusOpts = append(v.RadiusOpts, c.Option{Value: strconv.Itoa(km), Label: strconv.Itoa(km) + " km"})
+	}
 	return v
+}
+
+// Places answers the search box: up to 7 matching places.
+func (h *Handler) Places(w http.ResponseWriter, r *http.Request) {
+	var opts []pages.PlaceOption
+	for _, p := range geo.SearchPlaces(r.URL.Query().Get("q"), 7) {
+		opts = append(opts, pages.PlaceOption{Slug: p.Slug, Name: p.Name, Kind: p.Kind.Label(), Area: p.Area,
+			Lat: strconv.FormatFloat(p.Point.Lat, 'f', 5, 64), Lng: strconv.FormatFloat(p.Point.Lng, 'f', 5, 64)})
+	}
+	w.Header().Set("Cache-Control", "public, max-age=300")
+	render.Component(w, r, http.StatusOK, pages.PlaceSuggestions(opts))
 }
 
 // emptyText says what wasn't found, in the renter's words:
@@ -188,12 +211,15 @@ func emptyText(f Filter) string {
 	case f.MinPrice > 0:
 		s += " over ₵" + strconv.Itoa(f.MinPrice) + " a month"
 	}
+	if pl, ok := f.Place(); ok && f.Radius > 0 {
+		return s + " within " + strconv.Itoa(f.Radius) + " km of " + pl.Name
+	}
 	return s + " in this area"
 }
 
 // cards turns live listings into result cards, looking up whether each
 // lister's ID is checked in one query.
-func (h *Handler) cards(ctx context.Context, items []*Item) []partials.ResultCard {
+func (h *Handler) cards(ctx context.Context, items []*Item, ref geo.Place) []partials.ResultCard {
 	verified := map[uuid.UUID]bool{}
 	var listers []uuid.UUID
 	for _, d := range items {
@@ -211,12 +237,12 @@ func (h *Handler) cards(ctx context.Context, items []*Item) []partials.ResultCar
 	now := time.Now().UTC()
 	out := make([]partials.ResultCard, 0, len(items))
 	for _, d := range items {
-		out = append(out, resultCard(d, verified[d.L.ListerID], now))
+		out = append(out, resultCard(d, verified[d.L.ListerID], now, ref))
 	}
 	return out
 }
 
-func resultCard(d *Item, verified bool, now time.Time) partials.ResultCard {
+func resultCard(d *Item, verified bool, now time.Time, ref geo.Place) partials.ResultCard {
 	r := partials.ResultCard{ID: d.L.ID.String(), URL: PublicPath(d), Headline: d.L.Headline, Verified: verified,
 		IsAgent: d.L.ListerKind == listing.ListerKindAgent, Photos: len(d.Photos())}
 	if r.Headline == "" {
@@ -224,7 +250,7 @@ func resultCard(d *Item, verified bool, now time.Time) partials.ResultCard {
 	}
 	meta := []string{UnitTypeLabel(d.U.UnitType), area(d)}
 	if d.P.ApproxLat != nil && d.P.ApproxLng != nil {
-		meta = append(meta, geo.PublicDistance(geo.Distance(geo.Point{Lat: *d.P.ApproxLat, Lng: *d.P.ApproxLng}, geo.KNUST))+" from KNUST")
+		meta = append(meta, geo.PublicDistance(geo.Distance(geo.Point{Lat: *d.P.ApproxLat, Lng: *d.P.ApproxLng}, ref.Point))+" from "+ref.Name)
 	}
 	r.Meta = strings.Join(meta, " · ")
 	if cv := d.Cover(); cv != nil {

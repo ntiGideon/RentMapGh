@@ -172,6 +172,9 @@ func publicView(d *Item, lister *ent.User, authority mandates.State, viewer uuid
 		v.ApproxLat = strconv.FormatFloat(approx.Lat, 'f', 5, 64)
 		v.ApproxLng = strconv.FormatFloat(approx.Lng, 'f', 5, 64)
 		v.Distance = geo.PublicDistance(geo.Distance(approx, geo.KNUST)) + " from KNUST"
+		for _, n := range geo.NearbyPlaces(approx, 5000, 4) {
+			v.Nearby = append(v.Nearby, pages.NearbyPlace{Name: n.Place.Name, Kind: n.Place.Kind.Label(), Distance: geo.PublicDistance(n.Metres)})
+		}
 	}
 	v.Fresh, v.FreshRecent = freshness(d, now)
 

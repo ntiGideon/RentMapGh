@@ -36,7 +36,17 @@ type SearchView struct {
 	Owner         bool
 	From          string
 	Active        int
+
+	// Place search: Near is a place slug; Radius (km) makes it a radius search.
+	Near, PlaceName  string
+	NearLat, NearLng string
+	Radius           string
+	RadiusOpts       []c.Option
+	Where            string // "in this area", "within 3 km of KNUST"
 }
+
+// PlaceOption is one suggestion under the search box.
+type PlaceOption struct{ Slug, Name, Kind, Area, Lat, Lng string }
 
 // Chip is a toggle filter (unit-type family, feature).
 type Chip struct {
@@ -47,23 +57,28 @@ type Chip struct {
 func (v SearchView) countText() string {
 	switch v.Total {
 	case 0:
-		return "No places in this area"
+		return "No places " + v.Where
 	case 1:
-		return "1 place in this area"
+		return "1 place " + v.Where
 	}
-	return strconv.Itoa(v.Total) + " places in this area"
+	return strconv.Itoa(v.Total) + " places " + v.Where
 }
 
 templ Search(m layouts.Meta, v SearchView) {
 	@layouts.Base(m) {
 		<form id="search-form" action="/search" method="get" class="flex h-dvh flex-col" data-search>
 			<input type="hidden" name="bbox" value={ v.BBox } data-bbox/>
+			<input type="hidden" name="near" value={ v.Near } data-near/>
+			<input type="hidden" name="radius" value={ v.Radius } data-radius/>
 			<header class="z-30 border-b border-line bg-bg">
 				<div class="flex h-14 items-center gap-3 px-4">
 					<a href="/" class="-m-1 shrink-0 rounded-md p-1" aria-label="RentMap Ghana home">
 						@c.Logo()
 					</a>
-					<div class="ml-2 hidden min-w-0 flex-1 items-center gap-1.5 overflow-x-auto md:flex [scrollbar-width:none]">
+					<div class="ml-1 hidden w-72 shrink-0 md:block">
+						@placeBox(v, "place-q")
+					</div>
+					<div class="hidden min-w-0 flex-1 items-center gap-1.5 overflow-x-auto md:flex [scrollbar-width:none]">
 						@typeChips(v)
 					</div>
 					<div class="ml-auto flex items-center gap-1.5">
@@ -79,6 +94,9 @@ templ Search(m layouts.Meta, v SearchView) {
 							<a href="/login" class="hidden h-9 items-center rounded-lg px-2.5 text-sm font-medium text-fg-muted hover:bg-surface hover:text-fg sm:inline-flex">Sign in</a>
 						}
 					</div>
+				</div>
+				<div class="px-4 pb-2 md:hidden">
+					@placeBox(v, "place-q-m")
 				</div>
 				<div class="flex items-center gap-1.5 overflow-x-auto px-4 pb-2.5 md:hidden [scrollbar-width:none]">
 					@typeChips(v)
@@ -115,6 +133,49 @@ templ Search(m layouts.Meta, v SearchView) {
 	}
 }
 
+// placeBox is the "area, campus or landmark" search with suggestions. It
+// appears twice (desktop header, phone row); search.js keeps them in step.
+// Without the script, the typed words submit as q and the server picks the
+// best match.
+templ placeBox(v SearchView, id string) {
+	<div class="relative" data-place-box>
+		<label for={ id } class="sr-only">Search an area, campus or landmark</label>
+		<span class="pointer-events-none absolute inset-y-0 left-3 flex items-center text-fg-subtle">
+			@c.Icon("search", "size-4")
+		</span>
+		<input
+			id={ id }
+			type="search"
+			name="q"
+			value={ v.PlaceName }
+			placeholder="Area, campus or landmark"
+			autocomplete="off"
+			role="combobox"
+			aria-autocomplete="list"
+			aria-expanded="false"
+			aria-controls={ id + "-list" }
+			data-place-input
+			class="h-9 w-full rounded-lg border border-line bg-surface-raised pl-9 pr-3 text-sm text-fg placeholder:text-fg-subtle"
+		/>
+		<ul id={ id + "-list" } role="listbox" data-place-list class="absolute inset-x-0 top-full z-40 mt-1 hidden max-h-80 overflow-y-auto rounded-lg border border-line bg-bg p-1 shadow-card"></ul>
+	</div>
+}
+
+templ PlaceSuggestions(opts []PlaceOption) {
+	if len(opts) == 0 {
+		<li class="px-3 py-2 text-sm text-fg-muted">No matching place. Try a neighbourhood or campus name.</li>
+	}
+	for _, o := range opts {
+		<li role="option" tabindex="-1" data-place={ o.Slug } data-name={ o.Name } data-lat={ o.Lat } data-lng={ o.Lng } class="flex cursor-pointer items-center justify-between gap-3 rounded-md px-3 py-2 text-sm hover:bg-surface aria-selected:bg-surface">
+			<span class="min-w-0">
+				<span class="block truncate font-medium text-fg">{ o.Name }</span>
+				<span class="block truncate text-xs text-fg-muted">{ o.Area }</span>
+			</span>
+			<span class="shrink-0 text-xs text-fg-subtle">{ o.Kind }</span>
+		</li>
+	}
+}
+
 templ typeChips(v SearchView) {
 	for _, g := range v.Groups {
 		<label class="inline-flex h-8 shrink-0 cursor-pointer items-center rounded-full border border-line px-3 text-sm text-fg transition-colors hover:bg-surface has-checked:border-graphite-900 has-checked:bg-graphite-900 has-checked:text-white dark:has-checked:border-mint-200 dark:has-checked:bg-mint-200 dark:has-checked:text-graphite-900">
@@ -126,7 +187,27 @@ templ typeChips(v SearchView) {
 
 // SearchResults is the list pane: swapped on every search.
 templ SearchResults(v SearchView) {
-	<div id="search-results" data-active={ strconv.Itoa(v.Active) } class="px-4 pb-24 pt-4 lg:pb-8">
+	<div id="search-results" data-active={ strconv.Itoa(v.Active) } data-near={ v.Near } data-near-lat={ v.NearLat } data-near-lng={ v.NearLng } data-radius={ v.Radius } class="px-4 pb-24 pt-4 lg:pb-8">
+		if v.Near != "" {
+			<div class="mb-3 flex flex-wrap items-center gap-2 text-sm">
+				<span class="text-fg-muted">Within</span>
+				<select data-radius-select aria-label="Distance" class="h-8 rounded-lg border border-line bg-surface-raised px-2 pr-7 text-sm text-fg">
+					if v.Radius == "" {
+						<option value="" selected>any distance</option>
+					}
+					for _, o := range v.RadiusOpts {
+						<option value={ o.Value } selected?={ o.Value == v.Radius }>{ o.Label }</option>
+					}
+				</select>
+				<span class="text-fg-muted">of</span>
+				<span class="inline-flex items-center gap-1 rounded-full bg-surface px-2.5 py-1 font-medium text-fg ring-1 ring-line">
+					{ v.PlaceName }
+					<button type="button" data-clear-place aria-label={ "Stop searching around " + v.PlaceName } class="-mr-1 grid size-5 place-items-center rounded-full text-fg-muted hover:bg-surface-raised hover:text-fg">
+						@c.Icon("x", "size-3.5")
+					</button>
+				</span>
+			</div>
+		}
 		<div class="flex flex-wrap items-center justify-between gap-2">
 			<p class="text-sm font-medium text-fg" aria-live="polite">{ v.countText() }</p>
 			<label class="inline-flex items-center gap-2 text-sm text-fg-muted">

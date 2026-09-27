@@ -8,6 +8,8 @@
 //   back / forward ──────────┘
 const form = document.querySelector("[data-search]");
 const bboxInput = form.querySelector("[data-bbox]");
+const nearInput = form.querySelector("[data-near]");
+const radiusInput = form.querySelector("[data-radius]");
 const mapEl = form.querySelector("[data-search-map]");
 const loading = form.querySelector("[data-map-loading]");
 const preview = form.querySelector("[data-preview]");
@@ -26,7 +28,8 @@ function query() {
   const seen = new Set();
   const q = new URLSearchParams();
   for (const [k, v] of new FormData(form)) {
-    if (v === "" || (k === "sort" && v === "recommended")) continue;
+    // The typed words are only for the no-script form; the script sends near.
+    if (v === "" || k === "q" || (k === "sort" && v === "recommended")) continue;
     const key = k + "=" + v;
     if (seen.has(key)) continue;
     seen.add(key);
@@ -37,6 +40,12 @@ function query() {
 
 form.addEventListener("change", (e) => {
   const el = e.target;
+  if (el.matches("[data-radius-select]")) {
+    radiusInput.value = el.value;
+    fitPlace();
+    runSearch({ push: true });
+    return;
+  }
   if (el.type === "checkbox" && el.name) {
     form.querySelectorAll(`input[type=checkbox][name="${el.name}"][value="${el.value}"]`).forEach((c) => (c.checked = el.checked));
   }
@@ -154,6 +163,10 @@ async function initMap() {
     });
     map.on("mouseenter", "clusters", () => (map.getCanvas().style.cursor = "pointer"));
     map.on("mouseleave", "clusters", () => (map.getCanvas().style.cursor = ""));
+    map.addSource("radius", { type: "geojson", data: emptyGeo });
+    map.addLayer({ id: "radius-fill", type: "fill", source: "radius", paint: { "fill-color": "#34d3a6", "fill-opacity": 0.08 } }, "clusters");
+    map.addLayer({ id: "radius-line", type: "line", source: "radius", paint: { "line-color": "#0f9f7a", "line-width": 1.5, "line-dasharray": [2, 2] } }, "clusters");
+    drawRadius();
     map.on("render", syncPills);
     const q = query();
     q.delete("page");
@@ -165,8 +178,18 @@ async function initMap() {
   let ready = false;
   map.once("idle", () => (ready = true));
   let timer = null;
+  // Dragging the map away from a place goes back to searching the view.
+  let userMove = false;
+  map.on("movestart", (e) => (userMove = !!e.originalEvent && !programmatic));
   map.on("moveend", () => {
+    const byUser = userMove;
+    userMove = false;
+    programmatic = false;
     if (!ready) return;
+    if (byUser && radiusInput.value) {
+      radiusInput.value = "";
+      drawRadius();
+    }
     clearTimeout(timer);
     timer = setTimeout(() => {
       const b = map.getBounds();
@@ -289,5 +312,141 @@ if (desktop.matches) {
 desktop.addEventListener("change", (e) => {
   if (e.matches && !dataSaver) initMap().then(() => map.resize());
 });
+
+// ── Place search ─────────────────────────────────────────────────────────
+// Suggestions come from /places as HTML options. Picking one makes it the
+// centre: a radius search (3 km unless chosen) that the map frames.
+const placeInputs = [...form.querySelectorAll("[data-place-input]")];
+let suggestTimer = null;
+let suggestAbort = null;
+
+function listOf(input) {
+  return input.closest("[data-place-box]").querySelector("[data-place-list]");
+}
+function closeList(input) {
+  const list = listOf(input);
+  list.classList.add("hidden");
+  input.setAttribute("aria-expanded", "false");
+}
+async function suggest(input) {
+  const q = input.value.trim();
+  const list = listOf(input);
+  if (!q) {
+    closeList(input);
+    return;
+  }
+  suggestAbort?.abort();
+  suggestAbort = new AbortController();
+  try {
+    const res = await fetch("/places?q=" + encodeURIComponent(q), { headers: { "HX-Request": "true" }, signal: suggestAbort.signal });
+    if (!res.ok) return;
+    list.innerHTML = await res.text();
+    list.classList.remove("hidden");
+    input.setAttribute("aria-expanded", "true");
+  } catch (_) {}
+}
+
+function choosePlace(opt) {
+  placeInputs.forEach((i) => {
+    i.value = opt.dataset.name;
+    closeList(i);
+  });
+  nearInput.value = opt.dataset.place;
+  if (!radiusInput.value) radiusInput.value = "3";
+  near = { lat: parseFloat(opt.dataset.lat), lng: parseFloat(opt.dataset.lng) };
+  fitPlace();
+  runSearch({ push: true });
+}
+
+function clearPlace() {
+  nearInput.value = "";
+  radiusInput.value = "";
+  placeInputs.forEach((i) => (i.value = ""));
+  near = null;
+  drawRadius();
+  runSearch({ push: true });
+}
+
+for (const input of placeInputs) {
+  input.addEventListener("input", () => {
+    clearTimeout(suggestTimer);
+    suggestTimer = setTimeout(() => suggest(input), 180);
+    if (!input.value.trim() && nearInput.value) clearPlace();
+  });
+  input.addEventListener("keydown", (e) => {
+    const list = listOf(input);
+    const opts = [...list.querySelectorAll("[data-place]")];
+    const at = opts.findIndex((o) => o.getAttribute("aria-selected") === "true");
+    const select = (i) => opts.forEach((o, j) => o.setAttribute("aria-selected", String(i === j)));
+    if (e.key === "ArrowDown" && opts.length) {
+      e.preventDefault();
+      select((at + 1) % opts.length);
+    } else if (e.key === "ArrowUp" && opts.length) {
+      e.preventDefault();
+      select((at - 1 + opts.length) % opts.length);
+    } else if (e.key === "Enter") {
+      e.preventDefault(); // never submit the whole form from here
+      const pick = opts[at >= 0 ? at : 0];
+      if (pick) choosePlace(pick);
+    } else if (e.key === "Escape") {
+      closeList(input);
+    }
+  });
+  input.addEventListener("blur", () => setTimeout(() => closeList(input), 150));
+}
+form.addEventListener("mousedown", (e) => {
+  const opt = e.target.closest("[data-place]");
+  if (opt) {
+    e.preventDefault(); // keep focus; pick on mousedown so blur doesn't close first
+    choosePlace(opt);
+  }
+});
+form.addEventListener("click", (e) => {
+  if (e.target.closest("[data-clear-place]")) clearPlace();
+});
+
+// The centre place and its radius circle on the map.
+let near = null;
+function readNear() {
+  const r = document.getElementById("search-results");
+  near = r?.dataset.near ? { lat: parseFloat(r.dataset.nearLat), lng: parseFloat(r.dataset.nearLng) } : null;
+}
+function circleOf(c, km, steps = 72) {
+  const pts = [];
+  const dLat = (km * 1000) / 111320;
+  const dLng = (km * 1000) / (111320 * Math.cos((c.lat * Math.PI) / 180));
+  for (let i = 0; i <= steps; i++) {
+    const t = (i / steps) * 2 * Math.PI;
+    pts.push([c.lng + dLng * Math.cos(t), c.lat + dLat * Math.sin(t)]);
+  }
+  return pts;
+}
+function drawRadius() {
+  if (!map || !map.getSource("radius")) return;
+  const km = parseFloat(radiusInput.value);
+  const data = near && km ? { type: "Feature", geometry: { type: "Polygon", coordinates: [circleOf(near, km)] } } : emptyGeo;
+  map.getSource("radius").setData(data);
+}
+// fitPlace frames the radius and records that box, so the URL matches.
+function fitPlace() {
+  const km = parseFloat(radiusInput.value);
+  if (!near || !km) return;
+  const pts = circleOf(near, km, 16);
+  const lngs = pts.map((p) => p[0]);
+  const lats = pts.map((p) => p[1]);
+  const box = [[Math.min(...lngs), Math.min(...lats)], [Math.max(...lngs), Math.max(...lats)]];
+  bboxInput.value = [box[0][0], box[0][1], box[1][0], box[1][1]].map((n) => n.toFixed(5)).join(",");
+  if (map) {
+    programmatic = true;
+    map.fitBounds(box, { padding: 32, duration: 500 });
+  }
+  drawRadius();
+}
+let programmatic = false;
+document.body.addEventListener("htmx:afterSwap", () => {
+  readNear();
+  drawRadius();
+});
+readNear();
 
 lastQuery = query().toString();
