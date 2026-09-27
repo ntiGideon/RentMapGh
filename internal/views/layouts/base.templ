@@ -12,6 +12,7 @@ type Meta struct {
 	URL         string   // absolute canonical URL (rel=canonical, og:url)
 	Image       string   // absolute og:image URL; WhatsApp and Facebook show it large
 	Type        string   // og:type, "website" by default
+	JSONLD      []byte   // schema.org structured data (json.Marshal output: <, > and & are escaped)
 }
 
 const siteName = "RentMap Ghana"
@@ -56,6 +57,9 @@ templ Base(m Meta) {
 			if m.URL != "" {
 				<link rel="canonical" href={ m.URL }/>
 				<meta property="og:url" content={ m.URL }/>
+			}
+			if len(m.JSONLD) > 0 {
+				@templ.Raw(`<script type="application/ld+json">` + string(m.JSONLD) + `</script>`)
 			}
 			if m.Image != "" {
 				<meta property="og:image" content={ m.Image }/>

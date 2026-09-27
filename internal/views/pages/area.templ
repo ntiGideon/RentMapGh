@@ -1,0 +1,80 @@
+package pages
+
+import (
+	"strconv"
+
+	c "rentmapgh/internal/views/components"
+	"rentmapgh/internal/views/layouts"
+	"rentmapgh/internal/views/partials"
+)
+
+// AreaView is an indexable area page: /kumasi/{place}/{kind}.
+type AreaView struct {
+	Title, Place, Kind, Intro string
+	Total, Radius             int
+	Cards                     []partials.ResultCard
+	MapURL                    string
+	OtherKinds, Nearby        []Link
+}
+
+type Link struct{ Label, URL string }
+
+templ Area(m layouts.Meta, v AreaView) {
+	@layouts.Site(m) {
+		<div class="mx-auto max-w-6xl px-4 pb-24 pt-6 sm:px-6">
+			<nav aria-label="Breadcrumb" class="text-sm text-fg-muted">
+				<ol class="flex items-center gap-1.5">
+					<li><a href="/search" class="hover:text-fg hover:underline underline-offset-4">Kumasi</a></li>
+					<li aria-hidden="true" class="text-fg-subtle">/</li>
+					<li>{ v.Place }</li>
+				</ol>
+			</nav>
+			<div class="mt-2 flex flex-wrap items-end justify-between gap-4">
+				<div class="max-w-3xl">
+					<h1 class="text-2xl font-semibold tracking-tight text-fg sm:text-[1.75rem]">{ v.Title }</h1>
+					<p class="mt-2 text-base text-fg-muted">{ v.Intro }</p>
+				</div>
+				@c.LinkButton(v.MapURL, c.Primary, c.MD) {
+					@c.Icon("map", "size-4")
+					if v.Total > len(v.Cards) {
+						See all { strconv.Itoa(v.Total) } on the map
+					} else {
+						See them on the map
+					}
+				}
+			</div>
+			if len(v.Cards) == 0 {
+				<div class="mt-10">
+					@c.EmptyState("search", "Nothing listed here yet", "New places are added every week. Try the map for a wider area, or a nearby neighbourhood below.") {
+						@c.LinkButton("/search", c.Ghost, c.MD) {
+							Open the map
+						}
+					}
+				</div>
+			} else {
+				<div class="mt-8 grid gap-x-5 gap-y-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+					for i, r := range v.Cards {
+						@partials.ResultCardView(r, i < 4)
+					}
+				</div>
+			}
+			<div class="mt-16 grid gap-10 border-t border-line pt-8 sm:grid-cols-2">
+				@linkList("More in "+v.Place, v.OtherKinds)
+				@linkList("Nearby areas", v.Nearby)
+			</div>
+		</div>
+	}
+}
+
+templ linkList(title string, links []Link) {
+	if len(links) > 0 {
+		<section>
+			<h2 class="text-sm font-semibold text-fg">{ title }</h2>
+			<ul class="mt-3 space-y-2 text-sm">
+				for _, l := range links {
+					<li><a href={ templ.SafeURL(l.URL) } class="text-fg-muted hover:text-fg hover:underline underline-offset-4">{ l.Label }</a></li>
+				}
+			</ul>
+		</section>
+	}
+}

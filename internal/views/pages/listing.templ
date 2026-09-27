@@ -32,6 +32,7 @@ type ListingPageView struct {
 	AreaURL                                string // search around the area
 	Nearby                                 []NearbyPlace
 	Similar                                []partials.ResultCard
+	Saved                                  bool
 }
 
 type Fact struct{ Label, Value, Icon string }
@@ -400,6 +401,10 @@ templ listerCard(l ListerCard) {
 
 templ shareRow(v ListingPageView) {
 	<div class="flex gap-2">
+		@partials.SaveButton(v.ID, v.Saved, v.Path, false)
+		<button type="button" data-compare={ v.ID } aria-pressed="false" title="Add to compare" aria-label="Add to compare" hidden class="size-11 shrink-0 place-items-center rounded-lg border border-line bg-surface-raised text-fg shadow-xs hover:bg-surface aria-pressed:border-graphite-900 aria-pressed:bg-graphite-900 aria-pressed:text-white dark:aria-pressed:border-mint-200 dark:aria-pressed:bg-mint-200 dark:aria-pressed:text-graphite-900 [&:not([hidden])]:grid">
+			@c.Icon("columns", "size-[18px]")
+		</button>
 		<a href={ templ.SafeURL(v.ShareURL) } target="_blank" rel="noopener" class="inline-flex h-11 flex-1 items-center justify-center gap-1.5 rounded-lg border border-line bg-surface-raised text-base font-medium text-fg shadow-xs hover:bg-surface">
 			@c.Icon("message", "size-4")
 			Share on WhatsApp

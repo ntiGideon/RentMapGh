@@ -1,9 +1,12 @@
 package server
 
 import (
+	"bytes"
 	"context"
+	"image/jpeg"
 	"net/http"
 	"net/url"
+	"regexp"
 	"strconv"
 	"strings"
 	"testing"
@@ -65,7 +68,19 @@ func TestPublicListingPage(t *testing.T) {
 	assert.Contains(t, page, "Total to move in")
 	assert.Contains(t, page, "from KNUST")
 	assert.Contains(t, page, "ID checked")
-	assert.Contains(t, page, `property="og:image" content="http://example.test/media/`)
+	og := regexp.MustCompile(`property="og:image" content="http://example.test(/l/` + id + `/og\.jpg\?v=[0-9a-f]{12})"`).FindStringSubmatch(page)
+	require.Len(t, og, 2, "a generated share image")
+	ogPath := strings.ReplaceAll(og[1], "&amp;", "&")
+	rec = anon.do("GET", ogPath, nil, false)
+	require.Equal(t, http.StatusOK, rec.Code)
+	assert.Equal(t, "image/jpeg", rec.Header().Get("Content-Type"))
+	assert.Contains(t, rec.Header().Get("Cache-Control"), "immutable")
+	img, err := jpeg.DecodeConfig(bytes.NewReader(rec.Body.Bytes()))
+	require.NoError(t, err)
+	assert.Equal(t, [2]int{1200, 630}, [2]int{img.Width, img.Height})
+	rec = anon.do("GET", "/l/"+id+"/og.jpg?v=stale", nil, false)
+	assert.Equal(t, http.StatusOK, rec.Code)
+	assert.NotContains(t, rec.Header().Get("Cache-Control"), "immutable", "an old version isn't cached forever")
 	assert.Contains(t, page, `rel="canonical" href="http://example.test`+canonical+`"`)
 	assert.Contains(t, page, "https://wa.me/?text=")
 	assert.NotContains(t, page, `content="noindex"`)

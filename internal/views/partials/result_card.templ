@@ -19,10 +19,55 @@ type ResultCard struct {
 	Verified                bool
 	IsAgent                 bool
 	Authority               bool // agent listing with the owner's confirmation
+	Saved                   bool
+}
+
+// SaveButton is the heart: a real form (works without JS), swapped in place
+// by htmx. back is where the no-script post returns to.
+templ SaveButton(id string, saved bool, back string, overlay bool) {
+	<form method="post" action={ templ.SafeURL("/saved/" + id) } hx-post={ "/saved/" + id } hx-swap="outerHTML" data-save-form={ id } class={ templ.KV("absolute right-2 top-2 z-10", overlay) }>
+		<input type="hidden" name="back" value={ back }/>
+		if !overlay {
+			<input type="hidden" name="style" value="inline"/>
+		}
+		<button
+			type="submit"
+			aria-pressed={ boolString(saved) }
+			aria-label={ saveLabel(saved) }
+			title={ saveLabel(saved) }
+			class={ "group/save grid place-items-center rounded-full transition-transform active:scale-90",
+				templ.KV("size-9 bg-white/95 text-graphite-900 shadow-xs hover:bg-white", overlay),
+				templ.KV("size-11 border border-line bg-surface-raised text-fg shadow-xs hover:bg-surface", !overlay) }
+		>
+			@c.Icon("heart", saveIconClass(saved))
+		</button>
+	</form>
+}
+
+func boolString(b bool) string {
+	if b {
+		return "true"
+	}
+	return "false"
+}
+
+func saveLabel(saved bool) string {
+	if saved {
+		return "Remove from saved"
+	}
+	return "Save this place"
+}
+
+func saveIconClass(saved bool) string {
+	if saved {
+		return "size-[18px] fill-red-500 text-red-500"
+	}
+	return "size-[18px]"
 }
 
 templ ResultCardView(r ResultCard, eager bool) {
 	<article data-result-id={ r.ID } class="group/card relative min-w-0">
+		@SaveButton(r.ID, r.Saved, r.URL, true)
 		<a href={ templ.SafeURL(r.URL) } class="block rounded-card focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-focus">
 			<div class="relative aspect-[4/3] overflow-hidden rounded-card bg-surface ring-1 ring-line">
 				if r.Small != "" {

@@ -87,6 +87,9 @@ templ Search(m layouts.Meta, v SearchView) {
 							Filters
 							<span data-active-badge class={ "size-5 place-items-center rounded-full bg-graphite-900 text-2xs font-semibold text-white dark:bg-mint-200 dark:text-graphite-900", templ.KV("grid", v.Active > 0), templ.KV("hidden", v.Active == 0) }>{ strconv.Itoa(v.Active) }</span>
 						</button>
+						<a href="/saved" aria-label="Saved places" title="Saved places" class="grid size-9 place-items-center rounded-lg text-fg-muted hover:bg-surface hover:text-fg">
+							@c.Icon("heart", "size-4")
+						</a>
 						@layouts.ThemeToggle()
 						if vw := reqctx.CurrentViewer(ctx); vw != nil {
 							<a href="/account" class="hidden h-9 items-center rounded-lg px-2.5 text-sm font-medium text-fg-muted hover:bg-surface hover:text-fg sm:inline-flex">Account</a>

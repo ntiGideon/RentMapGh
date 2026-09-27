@@ -119,7 +119,8 @@ func New(d Deps) http.Handler {
 		listingsSvc = listings.NewService(d.DB.Ent, auditLog, d.Cfg.LocationSecret, d.Media)
 	}
 	mandatesSvc := mandates.NewService(d.DB.Ent, auditLog, d.SMS, d.Cfg.AuthSecret, d.Cfg.BaseURL)
-	listingsH := listings.NewHandler(listingsSvc, mandatesSvc, d.Cfg.BaseURL)
+	listingsH := listings.NewHandler(listingsSvc, mandatesSvc, listings.HandlerConfig{
+		BaseURL: d.Cfg.BaseURL, Secret: d.Cfg.AuthSecret, Secure: d.Cfg.IsHTTPS()})
 	mandatesH := mandates.NewHandler(mandatesSvc)
 	usersH := users.NewHandler(users.NewService(d.DB.Ent, auditLog, d.Files, verifySvc.PurgeUser), authH, verifySvc, auditLog)
 
@@ -153,10 +154,6 @@ func New(d Deps) http.Handler {
 		}
 		_, _ = w.Write([]byte("ready"))
 	})
-	r.Get("/robots.txt", func(w http.ResponseWriter, _ *http.Request) {
-		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
-		_, _ = w.Write([]byte("User-agent: *\nAllow: /\n"))
-	})
 	r.Handle(web.Prefix+"*", d.Assets.Handler())
 
 	wl := waitlist.NewHandler(waitlist.NewService(d.DB.Ent), d.Cfg.BaseURL, d.Cfg.IsHTTPS())
@@ -175,7 +172,14 @@ func New(d Deps) http.Handler {
 	r.With(rateLimit(240, time.Minute)).Get("/search", listingsH.Search)
 	r.With(rateLimit(240, time.Minute)).Get("/search/markers.geojson", listingsH.Markers)
 	r.Get("/l/{id}/card", listingsH.Preview)
+	r.With(rateLimit(120, time.Minute)).Get("/l/{id}/og.jpg", listingsH.OGImage)
 	r.With(rateLimit(240, time.Minute)).Get("/places", listingsH.Places)
+	r.With(rateLimit(60, time.Minute)).Post("/saved/{id}", listingsH.ToggleSaved)
+	r.Get("/saved", listingsH.SavedPage)
+	r.Get("/compare", listingsH.Compare)
+	r.Get("/kumasi/{place}/{kind}", listingsH.AreaPage)
+	r.Get("/sitemap.xml", listingsH.Sitemap)
+	r.Get("/robots.txt", listingsH.Robots)
 	r.Get("/l/{id}", listingsH.ListingPage)
 	r.Get("/l/{id}/{slug}", listingsH.ListingPage)
 	// A landlord's answer to an agent's request: the SMS link is the key.

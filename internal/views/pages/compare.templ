@@ -1,0 +1,79 @@
+package pages
+
+import (
+	c "rentmapgh/internal/views/components"
+	"rentmapgh/internal/views/layouts"
+	"rentmapgh/internal/views/partials"
+)
+
+// CompareView puts up to four places side by side.
+type CompareView struct {
+	Cards []partials.ResultCard
+	Rows  []CompareRow
+}
+
+// CompareRow is one line of the table; Best marks the cheapest value(s).
+type CompareRow struct {
+	Label  string
+	Values []string
+	Best   []bool
+}
+
+templ Compare(m layouts.Meta, v CompareView) {
+	@layouts.Site(m) {
+		<div class="mx-auto max-w-6xl px-4 pb-24 pt-8 sm:px-6">
+			<div class="flex flex-wrap items-end justify-between gap-3">
+				<div>
+					<h1 class="text-2xl font-semibold tracking-tight text-fg">Compare places</h1>
+					<p class="mt-1 text-base text-fg-muted">Prices, move-in cost and the facts that matter, side by side.</p>
+				</div>
+				<button type="button" data-compare-clear hidden class="text-sm font-medium text-fg-muted underline-offset-4 hover:text-fg hover:underline">Clear comparison</button>
+			</div>
+			if len(v.Cards) < 2 {
+				<div class="mt-10">
+					@c.EmptyState("columns", "Pick at least two places", "Use the compare button on a listing or on your saved places. You can compare up to four.") {
+						@c.LinkButton("/saved", c.Primary, c.MD) {
+							Go to saved places
+						}
+					}
+				</div>
+			} else {
+				<div class="mt-6 overflow-x-auto">
+					<table class="w-full min-w-[40rem] table-fixed border-separate border-spacing-0 text-sm">
+						<colgroup>
+							<col class="w-36"/>
+							for range v.Cards {
+								<col/>
+							}
+						</colgroup>
+						<thead>
+							<tr>
+								<th class="sticky left-0 bg-bg"></th>
+								for _, r := range v.Cards {
+									<th class="px-2 pb-4 text-left align-top font-normal">
+										@partials.ResultCardView(r, false)
+									</th>
+								}
+							</tr>
+						</thead>
+						<tbody>
+							for _, row := range v.Rows {
+								<tr>
+									<th scope="row" class="sticky left-0 border-t border-line bg-bg py-2.5 pr-3 text-left align-top font-medium text-fg-muted">{ row.Label }</th>
+									for i, val := range row.Values {
+										<td class={ "border-t border-line px-2 py-2.5 align-top tabular-nums text-fg", templ.KV("font-semibold", row.Best[i]) }>
+											{ val }
+											if row.Best[i] {
+												<span class="ml-1 rounded bg-mint-200 px-1 text-2xs font-semibold text-graphite-900">Lowest</span>
+											}
+										</td>
+									}
+								</tr>
+							}
+						</tbody>
+					</table>
+				</div>
+			}
+		</div>
+	}
+}

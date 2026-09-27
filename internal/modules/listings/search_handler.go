@@ -33,14 +33,14 @@ func (h *Handler) Search(w http.ResponseWriter, r *http.Request) {
 		render.Error(w, r, http.StatusInternalServerError)
 		return
 	}
-	v := h.searchView(r.Context(), f, res)
+	v := h.searchView(r.Context(), f, res, h.saved.read(r))
 	m := layouts.Meta{
 		Title:       "Rooms, hostels and apartments near KNUST",
 		Description: "Find a room, hostel or apartment in Kumasi on a map, with the full move-in cost of every place. No agent runaround.",
 		URL:         h.baseURL + "/search",
 		NoIndex:     r.URL.RawQuery != "", // filtered views are for sharing, not for search engines
 		Styles:      []string{"vendor/maplibre-6.11.2/maplibre-gl.css"},
-		Modules:     []string{"js/search.js"},
+		Modules:     []string{"js/search.js", "js/compare.js"},
 	}
 	w.Header().Set("Cache-Control", "private, no-cache")
 	render.Page(w, r, http.StatusOK, pages.Search(m, v), pages.SearchResults(v))
@@ -98,15 +98,15 @@ func (h *Handler) Preview(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
-	cards := h.cards(r.Context(), items, Filter{}.Ref())
+	cards := h.cards(r.Context(), items, Filter{}.Ref(), h.saved.read(r))
 	w.Header().Set("Cache-Control", "public, max-age=30")
 	render.Component(w, r, http.StatusOK, pages.ListingPreview(cards[0]))
 }
 
-func (h *Handler) searchView(ctx context.Context, f Filter, res Results) pages.SearchView {
+func (h *Handler) searchView(ctx context.Context, f Filter, res Results, saved []uuid.UUID) pages.SearchView {
 	v := pages.SearchView{
 		Total: res.Total, Page: f.Page, Pages: (res.Total + PageSize - 1) / PageSize,
-		Results: h.cards(ctx, res.Items, f.Ref()), BBox: f.BBox.String(), DefaultBBox: DefaultBBox.String(), Sort: f.Sort, Active: f.ActiveCount(),
+		Results: h.cards(ctx, res.Items, f.Ref(), saved), BBox: f.BBox.String(), DefaultBBox: DefaultBBox.String(), Sort: f.Sort, Active: f.ActiveCount(),
 		SC: f.SC, Furnished: f.Furnished, OwnMeter: f.OwnMeter, Kitchen: f.Kitchen != "", Verified: f.Verified, Owner: f.Owner,
 		Water: f.Water, From: f.From,
 	}
@@ -219,7 +219,7 @@ func emptyText(f Filter) string {
 
 // cards turns live listings into result cards, looking up whether each
 // lister's ID is checked in one query.
-func (h *Handler) cards(ctx context.Context, items []*Item, ref geo.Place) []partials.ResultCard {
+func (h *Handler) cards(ctx context.Context, items []*Item, ref geo.Place, saved []uuid.UUID) []partials.ResultCard {
 	verified := map[uuid.UUID]bool{}
 	var listers []uuid.UUID
 	for _, d := range items {
@@ -237,7 +237,9 @@ func (h *Handler) cards(ctx context.Context, items []*Item, ref geo.Place) []par
 	now := time.Now().UTC()
 	out := make([]partials.ResultCard, 0, len(items))
 	for _, d := range items {
-		out = append(out, resultCard(d, verified[d.L.ListerID], now, ref))
+		rc := resultCard(d, verified[d.L.ListerID], now, ref)
+		rc.Saved = slices.Contains(saved, d.L.ID)
+		out = append(out, rc)
 	}
 	return out
 }

@@ -1,0 +1,77 @@
+package pages
+
+import (
+	"strconv"
+
+	c "rentmapgh/internal/views/components"
+	"rentmapgh/internal/views/layouts"
+	"rentmapgh/internal/views/partials"
+)
+
+// SavedView is the renter's shortlist (from the saved-places cookie).
+type SavedView struct {
+	Cards []partials.ResultCard
+	Gone  []GoneItem // saved, but no longer live
+}
+
+type GoneItem struct{ Title, URL, Status string }
+
+templ Saved(m layouts.Meta, v SavedView) {
+	@layouts.Site(m) {
+		<div class="mx-auto max-w-6xl px-4 pb-24 pt-8 sm:px-6">
+			<div class="flex flex-wrap items-end justify-between gap-3">
+				<div>
+					<h1 class="text-2xl font-semibold tracking-tight text-fg">Saved places</h1>
+					<p class="mt-1 text-base text-fg-muted">
+						switch len(v.Cards) {
+							case 0:
+							case 1:
+								1 place on your shortlist.
+							default:
+								{ strconv.Itoa(len(v.Cards)) } places on your shortlist.
+						}
+						Saved on this phone or computer — no account needed.
+					</p>
+				</div>
+				@c.LinkButton("/search", c.Ghost, c.SM) {
+					@c.Icon("map", "size-4")
+					Find more
+				}
+			</div>
+			if len(v.Cards) == 0 && len(v.Gone) == 0 {
+				<div class="mt-10">
+					@c.EmptyState("heart", "Nothing saved yet", "Tap the heart on any place to keep it here, then compare up to four side by side.") {
+						@c.LinkButton("/search", c.Primary, c.MD) {
+							Browse places
+						}
+					}
+				</div>
+			} else {
+				<div class="mt-6 grid gap-x-5 gap-y-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+					for _, r := range v.Cards {
+						<div class="min-w-0">
+							@partials.ResultCardView(r, false)
+							<button type="button" data-compare={ r.ID } aria-pressed="false" hidden class="mt-2 h-8 items-center gap-1.5 rounded-lg border border-line px-2.5 text-sm font-medium text-fg hover:bg-surface aria-pressed:border-graphite-900 aria-pressed:bg-graphite-900 aria-pressed:text-white dark:aria-pressed:border-mint-200 dark:aria-pressed:bg-mint-200 dark:aria-pressed:text-graphite-900 [&:not([hidden])]:inline-flex">
+								@c.Icon("columns", "size-3.5")
+								<span data-compare-label>Compare</span>
+							</button>
+						</div>
+					}
+				</div>
+				if len(v.Gone) > 0 {
+					<section class="mt-12">
+						<h2 class="text-base font-semibold text-fg">No longer available</h2>
+						<ul class="mt-3 divide-y divide-line rounded-card border border-line">
+							for _, g := range v.Gone {
+								<li class="flex items-center justify-between gap-3 px-4 py-3 text-sm">
+									<a href={ templ.SafeURL(g.URL) } class="min-w-0 truncate font-medium text-fg hover:underline">{ g.Title }</a>
+									<span class="shrink-0 text-fg-muted">{ g.Status }</span>
+								</li>
+							}
+						</ul>
+					</section>
+				}
+			}
+		</div>
+	}
+}

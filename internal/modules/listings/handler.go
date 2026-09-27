@@ -26,10 +26,19 @@ type Handler struct {
 	svc      *Service
 	mandates *mandates.Service // owner authority for agent listings (nil: off)
 	baseURL  string            // for absolute links (share, canonical, og:image)
+	saved    savedCodec
 }
 
-func NewHandler(svc *Service, m *mandates.Service, baseURL string) *Handler {
-	return &Handler{svc: svc, mandates: m, baseURL: strings.TrimRight(baseURL, "/")}
+// HandlerConfig is what the public pages need from the app config.
+type HandlerConfig struct {
+	BaseURL string
+	Secret  string // signs the saved-places cookie
+	Secure  bool   // HTTPS: cookies get Secure
+}
+
+func NewHandler(svc *Service, m *mandates.Service, cfg HandlerConfig) *Handler {
+	return &Handler{svc: svc, mandates: m, baseURL: strings.TrimRight(cfg.BaseURL, "/"),
+		saved: savedCodec{secret: []byte(cfg.Secret), secure: cfg.Secure}}
 }
 
 // Service exposes the service (admin wiring).

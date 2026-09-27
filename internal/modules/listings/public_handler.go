@@ -3,6 +3,7 @@ package listings
 import (
 	"log/slog"
 	"net/http"
+	"slices"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -48,6 +49,7 @@ func (h *Handler) ListingPage(w http.ResponseWriter, r *http.Request) {
 	}
 	v := publicView(d, lister, authority, viewer, reqctx.DataSaver(r.Context()), time.Now().UTC())
 	v.PageURL = h.baseURL + path
+	v.Saved = slices.Contains(h.saved.read(r), d.L.ID)
 	v.AreaURL = "/search"
 	if d.P.ApproxLat != nil && d.P.ApproxLng != nil {
 		c := BBox{MinLng: *d.P.ApproxLng - 0.02, MinLat: *d.P.ApproxLat - 0.015, MaxLng: *d.P.ApproxLng + 0.02, MaxLat: *d.P.ApproxLat + 0.015}
@@ -58,7 +60,7 @@ func (h *Handler) ListingPage(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			slog.ErrorContext(r.Context(), "listing page: similar", "err", err)
 		}
-		v.Similar = h.cards(r.Context(), sim, Filter{}.Ref())
+		v.Similar = h.cards(r.Context(), sim, Filter{}.Ref(), h.saved.read(r))
 	}
 	v.ShareURL = shareURL(v, v.PageURL)
 
@@ -66,10 +68,11 @@ func (h *Handler) ListingPage(w http.ResponseWriter, r *http.Request) {
 		Title: v.Headline + " in " + v.Area, Description: metaDescription(v), URL: v.PageURL,
 		NoIndex: d.L.Status != listing.StatusActive,
 		Styles:  []string{"vendor/maplibre-6.11.2/maplibre-gl.css"},
-		Modules: []string{"js/listing-page.js"},
+		Modules: []string{"js/listing-page.js", "js/compare.js"},
 	}
-	if len(v.Photos) > 0 {
-		m.Image = h.baseURL + v.Photos[0].Medium
+	m.Image = h.baseURL + OGImagePath(v)
+	if d.L.Status == listing.StatusActive {
+		m.JSONLD = listingJSONLD(h.baseURL, v, d)
 	}
 	if viewer == uuid.Nil && d.L.Status == listing.StatusActive {
 		w.Header().Set("Cache-Control", "public, max-age=60")

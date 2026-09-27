@@ -537,10 +537,10 @@ Engineering:
 - [x] Location search box with autocomplete (neighbourhoods, landmarks, POIs, universities). *In-memory place list, not pg_trgm yet; see §16.14.*
 - [x] Radius search ("within 3 km of KNUST").
 - [x] URL-driven state; shareable searches.
-- [ ] Listing detail page: gallery + lightbox, video, key facts grid, amenities, **move-in cost breakdown**, approximate-area map, distances to nearby POIs (rounded), lister card with badges, freshness badge, similar listings nearby. *Slice 3a built the page, 3b added "Similar places nearby", 3c the rounded distances to nearby places. See §16.12–16.14.*
-- [ ] Rich OpenGraph tags + generated share image (photo + price + area) so WhatsApp previews look great. *OG title/description/canonical/cover image done in 3a; the generated image is 3d.*
-- [ ] Anonymous favourites (cookie) and compare tray (up to 4).
-- [ ] SEO pages: `/kumasi/ayeduase/rooms-for-rent`, `/kumasi/knust/hostels` — server-rendered, indexable, with structured data.
+- [x] Listing detail page: gallery + lightbox, video, key facts grid, amenities, **move-in cost breakdown**, approximate-area map, distances to nearby POIs (rounded), lister card with badges, freshness badge, similar listings nearby. *Slice 3a built the page, 3b added "Similar places nearby", 3c the rounded distances to nearby places. See §16.12–16.14.*
+- [x] Rich OpenGraph tags + generated share image (photo + price + area) so WhatsApp previews look great. *Generated in 3d; see §16.15.*
+- [x] Anonymous favourites (cookie) and compare tray (up to 4).
+- [x] SEO pages: `/kumasi/ayeduase/rooms-for-rent`, `/kumasi/knust/hostels` — server-rendered, indexable, with structured data.
 - [x] Empty states that help ("No self-contained rooms under GHS 800 here — widen the area?" with one-tap actions).
 
 **Exit:** a renter can find, filter, inspect and shortlist real properties without calling anybody.
@@ -1108,5 +1108,16 @@ Sky Mint is step 200 of its scale; Graphite is step 900. Darker mint steps exist
 | Search box | autocomplete | `/places?q=` returns HTML options (debounced 180 ms); arrow keys, Enter and Esc work; the no-script form sends the words as `q` and the server takes the best match | Same HTML-over-the-wire approach as the rest of the app |
 | Radius | "within 3 km of KNUST" | Picking a place sets `near` (+ `radius`, 3 km by default; 1/2/3/5/10). A radius search replaces the map box (`ST_DWithin` on `approx_geog`); the map frames it and draws a dashed circle. Dragging the map drops the radius and goes back to searching the view, but keeps the place as the centre for "Nearest" and for distances | Two competing areas (box and circle) would confuse; the chip says which one applies |
 | Distances | from the approx point, rounded | Result cards measure from the chosen place ("~1.5 km from KATH"), otherwise from KNUST. Listing pages list up to 4 landmarks within 5 km, all via `geo.PublicDistance` from the approximate point | §6.1 rule 6 |
+
+### 16.15 Decisions taken while building Phase 3 (slice 3d — shortlist, SEO, share image)
+
+| Area | Plan said | Built | Why |
+| --- | --- | --- | --- |
+| Saved places | signed cookie; merge on sign-up | `saved` cookie: up to 60 listing IDs (16 bytes each), newest first, HMAC-signed (AUTH_SECRET, domain-separated), HttpOnly, one year. The heart is a real form (htmx swaps it; no-script posts redirect back to a checked local path). Only public listings can be saved. `/saved` lists live ones plus "no longer available" | Works with no account. **Deferred:** a `saved_listings` table and merging the cookie at sign-in, with renter accounts in Phase 4 |
+| Compare | tray, up to 4 | `compare.js` keeps up to 4 IDs in `localStorage` (a per-device convenience; blocked storage just means an empty tray) and shows a tray linking to `/compare?ids=…`. The server renders the table: per month, rent, total to move in, advance, type, area, self-contained, furnishing, electricity, water, kitchen, what's included, lister, availability; the lowest per-month and move-in figures are marked | Server-rendered facts; the tray is only a pointer |
+| SEO pages | `/kumasi/{area}/{kind}` | Place (neighbourhood or landmark) × kind (rooms-for-rent, hostels, apartments-for-rent, shops-for-rent); live listings within 2 km (approximate point); an intro with the count and monthly price range; links to the other kinds and the 6 nearest places; `ItemList` + `BreadcrumbList` JSON-LD; `noindex` when empty; cached 5 min for cookie-less visitors | Real content per page; empty pages don't dilute the index |
+| Structured data | — | Listing pages: an `Offer` (GHS price, unit) for an `Accommodation` located by town only — no coordinates, street or landmark | §6.1 |
+| Sitemap | — | `/sitemap.xml`: home, `/search`, area pages with listings, every live listing (lastmod = last confirmed); `robots.txt` names it and disallows private and filtered paths | |
+| Share image | photo + price + area | `/l/{id}/og.jpg?v=<hash>`: 1200×630 JPEG (~50 KB), the cover photo under a dark band with price, place and move-in total in Inter (static instances made from the site's variable font, cedi included), brand chip. Rendered once per version and kept in the media store; the hash covers everything drawn, so a price change is a new URL (WhatsApp caches by URL). Current version: immutable for a year | No headless browser; pure Go |
 
 Phase 0 engineering status: repo skeleton, Compose dev stack (PostGIS + pgvector image, Mailpit, Valhalla behind a profile), config, slog, request IDs, graceful shutdown, `/healthz` + `/readyz`, Ent + migrations, design tokens + first components, landing page with waitlist, tests, CI and the production Dockerfile/Compose/Caddy are done. Still open: staging VPS + Cloudflare, i18n scaffolding, product/legal tasks.

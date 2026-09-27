@@ -35,6 +35,9 @@ templ Site(m Meta) {
 					</ul>
 				</nav>
 				<div class="ml-auto flex items-center gap-1.5">
+					<a href="/saved" aria-label="Saved places" title="Saved places" class="grid size-8 place-items-center rounded-lg text-fg-muted transition-colors hover:bg-surface hover:text-fg">
+						@c.Icon("heart", "size-4")
+					</a>
 					@ThemeToggle()
 					if v := reqctx.CurrentViewer(ctx); v != nil {
 						if v.HasAny("landlord", "agent") {
