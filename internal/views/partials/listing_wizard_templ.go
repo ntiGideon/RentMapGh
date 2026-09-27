@@ -85,6 +85,7 @@ type WizardView struct {
 
 	// photos
 	Photos PhotosView
+	Video  VideoView
 
 	// pricing
 	Rent, Period, Advance, Deposit, AgentFee, ServiceCharge, ViewingFee, MinLease string
@@ -165,7 +166,7 @@ func Wizard(v WizardView, body templ.Component) templ.Component {
 		var templ_7745c5c3_Var2 string
 		templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(strconv.Itoa(v.StepNumber))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/listing_wizard.templ`, Line: 124, Col: 73}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/listing_wizard.templ`, Line: 125, Col: 73}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
 		if templ_7745c5c3_Err != nil {
@@ -178,7 +179,7 @@ func Wizard(v WizardView, body templ.Component) templ.Component {
 		var templ_7745c5c3_Var3 string
 		templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(strconv.Itoa(len(v.Steps)))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/listing_wizard.templ`, Line: 124, Col: 107}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/listing_wizard.templ`, Line: 125, Col: 107}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 		if templ_7745c5c3_Err != nil {
@@ -191,7 +192,7 @@ func Wizard(v WizardView, body templ.Component) templ.Component {
 		var templ_7745c5c3_Var4 string
 		templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(v.Steps[v.StepNumber-1].Label)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/listing_wizard.templ`, Line: 125, Col: 65}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/listing_wizard.templ`, Line: 126, Col: 65}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 		if templ_7745c5c3_Err != nil {
@@ -239,7 +240,7 @@ func Wizard(v WizardView, body templ.Component) templ.Component {
 			var templ_7745c5c3_Var7 string
 			templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(v.ReviewNote)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/listing_wizard.templ`, Line: 136, Col: 39}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/listing_wizard.templ`, Line: 137, Col: 39}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 			if templ_7745c5c3_Err != nil {
@@ -298,7 +299,7 @@ func stepLink(v WizardView, s WizStep, n int) templ.Component {
 			var templ_7745c5c3_Var9 templ.SafeURL
 			templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(v.stepURL(s.Key)))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/listing_wizard.templ`, Line: 155, Col: 43}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/listing_wizard.templ`, Line: 156, Col: 43}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 			if templ_7745c5c3_Err != nil {
@@ -319,7 +320,7 @@ func stepLink(v WizardView, s WizStep, n int) templ.Component {
 			var templ_7745c5c3_Var10 string
 			templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(s.Label)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/listing_wizard.templ`, Line: 158, Col: 61}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/listing_wizard.templ`, Line: 159, Col: 61}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 			if templ_7745c5c3_Err != nil {
@@ -332,7 +333,7 @@ func stepLink(v WizardView, s WizStep, n int) templ.Component {
 			var templ_7745c5c3_Var11 string
 			templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(s.Hint)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/listing_wizard.templ`, Line: 159, Col: 64}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/listing_wizard.templ`, Line: 160, Col: 64}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 			if templ_7745c5c3_Err != nil {
@@ -408,7 +409,7 @@ func stepLink(v WizardView, s WizStep, n int) templ.Component {
 			var templ_7745c5c3_Var16 string
 			templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinStringErrs(s.Label)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/listing_wizard.templ`, Line: 166, Col: 150}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/listing_wizard.templ`, Line: 167, Col: 150}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var16))
 			if templ_7745c5c3_Err != nil {
@@ -421,7 +422,7 @@ func stepLink(v WizardView, s WizStep, n int) templ.Component {
 			var templ_7745c5c3_Var17 string
 			templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.JoinStringErrs(s.Hint)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/listing_wizard.templ`, Line: 167, Col: 64}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/listing_wizard.templ`, Line: 168, Col: 64}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var17))
 			if templ_7745c5c3_Err != nil {
@@ -479,7 +480,7 @@ func stepDot(s WizStep, n int) templ.Component {
 			var templ_7745c5c3_Var19 string
 			templ_7745c5c3_Var19, templ_7745c5c3_Err = templ.JoinStringErrs(strconv.Itoa(n))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/listing_wizard.templ`, Line: 180, Col: 181}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/listing_wizard.templ`, Line: 181, Col: 181}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var19))
 			if templ_7745c5c3_Err != nil {
@@ -497,7 +498,7 @@ func stepDot(s WizStep, n int) templ.Component {
 			var templ_7745c5c3_Var20 string
 			templ_7745c5c3_Var20, templ_7745c5c3_Err = templ.JoinStringErrs(strconv.Itoa(n))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/listing_wizard.templ`, Line: 182, Col: 162}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/listing_wizard.templ`, Line: 183, Col: 162}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var20))
 			if templ_7745c5c3_Err != nil {
@@ -559,7 +560,7 @@ func SaveStatus(savedAt string, failed bool) templ.Component {
 			var templ_7745c5c3_Var22 string
 			templ_7745c5c3_Var22, templ_7745c5c3_Err = templ.JoinStringErrs(savedAt)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/listing_wizard.templ`, Line: 194, Col: 18}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/listing_wizard.templ`, Line: 195, Col: 18}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var22))
 			if templ_7745c5c3_Err != nil {
@@ -608,7 +609,7 @@ func stepForm(v WizardView, title, subtitle string) templ.Component {
 		var templ_7745c5c3_Var24 templ.SafeURL
 		templ_7745c5c3_Var24, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(v.stepURL(v.Step)))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/listing_wizard.templ`, Line: 204, Col: 43}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/listing_wizard.templ`, Line: 205, Col: 43}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var24))
 		if templ_7745c5c3_Err != nil {
@@ -621,7 +622,7 @@ func stepForm(v WizardView, title, subtitle string) templ.Component {
 		var templ_7745c5c3_Var25 string
 		templ_7745c5c3_Var25, templ_7745c5c3_Err = templ.ResolveAttributeValue(v.stepURL(v.Step) + "/autosave")
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/listing_wizard.templ`, Line: 206, Col: 43}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/listing_wizard.templ`, Line: 207, Col: 43}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var25)
 		if templ_7745c5c3_Err != nil {
@@ -634,7 +635,7 @@ func stepForm(v WizardView, title, subtitle string) templ.Component {
 		var templ_7745c5c3_Var26 string
 		templ_7745c5c3_Var26, templ_7745c5c3_Err = templ.JoinStringErrs(title)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/listing_wizard.templ`, Line: 214, Col: 53}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/listing_wizard.templ`, Line: 215, Col: 53}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var26))
 		if templ_7745c5c3_Err != nil {
@@ -647,7 +648,7 @@ func stepForm(v WizardView, title, subtitle string) templ.Component {
 		var templ_7745c5c3_Var27 string
 		templ_7745c5c3_Var27, templ_7745c5c3_Err = templ.JoinStringErrs(subtitle)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/listing_wizard.templ`, Line: 215, Col: 55}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/listing_wizard.templ`, Line: 216, Col: 55}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var27))
 		if templ_7745c5c3_Err != nil {
@@ -669,7 +670,7 @@ func stepForm(v WizardView, title, subtitle string) templ.Component {
 			var templ_7745c5c3_Var28 string
 			templ_7745c5c3_Var28, templ_7745c5c3_Err = templ.JoinStringErrs(msg)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/listing_wizard.templ`, Line: 220, Col: 9}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/listing_wizard.templ`, Line: 221, Col: 9}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var28))
 			if templ_7745c5c3_Err != nil {
@@ -696,7 +697,7 @@ func stepForm(v WizardView, title, subtitle string) templ.Component {
 			var templ_7745c5c3_Var29 templ.SafeURL
 			templ_7745c5c3_Var29, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(v.stepURL(prev)))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/listing_wizard.templ`, Line: 226, Col: 44}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/listing_wizard.templ`, Line: 227, Col: 44}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var29))
 			if templ_7745c5c3_Err != nil {
@@ -797,7 +798,7 @@ func fieldError(msg string) templ.Component {
 			var templ_7745c5c3_Var32 string
 			templ_7745c5c3_Var32, templ_7745c5c3_Err = templ.JoinStringErrs(msg)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/listing_wizard.templ`, Line: 255, Col: 8}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/listing_wizard.templ`, Line: 256, Col: 8}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var32))
 			if templ_7745c5c3_Err != nil {
@@ -841,7 +842,7 @@ func pills(name, legend, value string, opts []c.Option, errMsg string) templ.Com
 		var templ_7745c5c3_Var34 string
 		templ_7745c5c3_Var34, templ_7745c5c3_Err = templ.JoinStringErrs(legend)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/listing_wizard.templ`, Line: 263, Col: 54}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/listing_wizard.templ`, Line: 264, Col: 54}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var34))
 		if templ_7745c5c3_Err != nil {
@@ -859,7 +860,7 @@ func pills(name, legend, value string, opts []c.Option, errMsg string) templ.Com
 			var templ_7745c5c3_Var35 string
 			templ_7745c5c3_Var35, templ_7745c5c3_Err = templ.ResolveAttributeValue(name)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/listing_wizard.templ`, Line: 267, Col: 36}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/listing_wizard.templ`, Line: 268, Col: 36}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var35)
 			if templ_7745c5c3_Err != nil {
@@ -872,7 +873,7 @@ func pills(name, legend, value string, opts []c.Option, errMsg string) templ.Com
 			var templ_7745c5c3_Var36 string
 			templ_7745c5c3_Var36, templ_7745c5c3_Err = templ.ResolveAttributeValue(o.Value)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/listing_wizard.templ`, Line: 267, Col: 54}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/listing_wizard.templ`, Line: 268, Col: 54}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var36)
 			if templ_7745c5c3_Err != nil {
@@ -895,7 +896,7 @@ func pills(name, legend, value string, opts []c.Option, errMsg string) templ.Com
 			var templ_7745c5c3_Var37 string
 			templ_7745c5c3_Var37, templ_7745c5c3_Err = templ.JoinStringErrs(o.Label)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/listing_wizard.templ`, Line: 268, Col: 14}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/listing_wizard.templ`, Line: 269, Col: 14}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var37))
 			if templ_7745c5c3_Err != nil {
@@ -995,7 +996,7 @@ func StepLocation(v WizardView) templ.Component {
 			var templ_7745c5c3_Var41 string
 			templ_7745c5c3_Var41, templ_7745c5c3_Err = templ.ResolveAttributeValue(v.DefaultLat)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/listing_wizard.templ`, Line: 287, Col: 60}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/listing_wizard.templ`, Line: 288, Col: 60}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var41)
 			if templ_7745c5c3_Err != nil {
@@ -1008,7 +1009,7 @@ func StepLocation(v WizardView) templ.Component {
 			var templ_7745c5c3_Var42 string
 			templ_7745c5c3_Var42, templ_7745c5c3_Err = templ.ResolveAttributeValue(v.DefaultLng)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/listing_wizard.templ`, Line: 287, Col: 94}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/listing_wizard.templ`, Line: 288, Col: 94}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var42)
 			if templ_7745c5c3_Err != nil {
@@ -1045,7 +1046,7 @@ func StepLocation(v WizardView) templ.Component {
 				var templ_7745c5c3_Var43 string
 				templ_7745c5c3_Var43, templ_7745c5c3_Err = templ.JoinStringErrs(v.Lat)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/listing_wizard.templ`, Line: 311, Col: 14}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/listing_wizard.templ`, Line: 312, Col: 14}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var43))
 				if templ_7745c5c3_Err != nil {
@@ -1058,7 +1059,7 @@ func StepLocation(v WizardView) templ.Component {
 				var templ_7745c5c3_Var44 string
 				templ_7745c5c3_Var44, templ_7745c5c3_Err = templ.JoinStringErrs(v.Lng)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/listing_wizard.templ`, Line: 311, Col: 25}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/listing_wizard.templ`, Line: 312, Col: 25}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var44))
 				if templ_7745c5c3_Err != nil {
@@ -1085,7 +1086,7 @@ func StepLocation(v WizardView) templ.Component {
 			var templ_7745c5c3_Var45 string
 			templ_7745c5c3_Var45, templ_7745c5c3_Err = templ.ResolveAttributeValue(v.Lat)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/listing_wizard.templ`, Line: 322, Col: 83}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/listing_wizard.templ`, Line: 323, Col: 83}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var45)
 			if templ_7745c5c3_Err != nil {
@@ -1098,7 +1099,7 @@ func StepLocation(v WizardView) templ.Component {
 			var templ_7745c5c3_Var46 string
 			templ_7745c5c3_Var46, templ_7745c5c3_Err = templ.ResolveAttributeValue(v.Lng)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/listing_wizard.templ`, Line: 323, Col: 84}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/listing_wizard.templ`, Line: 324, Col: 84}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var46)
 			if templ_7745c5c3_Err != nil {
@@ -1250,7 +1251,7 @@ func StepProperty(v WizardView) templ.Component {
 				var templ_7745c5c3_Var50 string
 				templ_7745c5c3_Var50, templ_7745c5c3_Err = templ.ResolveAttributeValue(o.Value)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/listing_wizard.templ`, Line: 372, Col: 58}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/listing_wizard.templ`, Line: 373, Col: 58}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var50)
 				if templ_7745c5c3_Err != nil {
@@ -1273,7 +1274,7 @@ func StepProperty(v WizardView) templ.Component {
 				var templ_7745c5c3_Var51 string
 				templ_7745c5c3_Var51, templ_7745c5c3_Err = templ.JoinStringErrs(o.Label)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/listing_wizard.templ`, Line: 373, Col: 60}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/listing_wizard.templ`, Line: 374, Col: 60}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var51))
 				if templ_7745c5c3_Err != nil {
@@ -1362,7 +1363,7 @@ func StepUnit(v WizardView) templ.Component {
 				var templ_7745c5c3_Var54 string
 				templ_7745c5c3_Var54, templ_7745c5c3_Err = templ.JoinStringErrs(g.Label)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/listing_wizard.templ`, Line: 395, Col: 69}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/listing_wizard.templ`, Line: 396, Col: 69}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var54))
 				if templ_7745c5c3_Err != nil {
@@ -1380,7 +1381,7 @@ func StepUnit(v WizardView) templ.Component {
 					var templ_7745c5c3_Var55 string
 					templ_7745c5c3_Var55, templ_7745c5c3_Err = templ.ResolveAttributeValue(o.Value)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/listing_wizard.templ`, Line: 402, Col: 26}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/listing_wizard.templ`, Line: 403, Col: 26}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var55)
 					if templ_7745c5c3_Err != nil {
@@ -1419,7 +1420,7 @@ func StepUnit(v WizardView) templ.Component {
 					var templ_7745c5c3_Var56 string
 					templ_7745c5c3_Var56, templ_7745c5c3_Err = templ.JoinStringErrs(o.Label)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/listing_wizard.templ`, Line: 412, Col: 19}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/listing_wizard.templ`, Line: 413, Col: 19}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var56))
 					if templ_7745c5c3_Err != nil {
@@ -1558,7 +1559,7 @@ func StepAmenities(v WizardView) templ.Component {
 				var templ_7745c5c3_Var59 string
 				templ_7745c5c3_Var59, templ_7745c5c3_Err = templ.JoinStringErrs(g.Label)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/listing_wizard.templ`, Line: 448, Col: 58}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/listing_wizard.templ`, Line: 449, Col: 58}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var59))
 				if templ_7745c5c3_Err != nil {
@@ -1576,7 +1577,7 @@ func StepAmenities(v WizardView) templ.Component {
 					var templ_7745c5c3_Var60 string
 					templ_7745c5c3_Var60, templ_7745c5c3_Err = templ.ResolveAttributeValue(o.Value)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/listing_wizard.templ`, Line: 452, Col: 63}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/listing_wizard.templ`, Line: 453, Col: 63}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var60)
 					if templ_7745c5c3_Err != nil {
@@ -1599,7 +1600,7 @@ func StepAmenities(v WizardView) templ.Component {
 					var templ_7745c5c3_Var61 string
 					templ_7745c5c3_Var61, templ_7745c5c3_Err = templ.JoinStringErrs(o.Label)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/listing_wizard.templ`, Line: 453, Col: 17}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/listing_wizard.templ`, Line: 454, Col: 17}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var61))
 					if templ_7745c5c3_Err != nil {
@@ -1718,7 +1719,7 @@ func StepPricing(v WizardView) templ.Component {
 				var templ_7745c5c3_Var64 string
 				templ_7745c5c3_Var64, templ_7745c5c3_Err = templ.ResolveAttributeValue("fee_label_" + strconv.Itoa(i+1))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/listing_wizard.templ`, Line: 487, Col: 54}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/listing_wizard.templ`, Line: 488, Col: 54}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var64)
 				if templ_7745c5c3_Err != nil {
@@ -1731,7 +1732,7 @@ func StepPricing(v WizardView) templ.Component {
 				var templ_7745c5c3_Var65 string
 				templ_7745c5c3_Var65, templ_7745c5c3_Err = templ.ResolveAttributeValue(f.Label)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/listing_wizard.templ`, Line: 487, Col: 72}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/listing_wizard.templ`, Line: 488, Col: 72}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var65)
 				if templ_7745c5c3_Err != nil {
@@ -1744,7 +1745,7 @@ func StepPricing(v WizardView) templ.Component {
 				var templ_7745c5c3_Var66 string
 				templ_7745c5c3_Var66, templ_7745c5c3_Err = templ.ResolveAttributeValue("Fee " + strconv.Itoa(i+1) + " name")
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/listing_wizard.templ`, Line: 487, Col: 170}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/listing_wizard.templ`, Line: 488, Col: 170}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var66)
 				if templ_7745c5c3_Err != nil {
@@ -1757,7 +1758,7 @@ func StepPricing(v WizardView) templ.Component {
 				var templ_7745c5c3_Var67 string
 				templ_7745c5c3_Var67, templ_7745c5c3_Err = templ.ResolveAttributeValue("fee_amount_" + strconv.Itoa(i+1))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/listing_wizard.templ`, Line: 488, Col: 55}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/listing_wizard.templ`, Line: 489, Col: 55}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var67)
 				if templ_7745c5c3_Err != nil {
@@ -1770,7 +1771,7 @@ func StepPricing(v WizardView) templ.Component {
 				var templ_7745c5c3_Var68 string
 				templ_7745c5c3_Var68, templ_7745c5c3_Err = templ.ResolveAttributeValue(f.Amount)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/listing_wizard.templ`, Line: 488, Col: 74}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/listing_wizard.templ`, Line: 489, Col: 74}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var68)
 				if templ_7745c5c3_Err != nil {
@@ -1783,7 +1784,7 @@ func StepPricing(v WizardView) templ.Component {
 				var templ_7745c5c3_Var69 string
 				templ_7745c5c3_Var69, templ_7745c5c3_Err = templ.ResolveAttributeValue("Fee " + strconv.Itoa(i+1) + " amount")
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/listing_wizard.templ`, Line: 488, Col: 185}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/listing_wizard.templ`, Line: 489, Col: 185}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var69)
 				if templ_7745c5c3_Err != nil {
@@ -1895,7 +1896,7 @@ func MoveInPreview(m MoveInView, oob bool) templ.Component {
 			var templ_7745c5c3_Var71 string
 			templ_7745c5c3_Var71, templ_7745c5c3_Err = templ.JoinStringErrs(l.Label)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/listing_wizard.templ`, Line: 535, Col: 18}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/listing_wizard.templ`, Line: 536, Col: 18}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var71))
 			if templ_7745c5c3_Err != nil {
@@ -1908,7 +1909,7 @@ func MoveInPreview(m MoveInView, oob bool) templ.Component {
 			var templ_7745c5c3_Var72 string
 			templ_7745c5c3_Var72, templ_7745c5c3_Err = templ.JoinStringErrs(l.Amount)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/listing_wizard.templ`, Line: 536, Col: 35}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/listing_wizard.templ`, Line: 537, Col: 35}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var72))
 			if templ_7745c5c3_Err != nil {
@@ -1931,7 +1932,7 @@ func MoveInPreview(m MoveInView, oob bool) templ.Component {
 			var templ_7745c5c3_Var73 string
 			templ_7745c5c3_Var73, templ_7745c5c3_Err = templ.JoinStringErrs(m.Total)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/listing_wizard.templ`, Line: 543, Col: 54}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/listing_wizard.templ`, Line: 544, Col: 54}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var73))
 			if templ_7745c5c3_Err != nil {
@@ -1944,7 +1945,7 @@ func MoveInPreview(m MoveInView, oob bool) templ.Component {
 			var templ_7745c5c3_Var74 string
 			templ_7745c5c3_Var74, templ_7745c5c3_Err = templ.JoinStringErrs(m.Monthly)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/listing_wizard.templ`, Line: 545, Col: 63}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/listing_wizard.templ`, Line: 546, Col: 63}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var74))
 			if templ_7745c5c3_Err != nil {
@@ -1965,7 +1966,7 @@ func MoveInPreview(m MoveInView, oob bool) templ.Component {
 					var templ_7745c5c3_Var75 string
 					templ_7745c5c3_Var75, templ_7745c5c3_Err = templ.JoinStringErrs(", ")
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/listing_wizard.templ`, Line: 552, Col: 12}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/listing_wizard.templ`, Line: 553, Col: 12}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var75))
 					if templ_7745c5c3_Err != nil {
@@ -1979,7 +1980,7 @@ func MoveInPreview(m MoveInView, oob bool) templ.Component {
 				var templ_7745c5c3_Var76 string
 				templ_7745c5c3_Var76, templ_7745c5c3_Err = templ.JoinStringErrs(x)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/listing_wizard.templ`, Line: 554, Col: 8}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/listing_wizard.templ`, Line: 555, Col: 8}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var76))
 				if templ_7745c5c3_Err != nil {
@@ -2117,7 +2118,7 @@ func StepReview(v WizardView) templ.Component {
 			var templ_7745c5c3_Var81 string
 			templ_7745c5c3_Var81, templ_7745c5c3_Err = templ.ResolveAttributeValue(strconv.Itoa(v.Score) + " 100")
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/listing_wizard.templ`, Line: 591, Col: 191}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/listing_wizard.templ`, Line: 592, Col: 191}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var81)
 			if templ_7745c5c3_Err != nil {
@@ -2130,7 +2131,7 @@ func StepReview(v WizardView) templ.Component {
 			var templ_7745c5c3_Var82 string
 			templ_7745c5c3_Var82, templ_7745c5c3_Err = templ.JoinStringErrs(strconv.Itoa(v.Score))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/listing_wizard.templ`, Line: 593, Col: 85}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/listing_wizard.templ`, Line: 594, Col: 85}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var82))
 			if templ_7745c5c3_Err != nil {
@@ -2153,7 +2154,7 @@ func StepReview(v WizardView) templ.Component {
 					var templ_7745c5c3_Var83 string
 					templ_7745c5c3_Var83, templ_7745c5c3_Err = templ.JoinStringErrs(t.Text)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/listing_wizard.templ`, Line: 604, Col: 43}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/listing_wizard.templ`, Line: 605, Col: 43}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var83))
 					if templ_7745c5c3_Err != nil {
@@ -2166,7 +2167,7 @@ func StepReview(v WizardView) templ.Component {
 					var templ_7745c5c3_Var84 templ.SafeURL
 					templ_7745c5c3_Var84, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(v.stepURL(t.Step)))
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/listing_wizard.templ`, Line: 605, Col: 49}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/listing_wizard.templ`, Line: 606, Col: 49}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var84))
 					if templ_7745c5c3_Err != nil {
@@ -2179,7 +2180,7 @@ func StepReview(v WizardView) templ.Component {
 					var templ_7745c5c3_Var85 string
 					templ_7745c5c3_Var85, templ_7745c5c3_Err = templ.JoinStringErrs(strconv.Itoa(t.Points))
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/listing_wizard.templ`, Line: 605, Col: 116}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/listing_wizard.templ`, Line: 606, Col: 116}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var85))
 					if templ_7745c5c3_Err != nil {
@@ -2221,7 +2222,7 @@ func StepReview(v WizardView) templ.Component {
 				var templ_7745c5c3_Var87 string
 				templ_7745c5c3_Var87, templ_7745c5c3_Err = templ.JoinStringErrs(s.Title)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/listing_wizard.templ`, Line: 614, Col: 58}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/listing_wizard.templ`, Line: 615, Col: 58}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var87))
 				if templ_7745c5c3_Err != nil {
@@ -2234,7 +2235,7 @@ func StepReview(v WizardView) templ.Component {
 				var templ_7745c5c3_Var88 templ.SafeURL
 				templ_7745c5c3_Var88, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(v.stepURL(s.Step)))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/listing_wizard.templ`, Line: 615, Col: 47}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/listing_wizard.templ`, Line: 616, Col: 47}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var88))
 				if templ_7745c5c3_Err != nil {
@@ -2252,7 +2253,7 @@ func StepReview(v WizardView) templ.Component {
 					var templ_7745c5c3_Var89 string
 					templ_7745c5c3_Var89, templ_7745c5c3_Err = templ.JoinStringErrs(r.Label)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/listing_wizard.templ`, Line: 620, Col: 42}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/listing_wizard.templ`, Line: 621, Col: 42}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var89))
 					if templ_7745c5c3_Err != nil {
@@ -2265,7 +2266,7 @@ func StepReview(v WizardView) templ.Component {
 					var templ_7745c5c3_Var90 string
 					templ_7745c5c3_Var90, templ_7745c5c3_Err = templ.JoinStringErrs(r.Value)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/listing_wizard.templ`, Line: 621, Col: 82}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/listing_wizard.templ`, Line: 622, Col: 82}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var90))
 					if templ_7745c5c3_Err != nil {
@@ -2318,7 +2319,7 @@ func StepReview(v WizardView) templ.Component {
 				var templ_7745c5c3_Var91 string
 				templ_7745c5c3_Var91, templ_7745c5c3_Err = templ.JoinStringErrs(m.Text)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/listing_wizard.templ`, Line: 639, Col: 64}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/listing_wizard.templ`, Line: 640, Col: 64}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var91))
 				if templ_7745c5c3_Err != nil {
@@ -2331,7 +2332,7 @@ func StepReview(v WizardView) templ.Component {
 				var templ_7745c5c3_Var92 templ.SafeURL
 				templ_7745c5c3_Var92, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(v.stepURL(m.Step)))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/listing_wizard.templ`, Line: 640, Col: 49}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/listing_wizard.templ`, Line: 641, Col: 49}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var92))
 				if templ_7745c5c3_Err != nil {
@@ -2354,7 +2355,7 @@ func StepReview(v WizardView) templ.Component {
 		var templ_7745c5c3_Var93 templ.SafeURL
 		templ_7745c5c3_Var93, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL("/listings/" + v.ID + "/submit"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/listing_wizard.templ`, Line: 646, Col: 63}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/listing_wizard.templ`, Line: 647, Col: 63}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var93))
 		if templ_7745c5c3_Err != nil {

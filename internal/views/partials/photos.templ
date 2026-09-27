@@ -58,6 +58,9 @@ templ StepPhotos(v WizardView) {
 			@photoUploader(v.Photos)
 		}
 		@PhotoGrid(v.Photos)
+		if v.Video.Enabled {
+			@VideoPanel(v.Video)
+		}
 		<div class="rounded-lg border border-line bg-surface px-4 py-3 text-sm text-fg-muted">
 			<p class="font-medium text-fg">Photos that get viewings</p>
 			<p class="mt-1">Shoot in daylight with the lights on, phone held sideways. Show the room, bathroom and toilet, kitchen, the compound, the gate and the street, the meter and water tank. No people, and no phone numbers written on photos.</p>

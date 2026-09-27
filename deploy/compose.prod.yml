@@ -18,6 +18,9 @@ x-web-env: &web-env
   # S3_* variables for Cloudflare R2 (S3_REGION=auto) or Garage.
   MEDIA_STORE: ${MEDIA_STORE:-disk}
   MEDIA_DIR: /data/media
+  # Walk-through video uploads are assembled and transcoded here (one web
+  # replica per inbox; the originals never leave it).
+  VIDEO_INBOX_DIR: /data/inbox
   S3_ENDPOINT: ${S3_ENDPOINT:-}
   S3_REGION: ${S3_REGION:-auto}
   S3_BUCKET: ${S3_BUCKET:-}
@@ -57,7 +60,7 @@ services:
     environment: *web-env
     depends_on: { db: { condition: service_healthy } }
     expose: ["8080"]
-    volumes: [uploads:/data/private, media:/data/media]
+    volumes: [uploads:/data/private, media:/data/media, inbox:/data/inbox]
 
   caddy:
     image: caddy:2
@@ -75,5 +78,6 @@ volumes:
   pgdata: {}
   uploads: {} # back this up with the database; evidence is useless without DOCUMENT_KEY
   media: {} # listing photos when MEDIA_STORE=disk; back it up with the database
+  inbox: {} # video uploads in progress; safe to lose (listers re-upload)
   caddy_data: {}
   caddy_config: {}

@@ -1,10 +1,12 @@
 package listings
 
 import (
+	"fmt"
 	"net/url"
 	"strconv"
 	"time"
 
+	"rentmapgh/internal/ent/listingmedia"
 	"rentmapgh/internal/platform/geo"
 	"rentmapgh/internal/platform/money"
 	c "rentmapgh/internal/views/components"
@@ -253,6 +255,13 @@ func summary(d *Item) []partials.SummarySection {
 		count = strconv.Itoa(n) + " — the first is the cover"
 	}
 	photos.Rows = append(photos.Rows, partials.SummaryRow{Label: "Photos", Value: count})
+	if v := d.Video(); v != nil {
+		val := map[listingmedia.Status]string{listingmedia.StatusReady: "Added", listingmedia.StatusProcessing: "Being prepared", listingmedia.StatusFailed: "Couldn't be prepared — remove it and try again"}[v.Status]
+		if v.Status == listingmedia.StatusReady && v.DurationMs != nil {
+			val += " (" + fmtDuration(*v.DurationMs) + ")"
+		}
+		photos.Rows = append(photos.Rows, partials.SummaryRow{Label: "Video", Value: val})
+	}
 
 	det := partials.SummarySection{Title: "Details", Step: "details"}
 	avail := "Now"
@@ -357,6 +366,35 @@ func ago(t, now time.Time) string {
 		return "yesterday"
 	}
 	return t.Format("2 Jan")
+}
+
+// videoView is the walk-through video section. enabled is false when the
+// server can't process videos; an existing video still shows.
+func videoView(d *Item, enabled, dataSaver bool, errMsg string) partials.VideoView {
+	v := partials.VideoView{
+		ListingID: d.L.ID.String(), Enabled: enabled, Editable: Editable(Status(d.L.Status)),
+		DataSaver: dataSaver, MaxMB: MaxVideoBytes >> 20, Error: errMsg,
+	}
+	m := d.Video()
+	if m == nil {
+		return v
+	}
+	v.Enabled = true
+	v.State = string(m.Status)
+	if m.Status == listingmedia.StatusReady {
+		v.Poster, v.Src480, v.Src720 = MediaURL(m.ID, "w800.jpg"), MediaURL(m.ID, "v480.mp4"), MediaURL(m.ID, "v720.mp4")
+		v.Width, v.Height = m.Width, m.Height
+		if m.DurationMs != nil {
+			v.Duration = fmtDuration(*m.DurationMs)
+		}
+	}
+	return v
+}
+
+// fmtDuration renders milliseconds as m:ss.
+func fmtDuration(ms int) string {
+	s := (ms + 500) / 1000
+	return strconv.Itoa(s/60) + ":" + fmt.Sprintf("%02d", s%60)
 }
 
 // photosView is the photo manager: tiles in order, plus the counts that

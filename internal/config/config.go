@@ -62,6 +62,13 @@ type Config struct {
 	MediaStore string `env:"MEDIA_STORE" envDefault:"disk"`
 	MediaDir   string `env:"MEDIA_DIR" envDefault:"./data/media"`
 	S3         storage.S3Config
+	// Walk-through videos need ffmpeg + ffprobe (on PATH unless set). Uploads
+	// are assembled and transcoded in VideoInbox, a local volume; the
+	// original files never leave it.
+	VideoEnabled bool   `env:"VIDEO_ENABLED" envDefault:"true"`
+	FFmpegPath   string `env:"FFMPEG_PATH"`
+	FFprobePath  string `env:"FFPROBE_PATH"`
+	VideoInbox   string `env:"VIDEO_INBOX_DIR" envDefault:"./data/video-inbox"`
 	// EvidenceRetention: ID photos are deleted this long after a decision.
 	EvidenceRetention time.Duration `env:"EVIDENCE_RETENTION" envDefault:"2160h"`
 

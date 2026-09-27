@@ -22,6 +22,7 @@ import (
 	"rentmapgh/internal/modules/waitlist"
 	"rentmapgh/internal/platform/sms"
 	"rentmapgh/internal/platform/storage"
+	"rentmapgh/internal/platform/video"
 	mw "rentmapgh/internal/server/middleware"
 	"rentmapgh/internal/server/render"
 	"rentmapgh/internal/server/reqctx"
@@ -34,7 +35,29 @@ type Deps struct {
 	Assets *web.Assets
 	SMS    sms.Sender
 	Files  storage.Store // private uploads; evidence is sealed on top of it
-	Media  storage.Store // public listing photos
+	Media  storage.Store // public listing photos and videos
+	// Listings is shared by the router and the video worker; New builds
+	// one (without video) when it's nil.
+	Listings *listings.Service
+}
+
+// NewListings builds the listings service, with walk-through videos when
+// ffmpeg is available.
+func NewListings(d Deps) (*listings.Service, error) {
+	svc := listings.NewService(d.DB.Ent, audit.New(d.DB.Ent), d.Cfg.LocationSecret, d.Media)
+	if !d.Cfg.VideoEnabled {
+		return svc, nil
+	}
+	tool, err := video.Find(d.Cfg.FFmpegPath, d.Cfg.FFprobePath)
+	if err != nil {
+		slog.Warn("walk-through videos off: ffmpeg/ffprobe not found")
+		return svc, nil
+	}
+	if err := svc.EnableVideo(tool, d.Cfg.VideoInbox); err != nil {
+		return nil, err
+	}
+	slog.Info("walk-through videos on", "ffmpeg", tool.FFmpeg, "inbox", d.Cfg.VideoInbox)
+	return svc, nil
 }
 
 // evidenceStore wraps Files with the document key.
@@ -58,6 +81,9 @@ func newVerification(d Deps, log *audit.Log) *verification.Service {
 // replicas: every job is idempotent. (Moves to River with the job queue.)
 func StartJobs(ctx context.Context, d Deps) {
 	vs := newVerification(d, audit.New(d.DB.Ent))
+	if d.Listings != nil {
+		go d.Listings.RunVideoWorker(ctx)
+	}
 	go func() {
 		t := time.NewTimer(time.Minute)
 		defer t.Stop()
@@ -87,7 +113,10 @@ func New(d Deps) http.Handler {
 	})
 	verifySvc := newVerification(d, auditLog)
 	verifyH := verification.NewHandler(verifySvc)
-	listingsSvc := listings.NewService(d.DB.Ent, auditLog, d.Cfg.LocationSecret, d.Media)
+	listingsSvc := d.Listings
+	if listingsSvc == nil {
+		listingsSvc = listings.NewService(d.DB.Ent, auditLog, d.Cfg.LocationSecret, d.Media)
+	}
 	listingsH := listings.NewHandler(listingsSvc)
 	usersH := users.NewHandler(users.NewService(d.DB.Ent, auditLog, d.Files, verifySvc.PurgeUser), authH, verifySvc, auditLog)
 
@@ -191,6 +220,12 @@ func New(d Deps) http.Handler {
 			r.With(rateLimit(240, time.Hour)).Post("/photos", listingsH.UploadPhotos)
 			r.Post("/photos/order", listingsH.ReorderPhotos)
 			r.Post("/photos/{mediaID}/{action}", listingsH.PhotoAction)
+			r.Get("/video", listingsH.VideoPanel)
+			r.With(rateLimit(10, time.Hour)).Post("/video", listingsH.UploadVideo)
+			r.With(rateLimit(20, time.Hour)).Post("/video/uploads", listingsH.StartVideoUpload)
+			r.Get("/video/uploads/{uploadID}", listingsH.VideoUploadOffset)
+			r.With(rateLimit(1200, time.Hour)).Post("/video/uploads/{uploadID}", listingsH.VideoChunk)
+			r.Post("/video/delete", listingsH.DeleteVideo)
 		})
 	})
 

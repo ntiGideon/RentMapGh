@@ -10,6 +10,7 @@ import (
 	"rentmapgh/internal/platform/geo"
 	"rentmapgh/internal/platform/phone"
 	"rentmapgh/internal/server/render"
+	"rentmapgh/internal/server/reqctx"
 	"rentmapgh/internal/views/pages"
 	"rentmapgh/internal/views/partials"
 )
@@ -75,6 +76,8 @@ func (h *Handler) renderReview(w http.ResponseWriter, r *http.Request, status in
 	}
 	v.ExactPin, v.ApproxPin = fmtPin(d.P.Lat, d.P.Lng), fmtPin(d.P.ApproxLat, d.P.ApproxLng)
 	v.Photos = photosView(d, "").Tiles
+	v.Video = videoView(d, true, reqctx.DataSaver(r.Context()), "")
+	v.Video.Editable = false
 	render.Component(w, r, status, pages.AdminListingReview(v))
 }
 

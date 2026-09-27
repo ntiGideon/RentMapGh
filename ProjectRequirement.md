@@ -510,12 +510,12 @@ Engineering:
 
 ### Phase 2 — Properties, units & listings (3–4 weeks)
 
-- [x] **Listing wizard** (multi-step HTMX form with autosave drafts): location → property → unit details → amenities → photos/video → pricing & terms → availability → review & publish. *Photos step added in slice 2b (video to follow); availability lives in the details step.*
+- [x] **Listing wizard** (multi-step HTMX form with autosave drafts): location → property → unit details → amenities → photos/video → pricing & terms → availability → review & publish. *Photos step added in slice 2b, with the walk-through video on the same step; availability lives in the details step.*
 - [x] Location step: drop a pin on the map, "use my current location", GhanaPostGPS digital address field, landmark description ("Behind Ayigya Zongo mosque").
 - [x] Deterministic approximate location generation (§6.1).
 - [x] Unit taxonomy and amenities seeded. *Defined in Go (`listings/taxonomy.go`); amenities stored as a JSONB array on the unit.*
-- [x] Media upload with presigned URLs, drag-to-reorder, cover selection, client-side compression, progress bars. *Photos upload through the server, one per request after shrinking on the phone (not presigned; see §16.9). Walk-through video is the next slice.*
-- [x] Media worker: variants, EXIF strip, blurhash, pHash. *Processed in the request (bounded to 2 at a time), not a River job yet; JPEG 320/800/1600.*
+- [x] Media upload with presigned URLs, drag-to-reorder, cover selection, client-side compression, progress bars. *Photos upload through the server, one per request after shrinking on the phone (not presigned; see §16.9). Videos upload in resumable 2 MB pieces (§16.10).*
+- [x] Media worker: variants, EXIF strip, blurhash, pHash. *Photos are processed in the request (bounded to 2 at a time); videos by an in-process ffmpeg worker (§16.10). No River yet.*
 - [x] Pricing & terms with mandatory fee disclosure; live **move-in cost preview** while typing.
 - [x] Properties with multiple units (hostels, apartment blocks, compound houses) — one property, many units, many listings.
 - [ ] Agent listing on behalf of a landlord: mandate request → landlord approves via SMS/WhatsApp link. Unmandated agent listings are allowed but labelled "Agent listing — owner authority not confirmed".
@@ -1044,5 +1044,19 @@ Sky Mint is step 200 of its scale; Graphite is step 900. Darker mint steps exist
 | Serving | bucket/CDN URLs | `/media/{id}/w320.jpg` etc. through Go, `Cache-Control: immutable` for a year, Cloudflare in front | Keeps `img-src 'self'`; the IDs are unguessable UUIDv7s. A deleted photo can linger in the CDN cache until purged — add a Cloudflare purge on delete at launch |
 | Duplicates | pHash | 64-bit DCT pHash, ≤4 bits apart **and** the same aspect ratio → "already added" (within one listing) | Re-encoding the same photo drifts up to 4 bits; the aspect check stops portrait/landscape look-alikes. Cross-listing matching is Phase 5 (§6.11) |
 | Photo rules | — | 3 to publish, 8+ for the 25 quality points, 30 max; "Add photos later" skips the step, but Review blocks publishing | Enough for room, bathroom and compound without blocking listers who shoot later |
+
+### 16.10 Decisions taken while building Phase 2 (slice 2b — walk-through video)
+
+| Area | Plan said | Built | Why |
+| --- | --- | --- | --- |
+| Format | FFmpeg → 480p/720p HLS + poster, or Bunny/Cloudflare Stream | FFmpeg → progressive H.264/AAC MP4 at 480p and 720p (short side, CRF 28/26, capped at 0.8/1.8 Mbit/s, ≤30 fps, mono 64 kbit/s audio, `+faststart`), plus a poster frame saved as the photo sizes (`w320/w800/w1600.jpg`) with blurhash and pHash | Two minutes max doesn't need adaptive streaming. MP4 plays in every browser's `<video>` with no hls.js and no extra CSP, and costs nothing per minute. Data saver serves only the 480p file |
+| Rules | — | One video per listing; 5 s to 2 min; ≤250 MB upload; short side ≥360 px; MP4/MOV/3GP/WebM only. It earns the 5 quality points once it's ready, and never blocks publishing | Covers a phone's 1080p recording of a short walk-through. Longer clips are refused, not silently cut, so the lister knows |
+| Upload | presigned URL | Through Go in resumable 2 MB pieces (`/video/uploads`, `Upload-Offset`, 409 → resume); the script retries with backoff after a dropped connection. The no-JS form streams the whole file to disk | A 60 MB upload over 3G will drop at some point. Resuming beats restarting, and the same inbox feeds the worker |
+| Privacy | EXIF strip | The upload is never stored or served. ffmpeg drops all metadata (`-map_metadata -1`, including QuickTime GPS) and applies the rotation to the pixels; tests grep the stored files for the coordinates | Phone videos record the building's exact position (§6.1) |
+| Safety | — | ffprobe/ffmpeg run with `-protocol_whitelist file` and `-format_whitelist` pinned to mov/mp4/matroska/webm demuxers | Stops "video" files that are really HLS/concat playlists from reading local files or URLs (the classic ffmpeg SSRF) |
+| Processing | River job | In-process worker (`listings.RunVideoWorker`): one video at a time, 2 x264 threads, 15 min timeout, woken on upload and polled each minute; states processing → ready/failed; the panel polls every 5 s | River isn't in the stack yet. Files live in a local `VIDEO_INBOX_DIR`, so **one web replica per inbox**: fine on the single VPS. Move it to River plus shared storage before scaling out |
+| Serving | CDN URLs | `/media/{id}/v480.mp4` and `v720.mp4` through Go with Range support (`http.ServeContent`), immutable for a year | Keeps `media-src 'self'`. Each request reads the whole object (≤~30 MB) from the store, which Cloudflare absorbs; switch to ranged store reads or signed CDN URLs if origin traffic grows |
+| Image | distroless static | Static `ffmpeg`/`ffprobe` copied from `mwader/static-ffmpeg:7.1`; `inbox` volume. Without ffmpeg the video section hides itself | Keeps the image distroless; dev uses the locally installed ffmpeg |
+| Schema | — | Migration `listing_video` adds `status` and `duration_ms` (they were in the Ent schema but never migrated); poster `blurhash`/`phash` became mutable | They're only known after transcoding |
 
 Phase 0 engineering status: repo skeleton, Compose dev stack (PostGIS + pgvector image, Mailpit, Valhalla behind a profile), config, slog, request IDs, graceful shutdown, `/healthz` + `/readyz`, Ent + migrations, design tokens + first components, landing page with waitlist, tests, CI and the production Dockerfile/Compose/Caddy are done. Still open: staging VPS + Cloudflare, i18n scaffolding, product/legal tasks.

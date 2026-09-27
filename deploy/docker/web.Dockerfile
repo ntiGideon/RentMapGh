@@ -22,13 +22,17 @@ RUN --mount=type=cache,target=/go/pkg/mod --mount=type=cache,target=/root/.cache
  && CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /out/web ./cmd/web \
  && CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /out/migrate ./cmd/migrate \
  && CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /out/admin ./cmd/admin \
- && mkdir -p /out/data/private
+ && mkdir -p /out/data/private /out/data/inbox
+
+# Static ffmpeg/ffprobe for walk-through videos (they run fine on distroless).
+FROM mwader/static-ffmpeg:7.1 AS ffmpeg
 
 FROM gcr.io/distroless/static-debian12:nonroot
 COPY --from=build /out/web /out/migrate /out/admin /app/
+COPY --from=ffmpeg /ffmpeg /ffprobe /usr/local/bin/
 # Owned by nonroot (65532) so a fresh named volume inherits writable permissions.
 COPY --from=build --chown=65532:65532 /out/data /data
-ENV APP_ENV=production HTTP_ADDR=:8080 STORAGE_DIR=/data/private
+ENV APP_ENV=production HTTP_ADDR=:8080 STORAGE_DIR=/data/private VIDEO_INBOX_DIR=/data/inbox
 # Private uploads (encrypted ID evidence, avatars): mount a volume here.
 VOLUME ["/data/private"]
 EXPOSE 8080

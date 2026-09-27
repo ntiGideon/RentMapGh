@@ -22,6 +22,7 @@ type AdminListingView struct {
 	Sections                      []SummarySection
 	MoveIn                        MoveInView
 	Photos                        []PhotoTile
+	Video                         VideoView
 	Own                           bool
 	Errors                        map[string]string
 	Note                          string
@@ -101,6 +102,9 @@ templ AdminListingReviewBody(v AdminListingView) {
 					} else {
 						<p class="mt-2 text-sm text-fg-subtle">No photos.</p>
 					}
+				}
+				if v.Video.State != "" {
+					@VideoPanel(v.Video)
 				}
 				@c.Card("p-5") {
 					<h2 class="text-base font-semibold text-fg">{ v.Headline }</h2>

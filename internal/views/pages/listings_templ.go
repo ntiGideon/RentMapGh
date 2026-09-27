@@ -123,7 +123,7 @@ func wizardMeta(v partials.WizardView) layouts.Meta {
 		m.Modules = []string{"js/location-picker.js"}
 	}
 	if v.Step == "photos" {
-		m.Modules = []string{"js/photo-manager.js"}
+		m.Modules = []string{"js/photo-manager.js", "js/video-uploader.js"}
 	}
 	return m
 }

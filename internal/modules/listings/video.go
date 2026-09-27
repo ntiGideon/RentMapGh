@@ -40,7 +40,7 @@ var VideoOutputs = []struct {
 	ShortSide, CRF int
 	MaxKbps        int
 }{
-	{"v480.mp4", 480, 28, 800},   // data saver, slow links (~6 MB/min)
+	{"v480.mp4", 480, 28, 800},  // data saver, slow links (~6 MB/min)
 	{"v720.mp4", 720, 26, 1800}, // default (~14 MB/min)
 }
 
@@ -165,8 +165,11 @@ func (s *Service) StartVideoUpload(ctx context.Context, a Actor, id uuid.UUID, s
 func (s *Service) upload(a Actor, id, uid uuid.UUID) (uploadMeta, int64, error) {
 	var m uploadMeta
 	raw, err := os.ReadFile(s.inboxPath(uid, ".json"))
-	if err != nil || json.Unmarshal(raw, &m) != nil || m.ListingID != id || m.UserID != a.UserID {
+	if err != nil || json.Unmarshal(raw, &m) != nil {
 		return m, 0, ErrUploadGone
+	}
+	if m.ListingID != id || m.UserID != a.UserID {
+		return m, 0, ErrNotFound // someone else's: as if it didn't exist
 	}
 	st, err := os.Stat(s.inboxPath(uid, ".part"))
 	if err != nil {

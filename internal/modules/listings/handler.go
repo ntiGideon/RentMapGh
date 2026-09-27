@@ -205,6 +205,7 @@ func (h *Handler) renderStep(w http.ResponseWriter, r *http.Request, status int,
 		units = 1
 	}
 	v := buildView(d, step, actor(r).IdentityVerified, form, errs, units)
+	v.Video = videoView(d, h.svc.VideoEnabled(), reqctx.DataSaver(r.Context()), errs["video"])
 	body := map[string]func(partials.WizardView) templ.Component{
 		"location": partials.StepLocation, "property": partials.StepProperty, "unit": partials.StepUnit,
 		"amenities": partials.StepAmenities, "photos": partials.StepPhotos, "pricing": partials.StepPricing, "details": partials.StepDetails,

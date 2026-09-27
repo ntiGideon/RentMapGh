@@ -1,6 +1,7 @@
 package listings
 
 import (
+	"bytes"
 	"errors"
 	"io"
 	"log/slog"
@@ -175,12 +176,15 @@ func (h *Handler) photoError(w http.ResponseWriter, r *http.Request, id uuid.UUI
 	h.renderStep(w, r, status, d, "photos", nil, ValidationError{"photos": msg})
 }
 
-// Media serves a photo rendition. Files never change under a URL (a new
-// photo gets a new ID), so they're cached for a year by browsers and the CDN.
+// Media serves a photo rendition, a video poster or a video file. Files
+// never change under a URL (new media gets a new ID), so they're cached for
+// a year by browsers and the CDN. Videos answer Range requests so players
+// can seek.
 func (h *Handler) Media(w http.ResponseWriter, r *http.Request) {
 	id, err := uuid.Parse(chi.URLParam(r, "id"))
 	file := chi.URLParam(r, "file")
-	if err != nil || !IsPhotoFile(file) {
+	isVideo := IsVideoFile(file)
+	if err != nil || (!IsPhotoFile(file) && !isVideo) {
 		http.NotFound(w, r)
 		return
 	}
@@ -196,9 +200,16 @@ func (h *Handler) Media(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	hd := w.Header()
-	hd.Set("Content-Type", "image/jpeg")
-	hd.Set("Content-Length", strconv.Itoa(len(data)))
 	hd.Set("Cache-Control", "public, max-age=31536000, immutable")
 	hd.Set("X-Content-Type-Options", "nosniff")
+	if isVideo {
+		// Whole file from the store, then ranges from memory: at ≤1.8 Mbit/s
+		// for ≤2 min that's under 30 MB, and the CDN absorbs repeats.
+		hd.Set("Content-Type", "video/mp4")
+		http.ServeContent(w, r, "", time.Time{}, bytes.NewReader(data))
+		return
+	}
+	hd.Set("Content-Type", "image/jpeg")
+	hd.Set("Content-Length", strconv.Itoa(len(data)))
 	_, _ = w.Write(data)
 }

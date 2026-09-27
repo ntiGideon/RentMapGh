@@ -102,6 +102,12 @@ func StepPhotos(v WizardView) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
+		if v.Video.Enabled {
+			templ_7745c5c3_Err = VideoPanel(v.Video).Render(ctx, templ_7745c5c3_Buffer)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+		}
 		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<div class=\"rounded-lg border border-line bg-surface px-4 py-3 text-sm text-fg-muted\"><p class=\"font-medium text-fg\">Photos that get viewings</p><p class=\"mt-1\">Shoot in daylight with the lights on, phone held sideways. Show the room, bathroom and toilet, kitchen, the compound, the gate and the street, the meter and water tank. No people, and no phone numbers written on photos.</p></div><form action=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
@@ -109,7 +115,7 @@ func StepPhotos(v WizardView) templ.Component {
 		var templ_7745c5c3_Var3 templ.SafeURL
 		templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(v.stepURL("photos")))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/photos.templ`, Line: 65, Col: 51}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/photos.templ`, Line: 68, Col: 51}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 		if templ_7745c5c3_Err != nil {
@@ -132,7 +138,7 @@ func StepPhotos(v WizardView) templ.Component {
 		var templ_7745c5c3_Var4 templ.SafeURL
 		templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(v.stepURL(prevStep(v))))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/photos.templ`, Line: 70, Col: 51}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/photos.templ`, Line: 73, Col: 51}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 		if templ_7745c5c3_Err != nil {
@@ -240,7 +246,7 @@ func photoUploader(v PhotosView) templ.Component {
 		var templ_7745c5c3_Var8 templ.SafeURL
 		templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(v.base()))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/photos.templ`, Line: 95, Col: 34}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/photos.templ`, Line: 98, Col: 34}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 		if templ_7745c5c3_Err != nil {
@@ -253,7 +259,7 @@ func photoUploader(v PhotosView) templ.Component {
 		var templ_7745c5c3_Var9 string
 		templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.ResolveAttributeValue(v.base())
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/photos.templ`, Line: 99, Col: 28}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/photos.templ`, Line: 102, Col: 28}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var9)
 		if templ_7745c5c3_Err != nil {
@@ -266,7 +272,7 @@ func photoUploader(v PhotosView) templ.Component {
 		var templ_7745c5c3_Var10 string
 		templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.ResolveAttributeValue(v.base() + "/order")
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/photos.templ`, Line: 100, Col: 38}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/photos.templ`, Line: 103, Col: 38}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var10)
 		if templ_7745c5c3_Err != nil {
@@ -279,7 +285,7 @@ func photoUploader(v PhotosView) templ.Component {
 		var templ_7745c5c3_Var11 string
 		templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.ResolveAttributeValue(strconv.Itoa(v.Max))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/photos.templ`, Line: 101, Col: 32}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/photos.templ`, Line: 104, Col: 32}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var11)
 		if templ_7745c5c3_Err != nil {
@@ -300,7 +306,7 @@ func photoUploader(v PhotosView) templ.Component {
 		var templ_7745c5c3_Var12 string
 		templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(strconv.Itoa(v.Max))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/photos.templ`, Line: 114, Col: 88}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/photos.templ`, Line: 117, Col: 88}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
 		if templ_7745c5c3_Err != nil {
@@ -405,7 +411,7 @@ func PhotoGrid(v PhotosView) templ.Component {
 			var templ_7745c5c3_Var15 string
 			templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinStringErrs(strconv.Itoa(len(v.Tiles)))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/photos.templ`, Line: 162, Col: 33}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/photos.templ`, Line: 165, Col: 33}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var15))
 			if templ_7745c5c3_Err != nil {
@@ -445,7 +451,7 @@ func PhotoGrid(v PhotosView) templ.Component {
 		var templ_7745c5c3_Var18 string
 		templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.JoinStringErrs(strconv.Itoa(min(len(v.Tiles), v.Good)))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/photos.templ`, Line: 169, Col: 45}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/photos.templ`, Line: 172, Col: 45}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var18))
 		if templ_7745c5c3_Err != nil {
@@ -458,7 +464,7 @@ func PhotoGrid(v PhotosView) templ.Component {
 		var templ_7745c5c3_Var19 string
 		templ_7745c5c3_Var19, templ_7745c5c3_Err = templ.JoinStringErrs(strconv.Itoa(v.Good))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/photos.templ`, Line: 169, Col: 70}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/photos.templ`, Line: 172, Col: 70}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var19))
 		if templ_7745c5c3_Err != nil {
@@ -471,7 +477,7 @@ func PhotoGrid(v PhotosView) templ.Component {
 		var templ_7745c5c3_Var20 string
 		templ_7745c5c3_Var20, templ_7745c5c3_Err = templ.JoinStringErrs(photoHint(v))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/photos.templ`, Line: 172, Col: 54}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/photos.templ`, Line: 175, Col: 54}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var20))
 		if templ_7745c5c3_Err != nil {
@@ -493,7 +499,7 @@ func PhotoGrid(v PhotosView) templ.Component {
 			var templ_7745c5c3_Var21 string
 			templ_7745c5c3_Var21, templ_7745c5c3_Err = templ.JoinStringErrs(v.Error)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/photos.templ`, Line: 176, Col: 13}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/photos.templ`, Line: 179, Col: 13}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var21))
 			if templ_7745c5c3_Err != nil {
@@ -517,7 +523,7 @@ func PhotoGrid(v PhotosView) templ.Component {
 				var templ_7745c5c3_Var22 string
 				templ_7745c5c3_Var22, templ_7745c5c3_Err = templ.ResolveAttributeValue(t.ID)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/photos.templ`, Line: 182, Col: 29}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/photos.templ`, Line: 185, Col: 29}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var22)
 				if templ_7745c5c3_Err != nil {
@@ -530,7 +536,7 @@ func PhotoGrid(v PhotosView) templ.Component {
 				var templ_7745c5c3_Var23 string
 				templ_7745c5c3_Var23, templ_7745c5c3_Err = templ.ResolveAttributeValue(t.Small)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/photos.templ`, Line: 185, Col: 21}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/photos.templ`, Line: 188, Col: 21}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var23)
 				if templ_7745c5c3_Err != nil {
@@ -543,7 +549,7 @@ func PhotoGrid(v PhotosView) templ.Component {
 				var templ_7745c5c3_Var24 string
 				templ_7745c5c3_Var24, templ_7745c5c3_Err = templ.ResolveAttributeValue(t.Small + " 320w, " + t.Medium + " 800w")
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/photos.templ`, Line: 186, Col: 57}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/photos.templ`, Line: 189, Col: 57}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var24)
 				if templ_7745c5c3_Err != nil {
@@ -556,7 +562,7 @@ func PhotoGrid(v PhotosView) templ.Component {
 				var templ_7745c5c3_Var25 string
 				templ_7745c5c3_Var25, templ_7745c5c3_Err = templ.ResolveAttributeValue(strconv.Itoa(t.Width))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/photos.templ`, Line: 188, Col: 37}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/photos.templ`, Line: 191, Col: 37}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var25)
 				if templ_7745c5c3_Err != nil {
@@ -569,7 +575,7 @@ func PhotoGrid(v PhotosView) templ.Component {
 				var templ_7745c5c3_Var26 string
 				templ_7745c5c3_Var26, templ_7745c5c3_Err = templ.ResolveAttributeValue(strconv.Itoa(t.Height))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/photos.templ`, Line: 189, Col: 39}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/photos.templ`, Line: 192, Col: 39}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var26)
 				if templ_7745c5c3_Err != nil {
@@ -582,7 +588,7 @@ func PhotoGrid(v PhotosView) templ.Component {
 				var templ_7745c5c3_Var27 string
 				templ_7745c5c3_Var27, templ_7745c5c3_Err = templ.ResolveAttributeValue("Photo " + strconv.Itoa(i+1))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/photos.templ`, Line: 190, Col: 42}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/photos.templ`, Line: 193, Col: 42}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var27)
 				if templ_7745c5c3_Err != nil {
@@ -614,7 +620,7 @@ func PhotoGrid(v PhotosView) templ.Component {
 					var templ_7745c5c3_Var28 string
 					templ_7745c5c3_Var28, templ_7745c5c3_Err = templ.ResolveAttributeValue("Drag to reorder photo " + strconv.Itoa(i+1))
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/photos.templ`, Line: 203, Col: 111}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/photos.templ`, Line: 206, Col: 111}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var28)
 					if templ_7745c5c3_Err != nil {
@@ -715,7 +721,7 @@ func photoAction(url, icon, label string, disabled bool, confirm, hoverClass str
 		var templ_7745c5c3_Var30 templ.SafeURL
 		templ_7745c5c3_Var30, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(url))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/photos.templ`, Line: 230, Col: 29}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/photos.templ`, Line: 233, Col: 29}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var30))
 		if templ_7745c5c3_Err != nil {
@@ -728,7 +734,7 @@ func photoAction(url, icon, label string, disabled bool, confirm, hoverClass str
 		var templ_7745c5c3_Var31 string
 		templ_7745c5c3_Var31, templ_7745c5c3_Err = templ.ResolveAttributeValue(url)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/photos.templ`, Line: 231, Col: 15}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/photos.templ`, Line: 234, Col: 15}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var31)
 		if templ_7745c5c3_Err != nil {
@@ -746,7 +752,7 @@ func photoAction(url, icon, label string, disabled bool, confirm, hoverClass str
 			var templ_7745c5c3_Var32 string
 			templ_7745c5c3_Var32, templ_7745c5c3_Err = templ.ResolveAttributeValue(confirm)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/photos.templ`, Line: 235, Col: 23}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/photos.templ`, Line: 238, Col: 23}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var32)
 			if templ_7745c5c3_Err != nil {
@@ -783,7 +789,7 @@ func photoAction(url, icon, label string, disabled bool, confirm, hoverClass str
 		var templ_7745c5c3_Var34 string
 		templ_7745c5c3_Var34, templ_7745c5c3_Err = templ.ResolveAttributeValue(label)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/photos.templ`, Line: 238, Col: 65}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/photos.templ`, Line: 241, Col: 65}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var34)
 		if templ_7745c5c3_Err != nil {
@@ -796,7 +802,7 @@ func photoAction(url, icon, label string, disabled bool, confirm, hoverClass str
 		var templ_7745c5c3_Var35 string
 		templ_7745c5c3_Var35, templ_7745c5c3_Err = templ.ResolveAttributeValue(label)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/photos.templ`, Line: 238, Col: 81}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/photos.templ`, Line: 241, Col: 81}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var35)
 		if templ_7745c5c3_Err != nil {
@@ -866,7 +872,7 @@ func PhotoStrip(tiles []PhotoTile) templ.Component {
 				var templ_7745c5c3_Var38 templ.SafeURL
 				templ_7745c5c3_Var38, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(t.Large))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/photos.templ`, Line: 250, Col: 37}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/photos.templ`, Line: 253, Col: 37}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var38))
 				if templ_7745c5c3_Err != nil {
@@ -879,7 +885,7 @@ func PhotoStrip(tiles []PhotoTile) templ.Component {
 				var templ_7745c5c3_Var39 string
 				templ_7745c5c3_Var39, templ_7745c5c3_Err = templ.ResolveAttributeValue(t.Small)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/photos.templ`, Line: 251, Col: 24}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/photos.templ`, Line: 254, Col: 24}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var39)
 				if templ_7745c5c3_Err != nil {
@@ -892,7 +898,7 @@ func PhotoStrip(tiles []PhotoTile) templ.Component {
 				var templ_7745c5c3_Var40 string
 				templ_7745c5c3_Var40, templ_7745c5c3_Err = templ.ResolveAttributeValue(strconv.Itoa(t.Width))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/photos.templ`, Line: 251, Col: 56}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/photos.templ`, Line: 254, Col: 56}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var40)
 				if templ_7745c5c3_Err != nil {
@@ -905,7 +911,7 @@ func PhotoStrip(tiles []PhotoTile) templ.Component {
 				var templ_7745c5c3_Var41 string
 				templ_7745c5c3_Var41, templ_7745c5c3_Err = templ.ResolveAttributeValue(strconv.Itoa(t.Height))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/photos.templ`, Line: 251, Col: 90}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/photos.templ`, Line: 254, Col: 90}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var41)
 				if templ_7745c5c3_Err != nil {
@@ -918,7 +924,7 @@ func PhotoStrip(tiles []PhotoTile) templ.Component {
 				var templ_7745c5c3_Var42 string
 				templ_7745c5c3_Var42, templ_7745c5c3_Err = templ.ResolveAttributeValue("Photo " + strconv.Itoa(i+1))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/photos.templ`, Line: 251, Col: 127}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/partials/photos.templ`, Line: 254, Col: 127}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var42)
 				if templ_7745c5c3_Err != nil {

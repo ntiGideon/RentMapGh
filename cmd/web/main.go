@@ -58,6 +58,9 @@ func run() error {
 	}
 	deps := server.Deps{Cfg: cfg, DB: database, Assets: web.NewAssets(cfg.StaticFromDisk), SMS: smsSender,
 		Files: storage.Disk{Root: cfg.StorageDir}, Media: media}
+	if deps.Listings, err = server.NewListings(deps); err != nil {
+		return err
+	}
 	server.StartJobs(ctx, deps)
 
 	srv := &http.Server{

@@ -15,8 +15,10 @@ import (
 
 	"rentmapgh/internal/config"
 	"rentmapgh/internal/db"
+	"rentmapgh/internal/modules/listings"
 	"rentmapgh/internal/platform/sms"
 	"rentmapgh/internal/platform/storage"
+	"rentmapgh/internal/platform/video"
 	"rentmapgh/web"
 )
 
@@ -33,6 +35,14 @@ func newTestServerSMS(t *testing.T) (http.Handler, *db.DB, *sms.Capture) {
 }
 
 func newTestServerMedia(t *testing.T) (http.Handler, *db.DB, *sms.Capture, *storage.Memory) {
+	t.Helper()
+	h, d, capture, media, _ := newTestServerFull(t, false)
+	return h, d, capture, media
+}
+
+// newTestServerFull optionally turns on walk-through videos (skipping the
+// test without ffmpeg) and returns the listings service to drive its worker.
+func newTestServerFull(t *testing.T, withVideo bool) (http.Handler, *db.DB, *sms.Capture, *storage.Memory, *listings.Service) {
 	t.Helper()
 	dsn := os.Getenv("TEST_DATABASE_URL")
 	if dsn == "" {
@@ -52,7 +62,17 @@ func newTestServerMedia(t *testing.T) (http.Handler, *db.DB, *sms.Capture, *stor
 		AuthSecret: "test-secret-test-secret-test-secret", LocationSecret: "test-location-secret", SessionTTL: 24 * time.Hour, SMSDailyCap: 100, EvidenceRetention: 90 * 24 * time.Hour}
 	capture := &sms.Capture{}
 	media := storage.NewMemory()
-	return New(Deps{Cfg: cfg, DB: d, Assets: web.NewAssets(false), SMS: capture, Files: storage.NewMemory(), Media: media}), d, capture, media
+	deps := Deps{Cfg: cfg, DB: d, Assets: web.NewAssets(false), SMS: capture, Files: storage.NewMemory(), Media: media}
+	if withVideo {
+		if _, err := video.Find("", ""); err != nil {
+			t.Skip("ffmpeg/ffprobe not on PATH")
+		}
+		deps.Cfg.VideoEnabled, deps.Cfg.VideoInbox = true, t.TempDir()
+		deps.Listings, err = NewListings(deps)
+		require.NoError(t, err)
+		require.True(t, deps.Listings.VideoEnabled())
+	}
+	return New(deps), d, capture, media, deps.Listings
 }
 
 func do(h http.Handler, method, target string, form url.Values, hdr map[string]string) *httptest.ResponseRecorder {
