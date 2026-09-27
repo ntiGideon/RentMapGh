@@ -14,12 +14,14 @@ import (
 	"rentmapgh/internal/ent/otpcode"
 	"rentmapgh/internal/ent/property"
 	"rentmapgh/internal/ent/roleassignment"
+	"rentmapgh/internal/ent/savedlisting"
 	"rentmapgh/internal/ent/schema"
 	"rentmapgh/internal/ent/session"
 	"rentmapgh/internal/ent/unit"
 	"rentmapgh/internal/ent/user"
 	"rentmapgh/internal/ent/verification"
 	"rentmapgh/internal/ent/verificationfile"
+	"rentmapgh/internal/ent/viewing"
 	"rentmapgh/internal/ent/waitlistentry"
 	"time"
 
@@ -563,6 +565,27 @@ func init() {
 	roleassignmentDescID := roleassignmentMixinFields0[0].Descriptor()
 	// roleassignment.DefaultID holds the default value on creation for the id field.
 	roleassignment.DefaultID = roleassignmentDescID.Default.(func() uuid.UUID)
+	savedlistingMixin := schema.SavedListing{}.Mixin()
+	savedlistingMixinFields0 := savedlistingMixin[0].Fields()
+	_ = savedlistingMixinFields0
+	savedlistingMixinFields1 := savedlistingMixin[1].Fields()
+	_ = savedlistingMixinFields1
+	savedlistingFields := schema.SavedListing{}.Fields()
+	_ = savedlistingFields
+	// savedlistingDescCreatedAt is the schema descriptor for created_at field.
+	savedlistingDescCreatedAt := savedlistingMixinFields1[0].Descriptor()
+	// savedlisting.DefaultCreatedAt holds the default value on creation for the created_at field.
+	savedlisting.DefaultCreatedAt = savedlistingDescCreatedAt.Default.(func() time.Time)
+	// savedlistingDescUpdatedAt is the schema descriptor for updated_at field.
+	savedlistingDescUpdatedAt := savedlistingMixinFields1[1].Descriptor()
+	// savedlisting.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	savedlisting.DefaultUpdatedAt = savedlistingDescUpdatedAt.Default.(func() time.Time)
+	// savedlisting.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	savedlisting.UpdateDefaultUpdatedAt = savedlistingDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// savedlistingDescID is the schema descriptor for id field.
+	savedlistingDescID := savedlistingMixinFields0[0].Descriptor()
+	// savedlisting.DefaultID holds the default value on creation for the id field.
+	savedlisting.DefaultID = savedlistingDescID.Default.(func() uuid.UUID)
 	sessionMixin := schema.Session{}.Mixin()
 	sessionMixinFields0 := sessionMixin[0].Fields()
 	_ = sessionMixinFields0
@@ -798,6 +821,45 @@ func init() {
 	verificationfileDescID := verificationfileMixinFields0[0].Descriptor()
 	// verificationfile.DefaultID holds the default value on creation for the id field.
 	verificationfile.DefaultID = verificationfileDescID.Default.(func() uuid.UUID)
+	viewingMixin := schema.Viewing{}.Mixin()
+	viewingMixinFields0 := viewingMixin[0].Fields()
+	_ = viewingMixinFields0
+	viewingMixinFields1 := viewingMixin[1].Fields()
+	_ = viewingMixinFields1
+	viewingFields := schema.Viewing{}.Fields()
+	_ = viewingFields
+	// viewingDescCreatedAt is the schema descriptor for created_at field.
+	viewingDescCreatedAt := viewingMixinFields1[0].Descriptor()
+	// viewing.DefaultCreatedAt holds the default value on creation for the created_at field.
+	viewing.DefaultCreatedAt = viewingDescCreatedAt.Default.(func() time.Time)
+	// viewingDescUpdatedAt is the schema descriptor for updated_at field.
+	viewingDescUpdatedAt := viewingMixinFields1[1].Descriptor()
+	// viewing.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	viewing.DefaultUpdatedAt = viewingDescUpdatedAt.Default.(func() time.Time)
+	// viewing.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	viewing.UpdateDefaultUpdatedAt = viewingDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// viewingDescDurationMin is the schema descriptor for duration_min field.
+	viewingDescDurationMin := viewingFields[5].Descriptor()
+	// viewing.DefaultDurationMin holds the default value on creation for the duration_min field.
+	viewing.DefaultDurationMin = viewingDescDurationMin.Default.(int)
+	// viewing.DurationMinValidator is a validator for the "duration_min" field. It is called by the builders before save.
+	viewing.DurationMinValidator = viewingDescDurationMin.Validators[0].(func(int) error)
+	// viewingDescNote is the schema descriptor for note field.
+	viewingDescNote := viewingFields[6].Descriptor()
+	// viewing.NoteValidator is a validator for the "note" field. It is called by the builders before save.
+	viewing.NoteValidator = viewingDescNote.Validators[0].(func(string) error)
+	// viewingDescFeeAcknowledged is the schema descriptor for fee_acknowledged field.
+	viewingDescFeeAcknowledged := viewingFields[8].Descriptor()
+	// viewing.DefaultFeeAcknowledged holds the default value on creation for the fee_acknowledged field.
+	viewing.DefaultFeeAcknowledged = viewingDescFeeAcknowledged.Default.(bool)
+	// viewingDescDeclineReason is the schema descriptor for decline_reason field.
+	viewingDescDeclineReason := viewingFields[9].Descriptor()
+	// viewing.DeclineReasonValidator is a validator for the "decline_reason" field. It is called by the builders before save.
+	viewing.DeclineReasonValidator = viewingDescDeclineReason.Validators[0].(func(string) error)
+	// viewingDescID is the schema descriptor for id field.
+	viewingDescID := viewingMixinFields0[0].Descriptor()
+	// viewing.DefaultID holds the default value on creation for the id field.
+	viewing.DefaultID = viewingDescID.Default.(func() uuid.UUID)
 	waitlistentryMixin := schema.WaitlistEntry{}.Mixin()
 	waitlistentryMixinFields0 := waitlistentryMixin[0].Fields()
 	_ = waitlistentryMixinFields0

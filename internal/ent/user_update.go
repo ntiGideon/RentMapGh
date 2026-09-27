@@ -13,10 +13,12 @@ import (
 	"rentmapgh/internal/ent/session"
 	"rentmapgh/internal/ent/user"
 	"rentmapgh/internal/ent/verification"
+	"rentmapgh/internal/platform/weekly"
 	"time"
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
+	"entgo.io/ent/dialect/sql/sqljson"
 	"entgo.io/ent/schema/field"
 	"github.com/google/uuid"
 )
@@ -257,6 +259,24 @@ func (_u *UserUpdate) SetNillableLicenseVerifiedAt(v *time.Time) *UserUpdate {
 // ClearLicenseVerifiedAt clears the value of the "license_verified_at" field.
 func (_u *UserUpdate) ClearLicenseVerifiedAt() *UserUpdate {
 	_u.mutation.ClearLicenseVerifiedAt()
+	return _u
+}
+
+// SetViewingHours sets the "viewing_hours" field.
+func (_u *UserUpdate) SetViewingHours(v []weekly.Window) *UserUpdate {
+	_u.mutation.SetViewingHours(v)
+	return _u
+}
+
+// AppendViewingHours appends value to the "viewing_hours" field.
+func (_u *UserUpdate) AppendViewingHours(v []weekly.Window) *UserUpdate {
+	_u.mutation.AppendViewingHours(v)
+	return _u
+}
+
+// ClearViewingHours clears the value of the "viewing_hours" field.
+func (_u *UserUpdate) ClearViewingHours() *UserUpdate {
+	_u.mutation.ClearViewingHours()
 	return _u
 }
 
@@ -564,6 +584,17 @@ func (_u *UserUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	}
 	if _u.mutation.LicenseVerifiedAtCleared() {
 		_spec.ClearField(user.FieldLicenseVerifiedAt, field.TypeTime)
+	}
+	if value, ok := _u.mutation.ViewingHours(); ok {
+		_spec.SetField(user.FieldViewingHours, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.AppendedViewingHours(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, user.FieldViewingHours, value)
+		})
+	}
+	if _u.mutation.ViewingHoursCleared() {
+		_spec.ClearField(user.FieldViewingHours, field.TypeJSON)
 	}
 	if _u.mutation.RolesCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -1004,6 +1035,24 @@ func (_u *UserUpdateOne) ClearLicenseVerifiedAt() *UserUpdateOne {
 	return _u
 }
 
+// SetViewingHours sets the "viewing_hours" field.
+func (_u *UserUpdateOne) SetViewingHours(v []weekly.Window) *UserUpdateOne {
+	_u.mutation.SetViewingHours(v)
+	return _u
+}
+
+// AppendViewingHours appends value to the "viewing_hours" field.
+func (_u *UserUpdateOne) AppendViewingHours(v []weekly.Window) *UserUpdateOne {
+	_u.mutation.AppendViewingHours(v)
+	return _u
+}
+
+// ClearViewingHours clears the value of the "viewing_hours" field.
+func (_u *UserUpdateOne) ClearViewingHours() *UserUpdateOne {
+	_u.mutation.ClearViewingHours()
+	return _u
+}
+
 // AddRoleIDs adds the "roles" edge to the RoleAssignment entity by IDs.
 func (_u *UserUpdateOne) AddRoleIDs(ids ...uuid.UUID) *UserUpdateOne {
 	_u.mutation.AddRoleIDs(ids...)
@@ -1338,6 +1387,17 @@ func (_u *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) {
 	}
 	if _u.mutation.LicenseVerifiedAtCleared() {
 		_spec.ClearField(user.FieldLicenseVerifiedAt, field.TypeTime)
+	}
+	if value, ok := _u.mutation.ViewingHours(); ok {
+		_spec.SetField(user.FieldViewingHours, field.TypeJSON, value)
+	}
+	if value, ok := _u.mutation.AppendedViewingHours(); ok {
+		_spec.AddModifier(func(u *sql.UpdateBuilder) {
+			sqljson.Append(u, user.FieldViewingHours, value)
+		})
+	}
+	if _u.mutation.ViewingHoursCleared() {
+		_spec.ClearField(user.FieldViewingHours, field.TypeJSON)
 	}
 	if _u.mutation.RolesCleared() {
 		edge := &sqlgraph.EdgeSpec{

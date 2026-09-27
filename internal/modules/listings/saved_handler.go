@@ -12,6 +12,7 @@ import (
 	"rentmapgh/internal/ent/listing"
 	"rentmapgh/internal/server/htmx"
 	"rentmapgh/internal/server/render"
+	"rentmapgh/internal/server/reqctx"
 	"rentmapgh/internal/views/layouts"
 	"rentmapgh/internal/views/pages"
 	"rentmapgh/internal/views/partials"
@@ -31,11 +32,22 @@ func (h *Handler) ToggleSaved(w http.ResponseWriter, r *http.Request) {
 		render.Error(w, r, http.StatusNotFound)
 		return
 	}
-	ids, saved := toggleSaved(h.saved.read(r), id)
-	if saved && len(ids) > MaxSaved {
-		ids = ids[:MaxSaved] // the oldest falls off
+	var saved bool
+	if vw := reqctx.CurrentViewer(r.Context()); vw != nil {
+		h.savedFor(w, r) // merge any cookie first
+		if saved, err = h.svc.ToggleSavedFor(r.Context(), vw.UserID, id); err != nil {
+			slog.ErrorContext(r.Context(), "saved: toggle", "err", err)
+			render.Error(w, r, http.StatusInternalServerError)
+			return
+		}
+	} else {
+		var ids []uuid.UUID
+		ids, saved = toggleSaved(h.saved.read(r), id)
+		if saved && len(ids) > MaxSaved {
+			ids = ids[:MaxSaved] // the oldest falls off
+		}
+		h.saved.write(w, ids)
 	}
-	h.saved.write(w, ids)
 	back := safeBack(r.PostFormValue("back"))
 	if !htmx.IsPartial(r) {
 		redirect(w, r, back)
@@ -60,7 +72,7 @@ func safeBack(p string) string {
 
 // SavedPage lists the renter's saved places, newest first.
 func (h *Handler) SavedPage(w http.ResponseWriter, r *http.Request) {
-	ids := h.saved.read(r)
+	ids := h.savedFor(w, r)
 	items, err := h.svc.loadPublic(r.Context(), ids)
 	if err != nil {
 		slog.ErrorContext(r.Context(), "saved", "err", err)
@@ -79,6 +91,7 @@ func (h *Handler) SavedPage(w http.ResponseWriter, r *http.Request) {
 	for _, d := range gone {
 		v.Gone = append(v.Gone, pages.GoneItem{Title: Title(d), URL: PublicPath(d), Status: statusWord(d.L.Status)})
 	}
+	v.SignedIn = reqctx.CurrentViewer(r.Context()) != nil
 	m := layouts.Meta{Title: "Saved places", NoIndex: true, Modules: []string{"js/compare.js"}}
 	w.Header().Set("Cache-Control", "private, no-store")
 	render.Component(w, r, http.StatusOK, pages.Saved(m, v))

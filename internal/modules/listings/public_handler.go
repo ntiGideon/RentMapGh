@@ -49,7 +49,12 @@ func (h *Handler) ListingPage(w http.ResponseWriter, r *http.Request) {
 	}
 	v := publicView(d, lister, authority, viewer, reqctx.DataSaver(r.Context()), time.Now().UTC())
 	v.PageURL = h.baseURL + path
-	v.Saved = slices.Contains(h.saved.read(r), d.L.ID)
+	v.Saved = slices.Contains(h.savedFor(w, r), d.L.ID)
+	v.ViewingURL = "/l/" + d.L.ID.String() + "/viewing"
+	v.CanBook = d.L.Status == listing.StatusActive && d.L.ListerID != viewer
+	if viewer != uuid.Nil && h.openViewing != nil {
+		v.MyViewingURL, v.MyViewingWhen = h.openViewing(r.Context(), viewer, d.L.ID)
+	}
 	v.AreaURL = "/search"
 	if d.P.ApproxLat != nil && d.P.ApproxLng != nil {
 		c := BBox{MinLng: *d.P.ApproxLng - 0.02, MinLat: *d.P.ApproxLat - 0.015, MaxLng: *d.P.ApproxLng + 0.02, MaxLat: *d.P.ApproxLat + 0.015}
@@ -60,7 +65,7 @@ func (h *Handler) ListingPage(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			slog.ErrorContext(r.Context(), "listing page: similar", "err", err)
 		}
-		v.Similar = h.cards(r.Context(), sim, Filter{}.Ref(), h.saved.read(r))
+		v.Similar = h.cards(r.Context(), sim, Filter{}.Ref(), h.savedFor(w, r))
 	}
 	v.ShareURL = shareURL(v, v.PageURL)
 

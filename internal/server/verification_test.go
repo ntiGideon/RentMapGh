@@ -72,8 +72,13 @@ func testJPEG(t *testing.T) []byte {
 // grants any staff roles directly.
 func signInAs(t *testing.T, h http.Handler, d *db.DB, capture *sms.Capture, phone, name string, roles ...string) *browser {
 	t.Helper()
+	return signInWith(t, newBrowser(t, h), d, capture, phone, name, roles...)
+}
+
+// signInWith signs in on an existing browser (keeping its cookies).
+func signInWith(t *testing.T, b *browser, d *db.DB, capture *sms.Capture, phone, name string, roles ...string) *browser {
+	t.Helper()
 	ctx := context.Background()
-	b := newBrowser(t, h)
 	_, err := d.SQL.ExecContext(ctx, "UPDATE otp_codes SET created_at = created_at - interval '2 minutes'")
 	require.NoError(t, err)
 	rec := b.do(http.MethodPost, "/login", url.Values{"phone": {phone}}, true)

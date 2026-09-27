@@ -36,6 +36,9 @@ type Property func(*sql.Selector)
 // RoleAssignment is the predicate function for roleassignment builders.
 type RoleAssignment func(*sql.Selector)
 
+// SavedListing is the predicate function for savedlisting builders.
+type SavedListing func(*sql.Selector)
+
 // Session is the predicate function for session builders.
 type Session func(*sql.Selector)
 
@@ -50,6 +53,9 @@ type Verification func(*sql.Selector)
 
 // VerificationFile is the predicate function for verificationfile builders.
 type VerificationFile func(*sql.Selector)
+
+// Viewing is the predicate function for viewing builders.
+type Viewing func(*sql.Selector)
 
 // WaitlistEntry is the predicate function for waitlistentry builders.
 type WaitlistEntry func(*sql.Selector)

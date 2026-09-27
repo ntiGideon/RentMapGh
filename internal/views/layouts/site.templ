@@ -43,6 +43,7 @@ templ Site(m Meta) {
 						if v.HasAny("landlord", "agent") {
 							<a href="/listings" class="hidden h-8 items-center rounded-lg px-2.5 text-sm font-medium text-fg-muted transition-colors hover:bg-surface hover:text-fg sm:inline-flex">Your listings</a>
 						}
+						<a href="/viewings" class="hidden h-8 items-center rounded-lg px-2.5 text-sm font-medium text-fg-muted transition-colors hover:bg-surface hover:text-fg sm:inline-flex">Viewings</a>
 						if v.HasAny("moderator", "admin") {
 							<a href="/admin" class="hidden h-8 items-center rounded-lg px-2.5 text-sm font-medium text-fg-muted transition-colors hover:bg-surface hover:text-fg sm:inline-flex">Admin</a>
 						}

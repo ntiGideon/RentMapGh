@@ -70,7 +70,7 @@ func TestSearch(t *testing.T) {
 	cheap := live(t, s, a, spot{6.6697, -1.5588, "single_room", "no", "month", 400, []string{"water_storage"}})
 	mid := live(t, s, a, spot{6.6840, -1.5640, "chamber_hall_sc", "yes", "month", 1200, []string{"gated", "parking"}})
 	hostel := live(t, s, a, spot{6.6630, -1.5530, "hostel_2in1", "yes", "academic_year", 4000, []string{"wifi", "cctv"}}) // 500/month
-	far := live(t, s, a, spot{6.6930, -1.6240, "apartment_2bed", "yes", "month", 3000, []string{"parking"}})               // Adum, outside the default view
+	far := live(t, s, a, spot{6.6930, -1.6240, "apartment_2bed", "yes", "month", 3000, []string{"parking"}})              // Adum, outside the default view
 
 	// A draft never shows.
 	draft, err := s.CreateDraft(ctx, a)

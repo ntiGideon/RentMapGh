@@ -40,7 +40,7 @@ func (h *Handler) Compare(w http.ResponseWriter, r *http.Request) {
 			live = append(live, d)
 		}
 	}
-	v := pages.CompareView{Cards: h.cards(r.Context(), live, Filter{}.Ref(), h.saved.read(r))}
+	v := pages.CompareView{Cards: h.cards(r.Context(), live, Filter{}.Ref(), h.savedFor(w, r))}
 	if len(live) >= 2 {
 		v.Rows = compareRows(live, time.Now().UTC())
 	}

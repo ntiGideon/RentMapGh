@@ -8,6 +8,7 @@ import (
 	"rentmapgh/internal/ent/agentprofile"
 	"rentmapgh/internal/ent/landlordprofile"
 	"rentmapgh/internal/ent/user"
+	"rentmapgh/internal/platform/weekly"
 	"strings"
 	"time"
 
@@ -49,6 +50,8 @@ type User struct {
 	IdentityVerifiedAt *time.Time `json:"identity_verified_at,omitempty"`
 	// denormalised from the approved licence Verification
 	LicenseVerifiedAt *time.Time `json:"license_verified_at,omitempty"`
+	// when this lister shows places, in Africa/Accra time
+	ViewingHours []weekly.Window `json:"viewing_hours,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the UserQuery when eager-loading is set.
 	Edges        UserEdges `json:"edges"`
@@ -126,7 +129,7 @@ func (*User) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case user.FieldNotificationPrefs:
+		case user.FieldNotificationPrefs, user.FieldViewingHours:
 			values[i] = new([]byte)
 		case user.FieldDataSaver:
 			values[i] = new(sql.NullBool)
@@ -250,6 +253,14 @@ func (_m *User) assignValues(columns []string, values []any) error {
 				_m.LicenseVerifiedAt = new(time.Time)
 				*_m.LicenseVerifiedAt = value.Time
 			}
+		case user.FieldViewingHours:
+			if value, ok := values[i].(*[]byte); !ok {
+				return fmt.Errorf("unexpected type %T for field viewing_hours", values[i])
+			} else if value != nil && len(*value) > 0 {
+				if err := json.Unmarshal(*value, &_m.ViewingHours); err != nil {
+					return fmt.Errorf("unmarshal field viewing_hours: %w", err)
+				}
+			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
 		}
@@ -366,6 +377,9 @@ func (_m *User) String() string {
 		builder.WriteString("license_verified_at=")
 		builder.WriteString(v.Format(time.ANSIC))
 	}
+	builder.WriteString(", ")
+	builder.WriteString("viewing_hours=")
+	builder.WriteString(fmt.Sprintf("%v", _m.ViewingHours))
 	builder.WriteByte(')')
 	return builder.String()
 }

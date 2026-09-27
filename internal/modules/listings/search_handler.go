@@ -33,7 +33,7 @@ func (h *Handler) Search(w http.ResponseWriter, r *http.Request) {
 		render.Error(w, r, http.StatusInternalServerError)
 		return
 	}
-	v := h.searchView(r.Context(), f, res, h.saved.read(r))
+	v := h.searchView(r.Context(), f, res, h.savedFor(w, r))
 	m := layouts.Meta{
 		Title:       "Rooms, hostels and apartments near KNUST",
 		Description: "Find a room, hostel or apartment in Kumasi on a map, with the full move-in cost of every place. No agent runaround.",
@@ -98,7 +98,7 @@ func (h *Handler) Preview(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
-	cards := h.cards(r.Context(), items, Filter{}.Ref(), h.saved.read(r))
+	cards := h.cards(r.Context(), items, Filter{}.Ref(), h.savedFor(w, r))
 	w.Header().Set("Cache-Control", "public, max-age=30")
 	render.Component(w, r, http.StatusOK, pages.ListingPreview(cards[0]))
 }

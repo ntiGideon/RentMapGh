@@ -761,6 +761,16 @@ func LicenseVerifiedAtNotNil() predicate.User {
 	return predicate.User(sql.FieldNotNull(FieldLicenseVerifiedAt))
 }
 
+// ViewingHoursIsNil applies the IsNil predicate on the "viewing_hours" field.
+func ViewingHoursIsNil() predicate.User {
+	return predicate.User(sql.FieldIsNull(FieldViewingHours))
+}
+
+// ViewingHoursNotNil applies the NotNil predicate on the "viewing_hours" field.
+func ViewingHoursNotNil() predicate.User {
+	return predicate.User(sql.FieldNotNull(FieldViewingHours))
+}
+
 // HasRoles applies the HasEdge predicate on the "roles" edge.
 func HasRoles() predicate.User {
 	return predicate.User(func(s *sql.Selector) {

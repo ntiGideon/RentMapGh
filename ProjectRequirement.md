@@ -549,11 +549,11 @@ Engineering:
 
 ### Phase 4 — Contact, viewings, availability & trust basics (3–4 weeks)
 
-- [ ] Account gate at first contact; anonymous favourites merge.
+- [x] Account gate at first contact; anonymous favourites merge. *Slice 4a; see §16.16.*
 - [ ] Messaging (SSE realtime, read receipts, unread badges, attachment support).
 - [ ] Scam-shield rules + inline warnings (§6.9).
-- [ ] Viewing slots, requests, accept/propose/decline, `.ics`, reminders (§6.8).
-- [ ] Exact location unlock on confirmation + "Navigate" deep links.
+- [ ] Viewing slots, requests, accept/propose/decline, `.ics`, reminders (§6.8). *4a built everything except the 24 h / 2 h reminders (4d).*
+- [x] Exact location unlock on confirmation + "Navigate" deep links.
 - [ ] Post-viewing feedback prompts.
 - [ ] Availability freshness engine + one-tap WhatsApp/SMS confirmations (§6.7).
 - [ ] "Mark as rented" flow (with optional "Rented through RentMap?" question — your key success metric).
@@ -1119,5 +1119,19 @@ Sky Mint is step 200 of its scale; Graphite is step 900. Darker mint steps exist
 | Structured data | — | Listing pages: an `Offer` (GHS price, unit) for an `Accommodation` located by town only — no coordinates, street or landmark | §6.1 |
 | Sitemap | — | `/sitemap.xml`: home, `/search`, area pages with listings, every live listing (lastmod = last confirmed); `robots.txt` names it and disallows private and filtered paths | |
 | Share image | photo + price + area | `/l/{id}/og.jpg?v=<hash>`: 1200×630 JPEG (~50 KB), the cover photo under a dark band with price, place and move-in total in Inter (static instances made from the site's variable font, cedi included), brand chip. Rendered once per version and kept in the media store; the hash covers everything drawn, so a price change is a new URL (WhatsApp caches by URL). Current version: immutable for a year | No headless browser; pure Go |
+
+### 16.16 Decisions taken while building Phase 4 (slice 4a — viewings)
+
+| Area | Plan said | Built | Why |
+| --- | --- | --- | --- |
+| Gate | account at first contact | Browsing, saving and comparing stay anonymous; "Request a viewing" needs sign-in (`RequireAuth` returns the renter to the booking form after OTP). Listers can't book their own place | The first moment a lister's time is involved |
+| Favourites merge | merge on sign-up | `saved_listings` table. The first request after sign-in that still carries the `saved` cookie moves its IDs into the account and clears the cookie; saves then follow the account to every device | Lazy merge: no hook in the auth flow |
+| Hours | weekly windows or specific slots | `users.viewing_hours` (JSON `weekly.Window`s, one per weekday, 6:00–20:00) cut into 30-minute slots over the next 14 days, at least 3 h ahead; confirmed viewings block their slot. No hours set → the renter suggests a day and time (7:00–18:00, half hours) | Weekly hours fit how landlords and caretakers show places; specific one-off slots can come later |
+| Times | — | Africa/Accra is GMT all year, so a fixed zone (no tzdata in the image) | |
+| States | accept / propose / decline | requested → confirmed; requested ⇄ proposed (lister suggests; renter accepts); declined (lister, with reason) / cancelled (either); completed / no_show (lister, after the time). Updates are conditional on the state shown, so double taps can't apply twice. Two renters may request the same slot; only one can be confirmed | §6.8 |
+| Fee | shown again, acknowledged | The viewing fee is snapshotted on the request and must be ticked ("paid in person at the viewing, only after you've met the lister") | |
+| Unlock | exact location on confirmation, logged | While confirmed and until 24 h after the start: street, landmark, area and digital address, Google Maps/Waze links, both phone numbers (tel + WhatsApp), and an `.ics` with a 2 h alarm. The renter's first look is audited (`viewing.location_unlocked`) | §6.1 rule 5, §6.9 (numbers hidden until confirmed) |
+| Messages | WhatsApp/SMS | An SMS to the other side at every step (request, accept, propose, decline with reason, cancel), each with a link to the viewing | Reminders and the notification centre are 4d |
+| Limits | — | 5 open requests per renter, 10 requests a day, 20 per hour per IP | |
 
 Phase 0 engineering status: repo skeleton, Compose dev stack (PostGIS + pgvector image, Mailpit, Valhalla behind a profile), config, slog, request IDs, graceful shutdown, `/healthz` + `/readyz`, Ent + migrations, design tokens + first components, landing page with waitlist, tests, CI and the production Dockerfile/Compose/Caddy are done. Still open: staging VPS + Cloudflare, i18n scaffolding, product/legal tasks.

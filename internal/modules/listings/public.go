@@ -64,6 +64,16 @@ func (s *Service) PublicListing(ctx context.Context, id, viewer uuid.UUID) (*Ite
 	return d, u, nil
 }
 
+// CoverURL is a listing's cover thumbnail, or "".
+func (s *Service) CoverURL(ctx context.Context, id uuid.UUID) string {
+	m, err := s.db.ListingMedia.Query().Where(listingmedia.ListingID(id), listingmedia.KindEQ(listingmedia.KindPhoto)).
+		Order(ent.Asc(listingmedia.FieldPosition)).First(ctx)
+	if err != nil {
+		return ""
+	}
+	return MediaURL(m.ID, "w320.jpg")
+}
+
 // Slug is the readable tail of a listing URL: "self-contained-chamber-hall-ayigya".
 func Slug(d *Item) string {
 	var b strings.Builder

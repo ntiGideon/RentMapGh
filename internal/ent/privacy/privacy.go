@@ -351,6 +351,30 @@ func (f RoleAssignmentMutationRuleFunc) EvalMutation(ctx context.Context, m ent.
 	return Denyf("ent/privacy: unexpected mutation type %T, expect *ent.RoleAssignmentMutation", m)
 }
 
+// The SavedListingQueryRuleFunc type is an adapter to allow the use of ordinary
+// functions as a query rule.
+type SavedListingQueryRuleFunc func(context.Context, *ent.SavedListingQuery) error
+
+// EvalQuery return f(ctx, q).
+func (f SavedListingQueryRuleFunc) EvalQuery(ctx context.Context, q ent.Query) error {
+	if q, ok := q.(*ent.SavedListingQuery); ok {
+		return f(ctx, q)
+	}
+	return Denyf("ent/privacy: unexpected query type %T, expect *ent.SavedListingQuery", q)
+}
+
+// The SavedListingMutationRuleFunc type is an adapter to allow the use of ordinary
+// functions as a mutation rule.
+type SavedListingMutationRuleFunc func(context.Context, *ent.SavedListingMutation) error
+
+// EvalMutation calls f(ctx, m).
+func (f SavedListingMutationRuleFunc) EvalMutation(ctx context.Context, m ent.Mutation) error {
+	if m, ok := m.(*ent.SavedListingMutation); ok {
+		return f(ctx, m)
+	}
+	return Denyf("ent/privacy: unexpected mutation type %T, expect *ent.SavedListingMutation", m)
+}
+
 // The SessionQueryRuleFunc type is an adapter to allow the use of ordinary
 // functions as a query rule.
 type SessionQueryRuleFunc func(context.Context, *ent.SessionQuery) error
@@ -471,6 +495,30 @@ func (f VerificationFileMutationRuleFunc) EvalMutation(ctx context.Context, m en
 	return Denyf("ent/privacy: unexpected mutation type %T, expect *ent.VerificationFileMutation", m)
 }
 
+// The ViewingQueryRuleFunc type is an adapter to allow the use of ordinary
+// functions as a query rule.
+type ViewingQueryRuleFunc func(context.Context, *ent.ViewingQuery) error
+
+// EvalQuery return f(ctx, q).
+func (f ViewingQueryRuleFunc) EvalQuery(ctx context.Context, q ent.Query) error {
+	if q, ok := q.(*ent.ViewingQuery); ok {
+		return f(ctx, q)
+	}
+	return Denyf("ent/privacy: unexpected query type %T, expect *ent.ViewingQuery", q)
+}
+
+// The ViewingMutationRuleFunc type is an adapter to allow the use of ordinary
+// functions as a mutation rule.
+type ViewingMutationRuleFunc func(context.Context, *ent.ViewingMutation) error
+
+// EvalMutation calls f(ctx, m).
+func (f ViewingMutationRuleFunc) EvalMutation(ctx context.Context, m ent.Mutation) error {
+	if m, ok := m.(*ent.ViewingMutation); ok {
+		return f(ctx, m)
+	}
+	return Denyf("ent/privacy: unexpected mutation type %T, expect *ent.ViewingMutation", m)
+}
+
 // The WaitlistEntryQueryRuleFunc type is an adapter to allow the use of ordinary
 // functions as a query rule.
 type WaitlistEntryQueryRuleFunc func(context.Context, *ent.WaitlistEntryQuery) error
@@ -550,6 +598,8 @@ func queryFilter(q ent.Query) (Filter, error) {
 		return q.Filter(), nil
 	case *ent.RoleAssignmentQuery:
 		return q.Filter(), nil
+	case *ent.SavedListingQuery:
+		return q.Filter(), nil
 	case *ent.SessionQuery:
 		return q.Filter(), nil
 	case *ent.UnitQuery:
@@ -559,6 +609,8 @@ func queryFilter(q ent.Query) (Filter, error) {
 	case *ent.VerificationQuery:
 		return q.Filter(), nil
 	case *ent.VerificationFileQuery:
+		return q.Filter(), nil
+	case *ent.ViewingQuery:
 		return q.Filter(), nil
 	case *ent.WaitlistEntryQuery:
 		return q.Filter(), nil
@@ -589,6 +641,8 @@ func mutationFilter(m ent.Mutation) (Filter, error) {
 		return m.Filter(), nil
 	case *ent.RoleAssignmentMutation:
 		return m.Filter(), nil
+	case *ent.SavedListingMutation:
+		return m.Filter(), nil
 	case *ent.SessionMutation:
 		return m.Filter(), nil
 	case *ent.UnitMutation:
@@ -598,6 +652,8 @@ func mutationFilter(m ent.Mutation) (Filter, error) {
 	case *ent.VerificationMutation:
 		return m.Filter(), nil
 	case *ent.VerificationFileMutation:
+		return m.Filter(), nil
+	case *ent.ViewingMutation:
 		return m.Filter(), nil
 	case *ent.WaitlistEntryMutation:
 		return m.Filter(), nil

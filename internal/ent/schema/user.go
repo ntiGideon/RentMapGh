@@ -5,6 +5,8 @@ import (
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
 	"entgo.io/ent/schema/index"
+
+	"rentmapgh/internal/platform/weekly"
 )
 
 // User is anyone with an account. The phone number is the login identity.
@@ -29,6 +31,7 @@ func (User) Fields() []ent.Field {
 		field.JSON("notification_prefs", map[string]bool{}).Optional().Comment("\"<topic>.<channel>\" → on/off"),
 		field.Time("identity_verified_at").Optional().Nillable().Comment("denormalised from the approved identity Verification"),
 		field.Time("license_verified_at").Optional().Nillable().Comment("denormalised from the approved licence Verification"),
+		field.JSON("viewing_hours", []weekly.Window{}).Optional().Comment("when this lister shows places, in Africa/Accra time"),
 	}
 }
 

@@ -17,13 +17,16 @@ import (
 	"rentmapgh/internal/ent/predicate"
 	"rentmapgh/internal/ent/property"
 	"rentmapgh/internal/ent/roleassignment"
+	"rentmapgh/internal/ent/savedlisting"
 	"rentmapgh/internal/ent/session"
 	"rentmapgh/internal/ent/unit"
 	"rentmapgh/internal/ent/user"
 	"rentmapgh/internal/ent/verification"
 	"rentmapgh/internal/ent/verificationfile"
+	"rentmapgh/internal/ent/viewing"
 	"rentmapgh/internal/ent/waitlistentry"
 	"rentmapgh/internal/platform/money"
+	"rentmapgh/internal/platform/weekly"
 	"sync"
 	"time"
 
@@ -51,11 +54,13 @@ const (
 	TypeOTPCode          = "OTPCode"
 	TypeProperty         = "Property"
 	TypeRoleAssignment   = "RoleAssignment"
+	TypeSavedListing     = "SavedListing"
 	TypeSession          = "Session"
 	TypeUnit             = "Unit"
 	TypeUser             = "User"
 	TypeVerification     = "Verification"
 	TypeVerificationFile = "VerificationFile"
+	TypeViewing          = "Viewing"
 	TypeWaitlistEntry    = "WaitlistEntry"
 )
 
@@ -11246,6 +11251,500 @@ func (m *RoleAssignmentMutation) ResetEdge(name string) error {
 	return fmt.Errorf("unknown RoleAssignment edge %s", name)
 }
 
+// SavedListingMutation represents an operation that mutates the SavedListing nodes in the graph.
+type SavedListingMutation struct {
+	config
+	op            Op
+	typ           string
+	id            *uuid.UUID
+	created_at    *time.Time
+	updated_at    *time.Time
+	user_id       *uuid.UUID
+	listing_id    *uuid.UUID
+	clearedFields map[string]struct{}
+	done          bool
+	oldValue      func(context.Context) (*SavedListing, error)
+	predicates    []predicate.SavedListing
+}
+
+var _ ent.Mutation = (*SavedListingMutation)(nil)
+
+// savedlistingOption allows management of the mutation configuration using functional options.
+type savedlistingOption func(*SavedListingMutation)
+
+// newSavedListingMutation creates new mutation for the SavedListing entity.
+func newSavedListingMutation(c config, op Op, opts ...savedlistingOption) *SavedListingMutation {
+	m := &SavedListingMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeSavedListing,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withSavedListingID sets the ID field of the mutation.
+func withSavedListingID(id uuid.UUID) savedlistingOption {
+	return func(m *SavedListingMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *SavedListing
+		)
+		m.oldValue = func(ctx context.Context) (*SavedListing, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().SavedListing.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withSavedListing sets the old SavedListing of the mutation.
+func withSavedListing(node *SavedListing) savedlistingOption {
+	return func(m *SavedListingMutation) {
+		m.oldValue = func(context.Context) (*SavedListing, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m SavedListingMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m SavedListingMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of SavedListing entities.
+func (m *SavedListingMutation) SetID(id uuid.UUID) {
+	m.id = &id
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *SavedListingMutation) ID() (id uuid.UUID, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *SavedListingMutation) IDs(ctx context.Context) ([]uuid.UUID, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []uuid.UUID{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().SavedListing.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *SavedListingMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *SavedListingMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the SavedListing entity.
+// If the SavedListing object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *SavedListingMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *SavedListingMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (m *SavedListingMutation) SetUpdatedAt(t time.Time) {
+	m.updated_at = &t
+}
+
+// UpdatedAt returns the value of the "updated_at" field in the mutation.
+func (m *SavedListingMutation) UpdatedAt() (r time.Time, exists bool) {
+	v := m.updated_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUpdatedAt returns the old "updated_at" field's value of the SavedListing entity.
+// If the SavedListing object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *SavedListingMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpdatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpdatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpdatedAt: %w", err)
+	}
+	return oldValue.UpdatedAt, nil
+}
+
+// ResetUpdatedAt resets all changes to the "updated_at" field.
+func (m *SavedListingMutation) ResetUpdatedAt() {
+	m.updated_at = nil
+}
+
+// SetUserID sets the "user_id" field.
+func (m *SavedListingMutation) SetUserID(u uuid.UUID) {
+	m.user_id = &u
+}
+
+// UserID returns the value of the "user_id" field in the mutation.
+func (m *SavedListingMutation) UserID() (r uuid.UUID, exists bool) {
+	v := m.user_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUserID returns the old "user_id" field's value of the SavedListing entity.
+// If the SavedListing object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *SavedListingMutation) OldUserID(ctx context.Context) (v uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUserID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUserID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUserID: %w", err)
+	}
+	return oldValue.UserID, nil
+}
+
+// ResetUserID resets all changes to the "user_id" field.
+func (m *SavedListingMutation) ResetUserID() {
+	m.user_id = nil
+}
+
+// SetListingID sets the "listing_id" field.
+func (m *SavedListingMutation) SetListingID(u uuid.UUID) {
+	m.listing_id = &u
+}
+
+// ListingID returns the value of the "listing_id" field in the mutation.
+func (m *SavedListingMutation) ListingID() (r uuid.UUID, exists bool) {
+	v := m.listing_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldListingID returns the old "listing_id" field's value of the SavedListing entity.
+// If the SavedListing object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *SavedListingMutation) OldListingID(ctx context.Context) (v uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldListingID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldListingID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldListingID: %w", err)
+	}
+	return oldValue.ListingID, nil
+}
+
+// ResetListingID resets all changes to the "listing_id" field.
+func (m *SavedListingMutation) ResetListingID() {
+	m.listing_id = nil
+}
+
+// Where appends a list predicates to the SavedListingMutation builder.
+func (m *SavedListingMutation) Where(ps ...predicate.SavedListing) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the SavedListingMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *SavedListingMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.SavedListing, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *SavedListingMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *SavedListingMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (SavedListing).
+func (m *SavedListingMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *SavedListingMutation) Fields() []string {
+	fields := make([]string, 0, 4)
+	if m.created_at != nil {
+		fields = append(fields, savedlisting.FieldCreatedAt)
+	}
+	if m.updated_at != nil {
+		fields = append(fields, savedlisting.FieldUpdatedAt)
+	}
+	if m.user_id != nil {
+		fields = append(fields, savedlisting.FieldUserID)
+	}
+	if m.listing_id != nil {
+		fields = append(fields, savedlisting.FieldListingID)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *SavedListingMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case savedlisting.FieldCreatedAt:
+		return m.CreatedAt()
+	case savedlisting.FieldUpdatedAt:
+		return m.UpdatedAt()
+	case savedlisting.FieldUserID:
+		return m.UserID()
+	case savedlisting.FieldListingID:
+		return m.ListingID()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *SavedListingMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case savedlisting.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	case savedlisting.FieldUpdatedAt:
+		return m.OldUpdatedAt(ctx)
+	case savedlisting.FieldUserID:
+		return m.OldUserID(ctx)
+	case savedlisting.FieldListingID:
+		return m.OldListingID(ctx)
+	}
+	return nil, fmt.Errorf("unknown SavedListing field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *SavedListingMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case savedlisting.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	case savedlisting.FieldUpdatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpdatedAt(v)
+		return nil
+	case savedlisting.FieldUserID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUserID(v)
+		return nil
+	case savedlisting.FieldListingID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetListingID(v)
+		return nil
+	}
+	return fmt.Errorf("unknown SavedListing field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *SavedListingMutation) AddedFields() []string {
+	return nil
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *SavedListingMutation) AddedField(name string) (ent.Value, bool) {
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *SavedListingMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown SavedListing numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *SavedListingMutation) ClearedFields() []string {
+	return nil
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *SavedListingMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *SavedListingMutation) ClearField(name string) error {
+	return fmt.Errorf("unknown SavedListing nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *SavedListingMutation) ResetField(name string) error {
+	switch name {
+	case savedlisting.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	case savedlisting.FieldUpdatedAt:
+		m.ResetUpdatedAt()
+		return nil
+	case savedlisting.FieldUserID:
+		m.ResetUserID()
+		return nil
+	case savedlisting.FieldListingID:
+		m.ResetListingID()
+		return nil
+	}
+	return fmt.Errorf("unknown SavedListing field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *SavedListingMutation) AddedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *SavedListingMutation) AddedIDs(name string) []ent.Value {
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *SavedListingMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *SavedListingMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *SavedListingMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *SavedListingMutation) EdgeCleared(name string) bool {
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *SavedListingMutation) ClearEdge(name string) error {
+	return fmt.Errorf("unknown SavedListing unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *SavedListingMutation) ResetEdge(name string) error {
+	return fmt.Errorf("unknown SavedListing edge %s", name)
+}
+
 // SessionMutation represents an operation that mutates the Session nodes in the graph.
 type SessionMutation struct {
 	config
@@ -13758,6 +14257,8 @@ type UserMutation struct {
 	notification_prefs      *map[string]bool
 	identity_verified_at    *time.Time
 	license_verified_at     *time.Time
+	viewing_hours           *[]weekly.Window
+	appendviewing_hours     []weekly.Window
 	clearedFields           map[string]struct{}
 	roles                   map[uuid.UUID]struct{}
 	removedroles            map[uuid.UUID]struct{}
@@ -14515,6 +15016,71 @@ func (m *UserMutation) ResetLicenseVerifiedAt() {
 	delete(m.clearedFields, user.FieldLicenseVerifiedAt)
 }
 
+// SetViewingHours sets the "viewing_hours" field.
+func (m *UserMutation) SetViewingHours(w []weekly.Window) {
+	m.viewing_hours = &w
+	m.appendviewing_hours = nil
+}
+
+// ViewingHours returns the value of the "viewing_hours" field in the mutation.
+func (m *UserMutation) ViewingHours() (r []weekly.Window, exists bool) {
+	v := m.viewing_hours
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldViewingHours returns the old "viewing_hours" field's value of the User entity.
+// If the User object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserMutation) OldViewingHours(ctx context.Context) (v []weekly.Window, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldViewingHours is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldViewingHours requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldViewingHours: %w", err)
+	}
+	return oldValue.ViewingHours, nil
+}
+
+// AppendViewingHours adds w to the "viewing_hours" field.
+func (m *UserMutation) AppendViewingHours(w []weekly.Window) {
+	m.appendviewing_hours = append(m.appendviewing_hours, w...)
+}
+
+// AppendedViewingHours returns the list of values that were appended to the "viewing_hours" field in this mutation.
+func (m *UserMutation) AppendedViewingHours() ([]weekly.Window, bool) {
+	if len(m.appendviewing_hours) == 0 {
+		return nil, false
+	}
+	return m.appendviewing_hours, true
+}
+
+// ClearViewingHours clears the value of the "viewing_hours" field.
+func (m *UserMutation) ClearViewingHours() {
+	m.viewing_hours = nil
+	m.appendviewing_hours = nil
+	m.clearedFields[user.FieldViewingHours] = struct{}{}
+}
+
+// ViewingHoursCleared returns if the "viewing_hours" field was cleared in this mutation.
+func (m *UserMutation) ViewingHoursCleared() bool {
+	_, ok := m.clearedFields[user.FieldViewingHours]
+	return ok
+}
+
+// ResetViewingHours resets all changes to the "viewing_hours" field.
+func (m *UserMutation) ResetViewingHours() {
+	m.viewing_hours = nil
+	m.appendviewing_hours = nil
+	delete(m.clearedFields, user.FieldViewingHours)
+}
+
 // AddRoleIDs adds the "roles" edge to the RoleAssignment entity by ids.
 func (m *UserMutation) AddRoleIDs(ids ...uuid.UUID) {
 	if m.roles == nil {
@@ -14789,7 +15355,7 @@ func (m *UserMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *UserMutation) Fields() []string {
-	fields := make([]string, 0, 14)
+	fields := make([]string, 0, 15)
 	if m.created_at != nil {
 		fields = append(fields, user.FieldCreatedAt)
 	}
@@ -14832,6 +15398,9 @@ func (m *UserMutation) Fields() []string {
 	if m.license_verified_at != nil {
 		fields = append(fields, user.FieldLicenseVerifiedAt)
 	}
+	if m.viewing_hours != nil {
+		fields = append(fields, user.FieldViewingHours)
+	}
 	return fields
 }
 
@@ -14868,6 +15437,8 @@ func (m *UserMutation) Field(name string) (ent.Value, bool) {
 		return m.IdentityVerifiedAt()
 	case user.FieldLicenseVerifiedAt:
 		return m.LicenseVerifiedAt()
+	case user.FieldViewingHours:
+		return m.ViewingHours()
 	}
 	return nil, false
 }
@@ -14905,6 +15476,8 @@ func (m *UserMutation) OldField(ctx context.Context, name string) (ent.Value, er
 		return m.OldIdentityVerifiedAt(ctx)
 	case user.FieldLicenseVerifiedAt:
 		return m.OldLicenseVerifiedAt(ctx)
+	case user.FieldViewingHours:
+		return m.OldViewingHours(ctx)
 	}
 	return nil, fmt.Errorf("unknown User field %s", name)
 }
@@ -15012,6 +15585,13 @@ func (m *UserMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetLicenseVerifiedAt(v)
 		return nil
+	case user.FieldViewingHours:
+		v, ok := value.([]weekly.Window)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetViewingHours(v)
+		return nil
 	}
 	return fmt.Errorf("unknown User field %s", name)
 }
@@ -15072,6 +15652,9 @@ func (m *UserMutation) ClearedFields() []string {
 	if m.FieldCleared(user.FieldLicenseVerifiedAt) {
 		fields = append(fields, user.FieldLicenseVerifiedAt)
 	}
+	if m.FieldCleared(user.FieldViewingHours) {
+		fields = append(fields, user.FieldViewingHours)
+	}
 	return fields
 }
 
@@ -15115,6 +15698,9 @@ func (m *UserMutation) ClearField(name string) error {
 		return nil
 	case user.FieldLicenseVerifiedAt:
 		m.ClearLicenseVerifiedAt()
+		return nil
+	case user.FieldViewingHours:
+		m.ClearViewingHours()
 		return nil
 	}
 	return fmt.Errorf("unknown User nullable field %s", name)
@@ -15165,6 +15751,9 @@ func (m *UserMutation) ResetField(name string) error {
 		return nil
 	case user.FieldLicenseVerifiedAt:
 		m.ResetLicenseVerifiedAt()
+		return nil
+	case user.FieldViewingHours:
+		m.ResetViewingHours()
 		return nil
 	}
 	return fmt.Errorf("unknown User field %s", name)
@@ -17522,6 +18111,1281 @@ func (m *VerificationFileMutation) ResetEdge(name string) error {
 		return nil
 	}
 	return fmt.Errorf("unknown VerificationFile edge %s", name)
+}
+
+// ViewingMutation represents an operation that mutates the Viewing nodes in the graph.
+type ViewingMutation struct {
+	config
+	op               Op
+	typ              string
+	id               *uuid.UUID
+	created_at       *time.Time
+	updated_at       *time.Time
+	listing_id       *uuid.UUID
+	renter_id        *uuid.UUID
+	lister_id        *uuid.UUID
+	status           *viewing.Status
+	starts_at        *time.Time
+	duration_min     *int
+	addduration_min  *int
+	note             *string
+	viewing_fee      *money.Pesewas
+	addviewing_fee   *money.Pesewas
+	fee_acknowledged *bool
+	decline_reason   *string
+	closed_by        *uuid.UUID
+	confirmed_at     *time.Time
+	location_seen_at *time.Time
+	clearedFields    map[string]struct{}
+	done             bool
+	oldValue         func(context.Context) (*Viewing, error)
+	predicates       []predicate.Viewing
+}
+
+var _ ent.Mutation = (*ViewingMutation)(nil)
+
+// viewingOption allows management of the mutation configuration using functional options.
+type viewingOption func(*ViewingMutation)
+
+// newViewingMutation creates new mutation for the Viewing entity.
+func newViewingMutation(c config, op Op, opts ...viewingOption) *ViewingMutation {
+	m := &ViewingMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeViewing,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withViewingID sets the ID field of the mutation.
+func withViewingID(id uuid.UUID) viewingOption {
+	return func(m *ViewingMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *Viewing
+		)
+		m.oldValue = func(ctx context.Context) (*Viewing, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().Viewing.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withViewing sets the old Viewing of the mutation.
+func withViewing(node *Viewing) viewingOption {
+	return func(m *ViewingMutation) {
+		m.oldValue = func(context.Context) (*Viewing, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m ViewingMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m ViewingMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of Viewing entities.
+func (m *ViewingMutation) SetID(id uuid.UUID) {
+	m.id = &id
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *ViewingMutation) ID() (id uuid.UUID, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *ViewingMutation) IDs(ctx context.Context) ([]uuid.UUID, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []uuid.UUID{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().Viewing.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *ViewingMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *ViewingMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the Viewing entity.
+// If the Viewing object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ViewingMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *ViewingMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (m *ViewingMutation) SetUpdatedAt(t time.Time) {
+	m.updated_at = &t
+}
+
+// UpdatedAt returns the value of the "updated_at" field in the mutation.
+func (m *ViewingMutation) UpdatedAt() (r time.Time, exists bool) {
+	v := m.updated_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUpdatedAt returns the old "updated_at" field's value of the Viewing entity.
+// If the Viewing object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ViewingMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpdatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpdatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpdatedAt: %w", err)
+	}
+	return oldValue.UpdatedAt, nil
+}
+
+// ResetUpdatedAt resets all changes to the "updated_at" field.
+func (m *ViewingMutation) ResetUpdatedAt() {
+	m.updated_at = nil
+}
+
+// SetListingID sets the "listing_id" field.
+func (m *ViewingMutation) SetListingID(u uuid.UUID) {
+	m.listing_id = &u
+}
+
+// ListingID returns the value of the "listing_id" field in the mutation.
+func (m *ViewingMutation) ListingID() (r uuid.UUID, exists bool) {
+	v := m.listing_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldListingID returns the old "listing_id" field's value of the Viewing entity.
+// If the Viewing object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ViewingMutation) OldListingID(ctx context.Context) (v uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldListingID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldListingID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldListingID: %w", err)
+	}
+	return oldValue.ListingID, nil
+}
+
+// ResetListingID resets all changes to the "listing_id" field.
+func (m *ViewingMutation) ResetListingID() {
+	m.listing_id = nil
+}
+
+// SetRenterID sets the "renter_id" field.
+func (m *ViewingMutation) SetRenterID(u uuid.UUID) {
+	m.renter_id = &u
+}
+
+// RenterID returns the value of the "renter_id" field in the mutation.
+func (m *ViewingMutation) RenterID() (r uuid.UUID, exists bool) {
+	v := m.renter_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldRenterID returns the old "renter_id" field's value of the Viewing entity.
+// If the Viewing object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ViewingMutation) OldRenterID(ctx context.Context) (v uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldRenterID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldRenterID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldRenterID: %w", err)
+	}
+	return oldValue.RenterID, nil
+}
+
+// ResetRenterID resets all changes to the "renter_id" field.
+func (m *ViewingMutation) ResetRenterID() {
+	m.renter_id = nil
+}
+
+// SetListerID sets the "lister_id" field.
+func (m *ViewingMutation) SetListerID(u uuid.UUID) {
+	m.lister_id = &u
+}
+
+// ListerID returns the value of the "lister_id" field in the mutation.
+func (m *ViewingMutation) ListerID() (r uuid.UUID, exists bool) {
+	v := m.lister_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldListerID returns the old "lister_id" field's value of the Viewing entity.
+// If the Viewing object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ViewingMutation) OldListerID(ctx context.Context) (v uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldListerID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldListerID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldListerID: %w", err)
+	}
+	return oldValue.ListerID, nil
+}
+
+// ResetListerID resets all changes to the "lister_id" field.
+func (m *ViewingMutation) ResetListerID() {
+	m.lister_id = nil
+}
+
+// SetStatus sets the "status" field.
+func (m *ViewingMutation) SetStatus(v viewing.Status) {
+	m.status = &v
+}
+
+// Status returns the value of the "status" field in the mutation.
+func (m *ViewingMutation) Status() (r viewing.Status, exists bool) {
+	v := m.status
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldStatus returns the old "status" field's value of the Viewing entity.
+// If the Viewing object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ViewingMutation) OldStatus(ctx context.Context) (v viewing.Status, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldStatus is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldStatus requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldStatus: %w", err)
+	}
+	return oldValue.Status, nil
+}
+
+// ResetStatus resets all changes to the "status" field.
+func (m *ViewingMutation) ResetStatus() {
+	m.status = nil
+}
+
+// SetStartsAt sets the "starts_at" field.
+func (m *ViewingMutation) SetStartsAt(t time.Time) {
+	m.starts_at = &t
+}
+
+// StartsAt returns the value of the "starts_at" field in the mutation.
+func (m *ViewingMutation) StartsAt() (r time.Time, exists bool) {
+	v := m.starts_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldStartsAt returns the old "starts_at" field's value of the Viewing entity.
+// If the Viewing object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ViewingMutation) OldStartsAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldStartsAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldStartsAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldStartsAt: %w", err)
+	}
+	return oldValue.StartsAt, nil
+}
+
+// ResetStartsAt resets all changes to the "starts_at" field.
+func (m *ViewingMutation) ResetStartsAt() {
+	m.starts_at = nil
+}
+
+// SetDurationMin sets the "duration_min" field.
+func (m *ViewingMutation) SetDurationMin(i int) {
+	m.duration_min = &i
+	m.addduration_min = nil
+}
+
+// DurationMin returns the value of the "duration_min" field in the mutation.
+func (m *ViewingMutation) DurationMin() (r int, exists bool) {
+	v := m.duration_min
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDurationMin returns the old "duration_min" field's value of the Viewing entity.
+// If the Viewing object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ViewingMutation) OldDurationMin(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldDurationMin is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldDurationMin requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDurationMin: %w", err)
+	}
+	return oldValue.DurationMin, nil
+}
+
+// AddDurationMin adds i to the "duration_min" field.
+func (m *ViewingMutation) AddDurationMin(i int) {
+	if m.addduration_min != nil {
+		*m.addduration_min += i
+	} else {
+		m.addduration_min = &i
+	}
+}
+
+// AddedDurationMin returns the value that was added to the "duration_min" field in this mutation.
+func (m *ViewingMutation) AddedDurationMin() (r int, exists bool) {
+	v := m.addduration_min
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetDurationMin resets all changes to the "duration_min" field.
+func (m *ViewingMutation) ResetDurationMin() {
+	m.duration_min = nil
+	m.addduration_min = nil
+}
+
+// SetNote sets the "note" field.
+func (m *ViewingMutation) SetNote(s string) {
+	m.note = &s
+}
+
+// Note returns the value of the "note" field in the mutation.
+func (m *ViewingMutation) Note() (r string, exists bool) {
+	v := m.note
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldNote returns the old "note" field's value of the Viewing entity.
+// If the Viewing object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ViewingMutation) OldNote(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldNote is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldNote requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldNote: %w", err)
+	}
+	return oldValue.Note, nil
+}
+
+// ClearNote clears the value of the "note" field.
+func (m *ViewingMutation) ClearNote() {
+	m.note = nil
+	m.clearedFields[viewing.FieldNote] = struct{}{}
+}
+
+// NoteCleared returns if the "note" field was cleared in this mutation.
+func (m *ViewingMutation) NoteCleared() bool {
+	_, ok := m.clearedFields[viewing.FieldNote]
+	return ok
+}
+
+// ResetNote resets all changes to the "note" field.
+func (m *ViewingMutation) ResetNote() {
+	m.note = nil
+	delete(m.clearedFields, viewing.FieldNote)
+}
+
+// SetViewingFee sets the "viewing_fee" field.
+func (m *ViewingMutation) SetViewingFee(value money.Pesewas) {
+	m.viewing_fee = &value
+	m.addviewing_fee = nil
+}
+
+// ViewingFee returns the value of the "viewing_fee" field in the mutation.
+func (m *ViewingMutation) ViewingFee() (r money.Pesewas, exists bool) {
+	v := m.viewing_fee
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldViewingFee returns the old "viewing_fee" field's value of the Viewing entity.
+// If the Viewing object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ViewingMutation) OldViewingFee(ctx context.Context) (v *money.Pesewas, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldViewingFee is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldViewingFee requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldViewingFee: %w", err)
+	}
+	return oldValue.ViewingFee, nil
+}
+
+// AddViewingFee adds value to the "viewing_fee" field.
+func (m *ViewingMutation) AddViewingFee(value money.Pesewas) {
+	if m.addviewing_fee != nil {
+		*m.addviewing_fee += value
+	} else {
+		m.addviewing_fee = &value
+	}
+}
+
+// AddedViewingFee returns the value that was added to the "viewing_fee" field in this mutation.
+func (m *ViewingMutation) AddedViewingFee() (r money.Pesewas, exists bool) {
+	v := m.addviewing_fee
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearViewingFee clears the value of the "viewing_fee" field.
+func (m *ViewingMutation) ClearViewingFee() {
+	m.viewing_fee = nil
+	m.addviewing_fee = nil
+	m.clearedFields[viewing.FieldViewingFee] = struct{}{}
+}
+
+// ViewingFeeCleared returns if the "viewing_fee" field was cleared in this mutation.
+func (m *ViewingMutation) ViewingFeeCleared() bool {
+	_, ok := m.clearedFields[viewing.FieldViewingFee]
+	return ok
+}
+
+// ResetViewingFee resets all changes to the "viewing_fee" field.
+func (m *ViewingMutation) ResetViewingFee() {
+	m.viewing_fee = nil
+	m.addviewing_fee = nil
+	delete(m.clearedFields, viewing.FieldViewingFee)
+}
+
+// SetFeeAcknowledged sets the "fee_acknowledged" field.
+func (m *ViewingMutation) SetFeeAcknowledged(b bool) {
+	m.fee_acknowledged = &b
+}
+
+// FeeAcknowledged returns the value of the "fee_acknowledged" field in the mutation.
+func (m *ViewingMutation) FeeAcknowledged() (r bool, exists bool) {
+	v := m.fee_acknowledged
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldFeeAcknowledged returns the old "fee_acknowledged" field's value of the Viewing entity.
+// If the Viewing object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ViewingMutation) OldFeeAcknowledged(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldFeeAcknowledged is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldFeeAcknowledged requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldFeeAcknowledged: %w", err)
+	}
+	return oldValue.FeeAcknowledged, nil
+}
+
+// ResetFeeAcknowledged resets all changes to the "fee_acknowledged" field.
+func (m *ViewingMutation) ResetFeeAcknowledged() {
+	m.fee_acknowledged = nil
+}
+
+// SetDeclineReason sets the "decline_reason" field.
+func (m *ViewingMutation) SetDeclineReason(s string) {
+	m.decline_reason = &s
+}
+
+// DeclineReason returns the value of the "decline_reason" field in the mutation.
+func (m *ViewingMutation) DeclineReason() (r string, exists bool) {
+	v := m.decline_reason
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDeclineReason returns the old "decline_reason" field's value of the Viewing entity.
+// If the Viewing object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ViewingMutation) OldDeclineReason(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldDeclineReason is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldDeclineReason requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDeclineReason: %w", err)
+	}
+	return oldValue.DeclineReason, nil
+}
+
+// ClearDeclineReason clears the value of the "decline_reason" field.
+func (m *ViewingMutation) ClearDeclineReason() {
+	m.decline_reason = nil
+	m.clearedFields[viewing.FieldDeclineReason] = struct{}{}
+}
+
+// DeclineReasonCleared returns if the "decline_reason" field was cleared in this mutation.
+func (m *ViewingMutation) DeclineReasonCleared() bool {
+	_, ok := m.clearedFields[viewing.FieldDeclineReason]
+	return ok
+}
+
+// ResetDeclineReason resets all changes to the "decline_reason" field.
+func (m *ViewingMutation) ResetDeclineReason() {
+	m.decline_reason = nil
+	delete(m.clearedFields, viewing.FieldDeclineReason)
+}
+
+// SetClosedBy sets the "closed_by" field.
+func (m *ViewingMutation) SetClosedBy(u uuid.UUID) {
+	m.closed_by = &u
+}
+
+// ClosedBy returns the value of the "closed_by" field in the mutation.
+func (m *ViewingMutation) ClosedBy() (r uuid.UUID, exists bool) {
+	v := m.closed_by
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldClosedBy returns the old "closed_by" field's value of the Viewing entity.
+// If the Viewing object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ViewingMutation) OldClosedBy(ctx context.Context) (v *uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldClosedBy is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldClosedBy requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldClosedBy: %w", err)
+	}
+	return oldValue.ClosedBy, nil
+}
+
+// ClearClosedBy clears the value of the "closed_by" field.
+func (m *ViewingMutation) ClearClosedBy() {
+	m.closed_by = nil
+	m.clearedFields[viewing.FieldClosedBy] = struct{}{}
+}
+
+// ClosedByCleared returns if the "closed_by" field was cleared in this mutation.
+func (m *ViewingMutation) ClosedByCleared() bool {
+	_, ok := m.clearedFields[viewing.FieldClosedBy]
+	return ok
+}
+
+// ResetClosedBy resets all changes to the "closed_by" field.
+func (m *ViewingMutation) ResetClosedBy() {
+	m.closed_by = nil
+	delete(m.clearedFields, viewing.FieldClosedBy)
+}
+
+// SetConfirmedAt sets the "confirmed_at" field.
+func (m *ViewingMutation) SetConfirmedAt(t time.Time) {
+	m.confirmed_at = &t
+}
+
+// ConfirmedAt returns the value of the "confirmed_at" field in the mutation.
+func (m *ViewingMutation) ConfirmedAt() (r time.Time, exists bool) {
+	v := m.confirmed_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldConfirmedAt returns the old "confirmed_at" field's value of the Viewing entity.
+// If the Viewing object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ViewingMutation) OldConfirmedAt(ctx context.Context) (v *time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldConfirmedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldConfirmedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldConfirmedAt: %w", err)
+	}
+	return oldValue.ConfirmedAt, nil
+}
+
+// ClearConfirmedAt clears the value of the "confirmed_at" field.
+func (m *ViewingMutation) ClearConfirmedAt() {
+	m.confirmed_at = nil
+	m.clearedFields[viewing.FieldConfirmedAt] = struct{}{}
+}
+
+// ConfirmedAtCleared returns if the "confirmed_at" field was cleared in this mutation.
+func (m *ViewingMutation) ConfirmedAtCleared() bool {
+	_, ok := m.clearedFields[viewing.FieldConfirmedAt]
+	return ok
+}
+
+// ResetConfirmedAt resets all changes to the "confirmed_at" field.
+func (m *ViewingMutation) ResetConfirmedAt() {
+	m.confirmed_at = nil
+	delete(m.clearedFields, viewing.FieldConfirmedAt)
+}
+
+// SetLocationSeenAt sets the "location_seen_at" field.
+func (m *ViewingMutation) SetLocationSeenAt(t time.Time) {
+	m.location_seen_at = &t
+}
+
+// LocationSeenAt returns the value of the "location_seen_at" field in the mutation.
+func (m *ViewingMutation) LocationSeenAt() (r time.Time, exists bool) {
+	v := m.location_seen_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldLocationSeenAt returns the old "location_seen_at" field's value of the Viewing entity.
+// If the Viewing object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ViewingMutation) OldLocationSeenAt(ctx context.Context) (v *time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldLocationSeenAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldLocationSeenAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldLocationSeenAt: %w", err)
+	}
+	return oldValue.LocationSeenAt, nil
+}
+
+// ClearLocationSeenAt clears the value of the "location_seen_at" field.
+func (m *ViewingMutation) ClearLocationSeenAt() {
+	m.location_seen_at = nil
+	m.clearedFields[viewing.FieldLocationSeenAt] = struct{}{}
+}
+
+// LocationSeenAtCleared returns if the "location_seen_at" field was cleared in this mutation.
+func (m *ViewingMutation) LocationSeenAtCleared() bool {
+	_, ok := m.clearedFields[viewing.FieldLocationSeenAt]
+	return ok
+}
+
+// ResetLocationSeenAt resets all changes to the "location_seen_at" field.
+func (m *ViewingMutation) ResetLocationSeenAt() {
+	m.location_seen_at = nil
+	delete(m.clearedFields, viewing.FieldLocationSeenAt)
+}
+
+// Where appends a list predicates to the ViewingMutation builder.
+func (m *ViewingMutation) Where(ps ...predicate.Viewing) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the ViewingMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *ViewingMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.Viewing, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *ViewingMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *ViewingMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (Viewing).
+func (m *ViewingMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *ViewingMutation) Fields() []string {
+	fields := make([]string, 0, 15)
+	if m.created_at != nil {
+		fields = append(fields, viewing.FieldCreatedAt)
+	}
+	if m.updated_at != nil {
+		fields = append(fields, viewing.FieldUpdatedAt)
+	}
+	if m.listing_id != nil {
+		fields = append(fields, viewing.FieldListingID)
+	}
+	if m.renter_id != nil {
+		fields = append(fields, viewing.FieldRenterID)
+	}
+	if m.lister_id != nil {
+		fields = append(fields, viewing.FieldListerID)
+	}
+	if m.status != nil {
+		fields = append(fields, viewing.FieldStatus)
+	}
+	if m.starts_at != nil {
+		fields = append(fields, viewing.FieldStartsAt)
+	}
+	if m.duration_min != nil {
+		fields = append(fields, viewing.FieldDurationMin)
+	}
+	if m.note != nil {
+		fields = append(fields, viewing.FieldNote)
+	}
+	if m.viewing_fee != nil {
+		fields = append(fields, viewing.FieldViewingFee)
+	}
+	if m.fee_acknowledged != nil {
+		fields = append(fields, viewing.FieldFeeAcknowledged)
+	}
+	if m.decline_reason != nil {
+		fields = append(fields, viewing.FieldDeclineReason)
+	}
+	if m.closed_by != nil {
+		fields = append(fields, viewing.FieldClosedBy)
+	}
+	if m.confirmed_at != nil {
+		fields = append(fields, viewing.FieldConfirmedAt)
+	}
+	if m.location_seen_at != nil {
+		fields = append(fields, viewing.FieldLocationSeenAt)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *ViewingMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case viewing.FieldCreatedAt:
+		return m.CreatedAt()
+	case viewing.FieldUpdatedAt:
+		return m.UpdatedAt()
+	case viewing.FieldListingID:
+		return m.ListingID()
+	case viewing.FieldRenterID:
+		return m.RenterID()
+	case viewing.FieldListerID:
+		return m.ListerID()
+	case viewing.FieldStatus:
+		return m.Status()
+	case viewing.FieldStartsAt:
+		return m.StartsAt()
+	case viewing.FieldDurationMin:
+		return m.DurationMin()
+	case viewing.FieldNote:
+		return m.Note()
+	case viewing.FieldViewingFee:
+		return m.ViewingFee()
+	case viewing.FieldFeeAcknowledged:
+		return m.FeeAcknowledged()
+	case viewing.FieldDeclineReason:
+		return m.DeclineReason()
+	case viewing.FieldClosedBy:
+		return m.ClosedBy()
+	case viewing.FieldConfirmedAt:
+		return m.ConfirmedAt()
+	case viewing.FieldLocationSeenAt:
+		return m.LocationSeenAt()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *ViewingMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case viewing.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	case viewing.FieldUpdatedAt:
+		return m.OldUpdatedAt(ctx)
+	case viewing.FieldListingID:
+		return m.OldListingID(ctx)
+	case viewing.FieldRenterID:
+		return m.OldRenterID(ctx)
+	case viewing.FieldListerID:
+		return m.OldListerID(ctx)
+	case viewing.FieldStatus:
+		return m.OldStatus(ctx)
+	case viewing.FieldStartsAt:
+		return m.OldStartsAt(ctx)
+	case viewing.FieldDurationMin:
+		return m.OldDurationMin(ctx)
+	case viewing.FieldNote:
+		return m.OldNote(ctx)
+	case viewing.FieldViewingFee:
+		return m.OldViewingFee(ctx)
+	case viewing.FieldFeeAcknowledged:
+		return m.OldFeeAcknowledged(ctx)
+	case viewing.FieldDeclineReason:
+		return m.OldDeclineReason(ctx)
+	case viewing.FieldClosedBy:
+		return m.OldClosedBy(ctx)
+	case viewing.FieldConfirmedAt:
+		return m.OldConfirmedAt(ctx)
+	case viewing.FieldLocationSeenAt:
+		return m.OldLocationSeenAt(ctx)
+	}
+	return nil, fmt.Errorf("unknown Viewing field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *ViewingMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case viewing.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	case viewing.FieldUpdatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpdatedAt(v)
+		return nil
+	case viewing.FieldListingID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetListingID(v)
+		return nil
+	case viewing.FieldRenterID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetRenterID(v)
+		return nil
+	case viewing.FieldListerID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetListerID(v)
+		return nil
+	case viewing.FieldStatus:
+		v, ok := value.(viewing.Status)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetStatus(v)
+		return nil
+	case viewing.FieldStartsAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetStartsAt(v)
+		return nil
+	case viewing.FieldDurationMin:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDurationMin(v)
+		return nil
+	case viewing.FieldNote:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetNote(v)
+		return nil
+	case viewing.FieldViewingFee:
+		v, ok := value.(money.Pesewas)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetViewingFee(v)
+		return nil
+	case viewing.FieldFeeAcknowledged:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetFeeAcknowledged(v)
+		return nil
+	case viewing.FieldDeclineReason:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDeclineReason(v)
+		return nil
+	case viewing.FieldClosedBy:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetClosedBy(v)
+		return nil
+	case viewing.FieldConfirmedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetConfirmedAt(v)
+		return nil
+	case viewing.FieldLocationSeenAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetLocationSeenAt(v)
+		return nil
+	}
+	return fmt.Errorf("unknown Viewing field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *ViewingMutation) AddedFields() []string {
+	var fields []string
+	if m.addduration_min != nil {
+		fields = append(fields, viewing.FieldDurationMin)
+	}
+	if m.addviewing_fee != nil {
+		fields = append(fields, viewing.FieldViewingFee)
+	}
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *ViewingMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case viewing.FieldDurationMin:
+		return m.AddedDurationMin()
+	case viewing.FieldViewingFee:
+		return m.AddedViewingFee()
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *ViewingMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	case viewing.FieldDurationMin:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddDurationMin(v)
+		return nil
+	case viewing.FieldViewingFee:
+		v, ok := value.(money.Pesewas)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddViewingFee(v)
+		return nil
+	}
+	return fmt.Errorf("unknown Viewing numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *ViewingMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(viewing.FieldNote) {
+		fields = append(fields, viewing.FieldNote)
+	}
+	if m.FieldCleared(viewing.FieldViewingFee) {
+		fields = append(fields, viewing.FieldViewingFee)
+	}
+	if m.FieldCleared(viewing.FieldDeclineReason) {
+		fields = append(fields, viewing.FieldDeclineReason)
+	}
+	if m.FieldCleared(viewing.FieldClosedBy) {
+		fields = append(fields, viewing.FieldClosedBy)
+	}
+	if m.FieldCleared(viewing.FieldConfirmedAt) {
+		fields = append(fields, viewing.FieldConfirmedAt)
+	}
+	if m.FieldCleared(viewing.FieldLocationSeenAt) {
+		fields = append(fields, viewing.FieldLocationSeenAt)
+	}
+	return fields
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *ViewingMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *ViewingMutation) ClearField(name string) error {
+	switch name {
+	case viewing.FieldNote:
+		m.ClearNote()
+		return nil
+	case viewing.FieldViewingFee:
+		m.ClearViewingFee()
+		return nil
+	case viewing.FieldDeclineReason:
+		m.ClearDeclineReason()
+		return nil
+	case viewing.FieldClosedBy:
+		m.ClearClosedBy()
+		return nil
+	case viewing.FieldConfirmedAt:
+		m.ClearConfirmedAt()
+		return nil
+	case viewing.FieldLocationSeenAt:
+		m.ClearLocationSeenAt()
+		return nil
+	}
+	return fmt.Errorf("unknown Viewing nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *ViewingMutation) ResetField(name string) error {
+	switch name {
+	case viewing.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	case viewing.FieldUpdatedAt:
+		m.ResetUpdatedAt()
+		return nil
+	case viewing.FieldListingID:
+		m.ResetListingID()
+		return nil
+	case viewing.FieldRenterID:
+		m.ResetRenterID()
+		return nil
+	case viewing.FieldListerID:
+		m.ResetListerID()
+		return nil
+	case viewing.FieldStatus:
+		m.ResetStatus()
+		return nil
+	case viewing.FieldStartsAt:
+		m.ResetStartsAt()
+		return nil
+	case viewing.FieldDurationMin:
+		m.ResetDurationMin()
+		return nil
+	case viewing.FieldNote:
+		m.ResetNote()
+		return nil
+	case viewing.FieldViewingFee:
+		m.ResetViewingFee()
+		return nil
+	case viewing.FieldFeeAcknowledged:
+		m.ResetFeeAcknowledged()
+		return nil
+	case viewing.FieldDeclineReason:
+		m.ResetDeclineReason()
+		return nil
+	case viewing.FieldClosedBy:
+		m.ResetClosedBy()
+		return nil
+	case viewing.FieldConfirmedAt:
+		m.ResetConfirmedAt()
+		return nil
+	case viewing.FieldLocationSeenAt:
+		m.ResetLocationSeenAt()
+		return nil
+	}
+	return fmt.Errorf("unknown Viewing field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *ViewingMutation) AddedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *ViewingMutation) AddedIDs(name string) []ent.Value {
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *ViewingMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *ViewingMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *ViewingMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *ViewingMutation) EdgeCleared(name string) bool {
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *ViewingMutation) ClearEdge(name string) error {
+	return fmt.Errorf("unknown Viewing unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *ViewingMutation) ResetEdge(name string) error {
+	return fmt.Errorf("unknown Viewing edge %s", name)
 }
 
 // WaitlistEntryMutation represents an operation that mutates the WaitlistEntry nodes in the graph.

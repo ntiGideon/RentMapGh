@@ -36,7 +36,9 @@ type BBox struct{ MinLng, MinLat, MaxLng, MaxLat float64 }
 // DefaultBBox frames the KNUST student belt.
 var DefaultBBox = BBox{MinLng: -1.6050, MinLat: 6.6480, MaxLng: -1.5300, MaxLat: 6.7000}
 
-func (b BBox) Centre() geo.Point { return geo.Point{Lat: (b.MinLat + b.MaxLat) / 2, Lng: (b.MinLng + b.MaxLng) / 2} }
+func (b BBox) Centre() geo.Point {
+	return geo.Point{Lat: (b.MinLat + b.MaxLat) / 2, Lng: (b.MinLng + b.MaxLng) / 2}
+}
 
 func (b BBox) String() string {
 	f := func(v float64) string { return strconv.FormatFloat(v, 'f', 5, 64) }

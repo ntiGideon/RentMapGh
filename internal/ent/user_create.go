@@ -12,6 +12,7 @@ import (
 	"rentmapgh/internal/ent/session"
 	"rentmapgh/internal/ent/user"
 	"rentmapgh/internal/ent/verification"
+	"rentmapgh/internal/platform/weekly"
 	"time"
 
 	"entgo.io/ent/dialect"
@@ -214,6 +215,12 @@ func (_c *UserCreate) SetNillableLicenseVerifiedAt(v *time.Time) *UserCreate {
 	if v != nil {
 		_c.SetLicenseVerifiedAt(*v)
 	}
+	return _c
+}
+
+// SetViewingHours sets the "viewing_hours" field.
+func (_c *UserCreate) SetViewingHours(v []weekly.Window) *UserCreate {
+	_c.mutation.SetViewingHours(v)
 	return _c
 }
 
@@ -496,6 +503,10 @@ func (_c *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.LicenseVerifiedAt(); ok {
 		_spec.SetField(user.FieldLicenseVerifiedAt, field.TypeTime, value)
 		_node.LicenseVerifiedAt = &value
+	}
+	if value, ok := _c.mutation.ViewingHours(); ok {
+		_spec.SetField(user.FieldViewingHours, field.TypeJSON, value)
+		_node.ViewingHours = value
 	}
 	if nodes := _c.mutation.RolesIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -845,6 +856,24 @@ func (u *UserUpsert) ClearLicenseVerifiedAt() *UserUpsert {
 	return u
 }
 
+// SetViewingHours sets the "viewing_hours" field.
+func (u *UserUpsert) SetViewingHours(v []weekly.Window) *UserUpsert {
+	u.Set(user.FieldViewingHours, v)
+	return u
+}
+
+// UpdateViewingHours sets the "viewing_hours" field to the value that was provided on create.
+func (u *UserUpsert) UpdateViewingHours() *UserUpsert {
+	u.SetExcluded(user.FieldViewingHours)
+	return u
+}
+
+// ClearViewingHours clears the value of the "viewing_hours" field.
+func (u *UserUpsert) ClearViewingHours() *UserUpsert {
+	u.SetNull(user.FieldViewingHours)
+	return u
+}
+
 // UpdateNewValues updates the mutable fields using the new values that were set on create except the ID field.
 // Using this option is equivalent to using:
 //
@@ -1145,6 +1174,27 @@ func (u *UserUpsertOne) UpdateLicenseVerifiedAt() *UserUpsertOne {
 func (u *UserUpsertOne) ClearLicenseVerifiedAt() *UserUpsertOne {
 	return u.Update(func(s *UserUpsert) {
 		s.ClearLicenseVerifiedAt()
+	})
+}
+
+// SetViewingHours sets the "viewing_hours" field.
+func (u *UserUpsertOne) SetViewingHours(v []weekly.Window) *UserUpsertOne {
+	return u.Update(func(s *UserUpsert) {
+		s.SetViewingHours(v)
+	})
+}
+
+// UpdateViewingHours sets the "viewing_hours" field to the value that was provided on create.
+func (u *UserUpsertOne) UpdateViewingHours() *UserUpsertOne {
+	return u.Update(func(s *UserUpsert) {
+		s.UpdateViewingHours()
+	})
+}
+
+// ClearViewingHours clears the value of the "viewing_hours" field.
+func (u *UserUpsertOne) ClearViewingHours() *UserUpsertOne {
+	return u.Update(func(s *UserUpsert) {
+		s.ClearViewingHours()
 	})
 }
 
@@ -1615,6 +1665,27 @@ func (u *UserUpsertBulk) UpdateLicenseVerifiedAt() *UserUpsertBulk {
 func (u *UserUpsertBulk) ClearLicenseVerifiedAt() *UserUpsertBulk {
 	return u.Update(func(s *UserUpsert) {
 		s.ClearLicenseVerifiedAt()
+	})
+}
+
+// SetViewingHours sets the "viewing_hours" field.
+func (u *UserUpsertBulk) SetViewingHours(v []weekly.Window) *UserUpsertBulk {
+	return u.Update(func(s *UserUpsert) {
+		s.SetViewingHours(v)
+	})
+}
+
+// UpdateViewingHours sets the "viewing_hours" field to the value that was provided on create.
+func (u *UserUpsertBulk) UpdateViewingHours() *UserUpsertBulk {
+	return u.Update(func(s *UserUpsert) {
+		s.UpdateViewingHours()
+	})
+}
+
+// ClearViewingHours clears the value of the "viewing_hours" field.
+func (u *UserUpsertBulk) ClearViewingHours() *UserUpsertBulk {
+	return u.Update(func(s *UserUpsert) {
+		s.ClearViewingHours()
 	})
 }
 

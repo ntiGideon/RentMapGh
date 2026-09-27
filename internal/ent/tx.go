@@ -34,6 +34,8 @@ type Tx struct {
 	Property *PropertyClient
 	// RoleAssignment is the client for interacting with the RoleAssignment builders.
 	RoleAssignment *RoleAssignmentClient
+	// SavedListing is the client for interacting with the SavedListing builders.
+	SavedListing *SavedListingClient
 	// Session is the client for interacting with the Session builders.
 	Session *SessionClient
 	// Unit is the client for interacting with the Unit builders.
@@ -44,6 +46,8 @@ type Tx struct {
 	Verification *VerificationClient
 	// VerificationFile is the client for interacting with the VerificationFile builders.
 	VerificationFile *VerificationFileClient
+	// Viewing is the client for interacting with the Viewing builders.
+	Viewing *ViewingClient
 	// WaitlistEntry is the client for interacting with the WaitlistEntry builders.
 	WaitlistEntry *WaitlistEntryClient
 
@@ -187,11 +191,13 @@ func (tx *Tx) init() {
 	tx.OTPCode = NewOTPCodeClient(tx.config)
 	tx.Property = NewPropertyClient(tx.config)
 	tx.RoleAssignment = NewRoleAssignmentClient(tx.config)
+	tx.SavedListing = NewSavedListingClient(tx.config)
 	tx.Session = NewSessionClient(tx.config)
 	tx.Unit = NewUnitClient(tx.config)
 	tx.User = NewUserClient(tx.config)
 	tx.Verification = NewVerificationClient(tx.config)
 	tx.VerificationFile = NewVerificationFileClient(tx.config)
+	tx.Viewing = NewViewingClient(tx.config)
 	tx.WaitlistEntry = NewWaitlistEntryClient(tx.config)
 }
 

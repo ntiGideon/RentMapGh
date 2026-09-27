@@ -17,11 +17,13 @@ import (
 	"rentmapgh/internal/ent/otpcode"
 	"rentmapgh/internal/ent/property"
 	"rentmapgh/internal/ent/roleassignment"
+	"rentmapgh/internal/ent/savedlisting"
 	"rentmapgh/internal/ent/session"
 	"rentmapgh/internal/ent/unit"
 	"rentmapgh/internal/ent/user"
 	"rentmapgh/internal/ent/verification"
 	"rentmapgh/internal/ent/verificationfile"
+	"rentmapgh/internal/ent/viewing"
 	"rentmapgh/internal/ent/waitlistentry"
 	"sync"
 
@@ -98,11 +100,13 @@ func checkColumn(t, c string) error {
 			otpcode.Table:          otpcode.ValidColumn,
 			property.Table:         property.ValidColumn,
 			roleassignment.Table:   roleassignment.ValidColumn,
+			savedlisting.Table:     savedlisting.ValidColumn,
 			session.Table:          session.ValidColumn,
 			unit.Table:             unit.ValidColumn,
 			user.Table:             user.ValidColumn,
 			verification.Table:     verification.ValidColumn,
 			verificationfile.Table: verificationfile.ValidColumn,
+			viewing.Table:          viewing.ValidColumn,
 			waitlistentry.Table:    waitlistentry.ValidColumn,
 		})
 	})

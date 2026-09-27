@@ -11,6 +11,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	chimw "github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/httprate"
+	"github.com/google/uuid"
 
 	"rentmapgh/internal/config"
 	"rentmapgh/internal/db"
@@ -20,6 +21,7 @@ import (
 	"rentmapgh/internal/modules/mandates"
 	"rentmapgh/internal/modules/users"
 	"rentmapgh/internal/modules/verification"
+	"rentmapgh/internal/modules/viewings"
 	"rentmapgh/internal/modules/waitlist"
 	"rentmapgh/internal/platform/sms"
 	"rentmapgh/internal/platform/storage"
@@ -119,8 +121,21 @@ func New(d Deps) http.Handler {
 		listingsSvc = listings.NewService(d.DB.Ent, auditLog, d.Cfg.LocationSecret, d.Media)
 	}
 	mandatesSvc := mandates.NewService(d.DB.Ent, auditLog, d.SMS, d.Cfg.AuthSecret, d.Cfg.BaseURL)
+	viewingsSvc := viewings.NewService(d.DB.Ent, auditLog, d.SMS, d.Cfg.BaseURL)
 	listingsH := listings.NewHandler(listingsSvc, mandatesSvc, listings.HandlerConfig{
-		BaseURL: d.Cfg.BaseURL, Secret: d.Cfg.AuthSecret, Secure: d.Cfg.IsHTTPS()})
+		BaseURL: d.Cfg.BaseURL, Secret: d.Cfg.AuthSecret, Secure: d.Cfg.IsHTTPS(),
+		OpenViewing: func(ctx context.Context, renter, listingID uuid.UUID) (string, string) {
+			v, err := viewingsSvc.OpenFor(ctx, renter, listingID)
+			if err != nil || v == nil {
+				return "", ""
+			}
+			return "/viewings/" + v.ID.String(), viewings.When(v.StartsAt)
+		}})
+	viewingsH := viewings.NewHandler(viewingsSvc, func(id uuid.UUID) string {
+		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+		defer cancel()
+		return listingsSvc.CoverURL(ctx, id)
+	})
 	mandatesH := mandates.NewHandler(mandatesSvc)
 	usersH := users.NewHandler(users.NewService(d.DB.Ent, auditLog, d.Files, verifySvc.PurgeUser), authH, verifySvc, auditLog)
 
@@ -246,6 +261,19 @@ func New(d Deps) http.Handler {
 			r.With(auth.RequireRole("agent"), rateLimit(20, time.Hour)).Post("/owner/resend", listingsH.OwnerResend)
 			r.With(auth.RequireRole("agent")).Post("/owner/cancel", listingsH.OwnerCancel)
 		})
+	})
+
+	// Viewings: any signed-in, onboarded user; listers also set their hours.
+	r.Group(func(r chi.Router) {
+		r.Use(auth.RequireAuth, auth.RequireOnboarded, noStore)
+		r.Get("/l/{id}/viewing", viewingsH.RequestPage)
+		r.With(rateLimit(20, time.Hour)).Post("/l/{id}/viewing", viewingsH.Create)
+		r.Get("/viewings", viewingsH.List)
+		r.With(auth.RequireRole("landlord", "agent")).Get("/viewings/hours", viewingsH.HoursPage)
+		r.With(auth.RequireRole("landlord", "agent")).Post("/viewings/hours", viewingsH.SaveHours)
+		r.Get("/viewings/{id}", viewingsH.Show)
+		r.Get("/viewings/{id}/calendar.ics", viewingsH.Calendar)
+		r.With(rateLimit(60, time.Minute)).Post("/viewings/{id}/{action}", viewingsH.Act)
 	})
 
 	// Back office: moderators and admins only.

@@ -21,11 +21,13 @@ import (
 	"rentmapgh/internal/ent/otpcode"
 	"rentmapgh/internal/ent/property"
 	"rentmapgh/internal/ent/roleassignment"
+	"rentmapgh/internal/ent/savedlisting"
 	"rentmapgh/internal/ent/session"
 	"rentmapgh/internal/ent/unit"
 	"rentmapgh/internal/ent/user"
 	"rentmapgh/internal/ent/verification"
 	"rentmapgh/internal/ent/verificationfile"
+	"rentmapgh/internal/ent/viewing"
 	"rentmapgh/internal/ent/waitlistentry"
 
 	"entgo.io/ent"
@@ -62,6 +64,8 @@ type Client struct {
 	Property *PropertyClient
 	// RoleAssignment is the client for interacting with the RoleAssignment builders.
 	RoleAssignment *RoleAssignmentClient
+	// SavedListing is the client for interacting with the SavedListing builders.
+	SavedListing *SavedListingClient
 	// Session is the client for interacting with the Session builders.
 	Session *SessionClient
 	// Unit is the client for interacting with the Unit builders.
@@ -72,6 +76,8 @@ type Client struct {
 	Verification *VerificationClient
 	// VerificationFile is the client for interacting with the VerificationFile builders.
 	VerificationFile *VerificationFileClient
+	// Viewing is the client for interacting with the Viewing builders.
+	Viewing *ViewingClient
 	// WaitlistEntry is the client for interacting with the WaitlistEntry builders.
 	WaitlistEntry *WaitlistEntryClient
 }
@@ -95,11 +101,13 @@ func (c *Client) init() {
 	c.OTPCode = NewOTPCodeClient(c.config)
 	c.Property = NewPropertyClient(c.config)
 	c.RoleAssignment = NewRoleAssignmentClient(c.config)
+	c.SavedListing = NewSavedListingClient(c.config)
 	c.Session = NewSessionClient(c.config)
 	c.Unit = NewUnitClient(c.config)
 	c.User = NewUserClient(c.config)
 	c.Verification = NewVerificationClient(c.config)
 	c.VerificationFile = NewVerificationFileClient(c.config)
+	c.Viewing = NewViewingClient(c.config)
 	c.WaitlistEntry = NewWaitlistEntryClient(c.config)
 }
 
@@ -203,11 +211,13 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		OTPCode:          NewOTPCodeClient(cfg),
 		Property:         NewPropertyClient(cfg),
 		RoleAssignment:   NewRoleAssignmentClient(cfg),
+		SavedListing:     NewSavedListingClient(cfg),
 		Session:          NewSessionClient(cfg),
 		Unit:             NewUnitClient(cfg),
 		User:             NewUserClient(cfg),
 		Verification:     NewVerificationClient(cfg),
 		VerificationFile: NewVerificationFileClient(cfg),
+		Viewing:          NewViewingClient(cfg),
 		WaitlistEntry:    NewWaitlistEntryClient(cfg),
 	}, nil
 }
@@ -238,11 +248,13 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		OTPCode:          NewOTPCodeClient(cfg),
 		Property:         NewPropertyClient(cfg),
 		RoleAssignment:   NewRoleAssignmentClient(cfg),
+		SavedListing:     NewSavedListingClient(cfg),
 		Session:          NewSessionClient(cfg),
 		Unit:             NewUnitClient(cfg),
 		User:             NewUserClient(cfg),
 		Verification:     NewVerificationClient(cfg),
 		VerificationFile: NewVerificationFileClient(cfg),
+		Viewing:          NewViewingClient(cfg),
 		WaitlistEntry:    NewWaitlistEntryClient(cfg),
 	}, nil
 }
@@ -275,7 +287,8 @@ func (c *Client) Use(hooks ...Hook) {
 	for _, n := range []interface{ Use(...Hook) }{
 		c.AgentMandate, c.AgentProfile, c.AuditEvent, c.LandlordProfile, c.Listing,
 		c.ListingMedia, c.ListingTerms, c.OTPCode, c.Property, c.RoleAssignment,
-		c.Session, c.Unit, c.User, c.Verification, c.VerificationFile, c.WaitlistEntry,
+		c.SavedListing, c.Session, c.Unit, c.User, c.Verification, c.VerificationFile,
+		c.Viewing, c.WaitlistEntry,
 	} {
 		n.Use(hooks...)
 	}
@@ -287,7 +300,8 @@ func (c *Client) Intercept(interceptors ...Interceptor) {
 	for _, n := range []interface{ Intercept(...Interceptor) }{
 		c.AgentMandate, c.AgentProfile, c.AuditEvent, c.LandlordProfile, c.Listing,
 		c.ListingMedia, c.ListingTerms, c.OTPCode, c.Property, c.RoleAssignment,
-		c.Session, c.Unit, c.User, c.Verification, c.VerificationFile, c.WaitlistEntry,
+		c.SavedListing, c.Session, c.Unit, c.User, c.Verification, c.VerificationFile,
+		c.Viewing, c.WaitlistEntry,
 	} {
 		n.Intercept(interceptors...)
 	}
@@ -316,6 +330,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.Property.mutate(ctx, m)
 	case *RoleAssignmentMutation:
 		return c.RoleAssignment.mutate(ctx, m)
+	case *SavedListingMutation:
+		return c.SavedListing.mutate(ctx, m)
 	case *SessionMutation:
 		return c.Session.mutate(ctx, m)
 	case *UnitMutation:
@@ -326,6 +342,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.Verification.mutate(ctx, m)
 	case *VerificationFileMutation:
 		return c.VerificationFile.mutate(ctx, m)
+	case *ViewingMutation:
+		return c.Viewing.mutate(ctx, m)
 	case *WaitlistEntryMutation:
 		return c.WaitlistEntry.mutate(ctx, m)
 	default:
@@ -1807,6 +1825,139 @@ func (c *RoleAssignmentClient) mutate(ctx context.Context, m *RoleAssignmentMuta
 	}
 }
 
+// SavedListingClient is a client for the SavedListing schema.
+type SavedListingClient struct {
+	config
+}
+
+// NewSavedListingClient returns a client for the SavedListing from the given config.
+func NewSavedListingClient(c config) *SavedListingClient {
+	return &SavedListingClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `savedlisting.Hooks(f(g(h())))`.
+func (c *SavedListingClient) Use(hooks ...Hook) {
+	c.hooks.SavedListing = append(c.hooks.SavedListing, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `savedlisting.Intercept(f(g(h())))`.
+func (c *SavedListingClient) Intercept(interceptors ...Interceptor) {
+	c.inters.SavedListing = append(c.inters.SavedListing, interceptors...)
+}
+
+// Create returns a builder for creating a SavedListing entity.
+func (c *SavedListingClient) Create() *SavedListingCreate {
+	mutation := newSavedListingMutation(c.config, OpCreate)
+	return &SavedListingCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of SavedListing entities.
+func (c *SavedListingClient) CreateBulk(builders ...*SavedListingCreate) *SavedListingCreateBulk {
+	return &SavedListingCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *SavedListingClient) MapCreateBulk(slice any, setFunc func(*SavedListingCreate, int)) *SavedListingCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &SavedListingCreateBulk{err: fmt.Errorf("calling to SavedListingClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*SavedListingCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &SavedListingCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for SavedListing.
+func (c *SavedListingClient) Update() *SavedListingUpdate {
+	mutation := newSavedListingMutation(c.config, OpUpdate)
+	return &SavedListingUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *SavedListingClient) UpdateOne(_m *SavedListing) *SavedListingUpdateOne {
+	mutation := newSavedListingMutation(c.config, OpUpdateOne, withSavedListing(_m))
+	return &SavedListingUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *SavedListingClient) UpdateOneID(id uuid.UUID) *SavedListingUpdateOne {
+	mutation := newSavedListingMutation(c.config, OpUpdateOne, withSavedListingID(id))
+	return &SavedListingUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for SavedListing.
+func (c *SavedListingClient) Delete() *SavedListingDelete {
+	mutation := newSavedListingMutation(c.config, OpDelete)
+	return &SavedListingDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *SavedListingClient) DeleteOne(_m *SavedListing) *SavedListingDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *SavedListingClient) DeleteOneID(id uuid.UUID) *SavedListingDeleteOne {
+	builder := c.Delete().Where(savedlisting.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &SavedListingDeleteOne{builder}
+}
+
+// Query returns a query builder for SavedListing.
+func (c *SavedListingClient) Query() *SavedListingQuery {
+	return &SavedListingQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeSavedListing},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a SavedListing entity by its id.
+func (c *SavedListingClient) Get(ctx context.Context, id uuid.UUID) (*SavedListing, error) {
+	return c.Query().Where(savedlisting.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *SavedListingClient) GetX(ctx context.Context, id uuid.UUID) *SavedListing {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *SavedListingClient) Hooks() []Hook {
+	return c.hooks.SavedListing
+}
+
+// Interceptors returns the client interceptors.
+func (c *SavedListingClient) Interceptors() []Interceptor {
+	return c.inters.SavedListing
+}
+
+func (c *SavedListingClient) mutate(ctx context.Context, m *SavedListingMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&SavedListingCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&SavedListingUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&SavedListingUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&SavedListingDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown SavedListing mutation op: %q", m.Op())
+	}
+}
+
 // SessionClient is a client for the Session schema.
 type SessionClient struct {
 	config
@@ -2650,6 +2801,139 @@ func (c *VerificationFileClient) mutate(ctx context.Context, m *VerificationFile
 	}
 }
 
+// ViewingClient is a client for the Viewing schema.
+type ViewingClient struct {
+	config
+}
+
+// NewViewingClient returns a client for the Viewing from the given config.
+func NewViewingClient(c config) *ViewingClient {
+	return &ViewingClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `viewing.Hooks(f(g(h())))`.
+func (c *ViewingClient) Use(hooks ...Hook) {
+	c.hooks.Viewing = append(c.hooks.Viewing, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `viewing.Intercept(f(g(h())))`.
+func (c *ViewingClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Viewing = append(c.inters.Viewing, interceptors...)
+}
+
+// Create returns a builder for creating a Viewing entity.
+func (c *ViewingClient) Create() *ViewingCreate {
+	mutation := newViewingMutation(c.config, OpCreate)
+	return &ViewingCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Viewing entities.
+func (c *ViewingClient) CreateBulk(builders ...*ViewingCreate) *ViewingCreateBulk {
+	return &ViewingCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *ViewingClient) MapCreateBulk(slice any, setFunc func(*ViewingCreate, int)) *ViewingCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &ViewingCreateBulk{err: fmt.Errorf("calling to ViewingClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*ViewingCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &ViewingCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Viewing.
+func (c *ViewingClient) Update() *ViewingUpdate {
+	mutation := newViewingMutation(c.config, OpUpdate)
+	return &ViewingUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *ViewingClient) UpdateOne(_m *Viewing) *ViewingUpdateOne {
+	mutation := newViewingMutation(c.config, OpUpdateOne, withViewing(_m))
+	return &ViewingUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *ViewingClient) UpdateOneID(id uuid.UUID) *ViewingUpdateOne {
+	mutation := newViewingMutation(c.config, OpUpdateOne, withViewingID(id))
+	return &ViewingUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Viewing.
+func (c *ViewingClient) Delete() *ViewingDelete {
+	mutation := newViewingMutation(c.config, OpDelete)
+	return &ViewingDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *ViewingClient) DeleteOne(_m *Viewing) *ViewingDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *ViewingClient) DeleteOneID(id uuid.UUID) *ViewingDeleteOne {
+	builder := c.Delete().Where(viewing.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &ViewingDeleteOne{builder}
+}
+
+// Query returns a query builder for Viewing.
+func (c *ViewingClient) Query() *ViewingQuery {
+	return &ViewingQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeViewing},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Viewing entity by its id.
+func (c *ViewingClient) Get(ctx context.Context, id uuid.UUID) (*Viewing, error) {
+	return c.Query().Where(viewing.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *ViewingClient) GetX(ctx context.Context, id uuid.UUID) *Viewing {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *ViewingClient) Hooks() []Hook {
+	return c.hooks.Viewing
+}
+
+// Interceptors returns the client interceptors.
+func (c *ViewingClient) Interceptors() []Interceptor {
+	return c.inters.Viewing
+}
+
+func (c *ViewingClient) mutate(ctx context.Context, m *ViewingMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&ViewingCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&ViewingUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&ViewingUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&ViewingDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown Viewing mutation op: %q", m.Op())
+	}
+}
+
 // WaitlistEntryClient is a client for the WaitlistEntry schema.
 type WaitlistEntryClient struct {
 	config
@@ -2787,13 +3071,13 @@ func (c *WaitlistEntryClient) mutate(ctx context.Context, m *WaitlistEntryMutati
 type (
 	hooks struct {
 		AgentMandate, AgentProfile, AuditEvent, LandlordProfile, Listing, ListingMedia,
-		ListingTerms, OTPCode, Property, RoleAssignment, Session, Unit, User,
-		Verification, VerificationFile, WaitlistEntry []ent.Hook
+		ListingTerms, OTPCode, Property, RoleAssignment, SavedListing, Session, Unit,
+		User, Verification, VerificationFile, Viewing, WaitlistEntry []ent.Hook
 	}
 	inters struct {
 		AgentMandate, AgentProfile, AuditEvent, LandlordProfile, Listing, ListingMedia,
-		ListingTerms, OTPCode, Property, RoleAssignment, Session, Unit, User,
-		Verification, VerificationFile, WaitlistEntry []ent.Interceptor
+		ListingTerms, OTPCode, Property, RoleAssignment, SavedListing, Session, Unit,
+		User, Verification, VerificationFile, Viewing, WaitlistEntry []ent.Interceptor
 	}
 )
 

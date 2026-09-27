@@ -1,6 +1,7 @@
 package listings
 
 import (
+	"context"
 	"errors"
 	"log/slog"
 	"net/http"
@@ -23,10 +24,11 @@ import (
 )
 
 type Handler struct {
-	svc      *Service
-	mandates *mandates.Service // owner authority for agent listings (nil: off)
-	baseURL  string            // for absolute links (share, canonical, og:image)
-	saved    savedCodec
+	svc         *Service
+	mandates    *mandates.Service // owner authority for agent listings (nil: off)
+	baseURL     string            // for absolute links (share, canonical, og:image)
+	saved       savedCodec
+	openViewing func(ctx context.Context, renter, listing uuid.UUID) (url, when string)
 }
 
 // HandlerConfig is what the public pages need from the app config.
@@ -34,11 +36,14 @@ type HandlerConfig struct {
 	BaseURL string
 	Secret  string // signs the saved-places cookie
 	Secure  bool   // HTTPS: cookies get Secure
+	// OpenViewing finds the renter's pending or confirmed viewing of a
+	// listing ("" if none), for the listing page's call to action.
+	OpenViewing func(ctx context.Context, renter, listing uuid.UUID) (url, when string)
 }
 
 func NewHandler(svc *Service, m *mandates.Service, cfg HandlerConfig) *Handler {
 	return &Handler{svc: svc, mandates: m, baseURL: strings.TrimRight(cfg.BaseURL, "/"),
-		saved: savedCodec{secret: []byte(cfg.Secret), secure: cfg.Secure}}
+		saved: savedCodec{secret: []byte(cfg.Secret), secure: cfg.Secure}, openViewing: cfg.OpenViewing}
 }
 
 // Service exposes the service (admin wiring).

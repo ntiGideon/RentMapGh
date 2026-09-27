@@ -14,11 +14,13 @@ import (
 	"rentmapgh/internal/ent/predicate"
 	"rentmapgh/internal/ent/property"
 	"rentmapgh/internal/ent/roleassignment"
+	"rentmapgh/internal/ent/savedlisting"
 	"rentmapgh/internal/ent/session"
 	"rentmapgh/internal/ent/unit"
 	"rentmapgh/internal/ent/user"
 	"rentmapgh/internal/ent/verification"
 	"rentmapgh/internal/ent/verificationfile"
+	"rentmapgh/internal/ent/viewing"
 	"rentmapgh/internal/ent/waitlistentry"
 
 	"entgo.io/ent/dialect/sql"
@@ -29,7 +31,7 @@ import (
 
 // schemaGraph holds a representation of ent/schema at runtime.
 var schemaGraph = func() *sqlgraph.Schema {
-	graph := &sqlgraph.Schema{Nodes: make([]*sqlgraph.Node, 16)}
+	graph := &sqlgraph.Schema{Nodes: make([]*sqlgraph.Node, 18)}
 	graph.Nodes[0] = &sqlgraph.Node{
 		NodeSpec: sqlgraph.NodeSpec{
 			Table:   agentmandate.Table,
@@ -273,6 +275,23 @@ var schemaGraph = func() *sqlgraph.Schema {
 	}
 	graph.Nodes[10] = &sqlgraph.Node{
 		NodeSpec: sqlgraph.NodeSpec{
+			Table:   savedlisting.Table,
+			Columns: savedlisting.Columns,
+			ID: &sqlgraph.FieldSpec{
+				Type:   field.TypeUUID,
+				Column: savedlisting.FieldID,
+			},
+		},
+		Type: "SavedListing",
+		Fields: map[string]*sqlgraph.FieldSpec{
+			savedlisting.FieldCreatedAt: {Type: field.TypeTime, Column: savedlisting.FieldCreatedAt},
+			savedlisting.FieldUpdatedAt: {Type: field.TypeTime, Column: savedlisting.FieldUpdatedAt},
+			savedlisting.FieldUserID:    {Type: field.TypeUUID, Column: savedlisting.FieldUserID},
+			savedlisting.FieldListingID: {Type: field.TypeUUID, Column: savedlisting.FieldListingID},
+		},
+	}
+	graph.Nodes[11] = &sqlgraph.Node{
+		NodeSpec: sqlgraph.NodeSpec{
 			Table:   session.Table,
 			Columns: session.Columns,
 			ID: &sqlgraph.FieldSpec{
@@ -293,7 +312,7 @@ var schemaGraph = func() *sqlgraph.Schema {
 			session.FieldRevokedAt:  {Type: field.TypeTime, Column: session.FieldRevokedAt},
 		},
 	}
-	graph.Nodes[11] = &sqlgraph.Node{
+	graph.Nodes[12] = &sqlgraph.Node{
 		NodeSpec: sqlgraph.NodeSpec{
 			Table:   unit.Table,
 			Columns: unit.Columns,
@@ -321,7 +340,7 @@ var schemaGraph = func() *sqlgraph.Schema {
 			unit.FieldAmenities:     {Type: field.TypeJSON, Column: unit.FieldAmenities},
 		},
 	}
-	graph.Nodes[12] = &sqlgraph.Node{
+	graph.Nodes[13] = &sqlgraph.Node{
 		NodeSpec: sqlgraph.NodeSpec{
 			Table:   user.Table,
 			Columns: user.Columns,
@@ -346,9 +365,10 @@ var schemaGraph = func() *sqlgraph.Schema {
 			user.FieldNotificationPrefs:  {Type: field.TypeJSON, Column: user.FieldNotificationPrefs},
 			user.FieldIdentityVerifiedAt: {Type: field.TypeTime, Column: user.FieldIdentityVerifiedAt},
 			user.FieldLicenseVerifiedAt:  {Type: field.TypeTime, Column: user.FieldLicenseVerifiedAt},
+			user.FieldViewingHours:       {Type: field.TypeJSON, Column: user.FieldViewingHours},
 		},
 	}
-	graph.Nodes[13] = &sqlgraph.Node{
+	graph.Nodes[14] = &sqlgraph.Node{
 		NodeSpec: sqlgraph.NodeSpec{
 			Table:   verification.Table,
 			Columns: verification.Columns,
@@ -375,7 +395,7 @@ var schemaGraph = func() *sqlgraph.Schema {
 			verification.FieldEvidencePurgedAt: {Type: field.TypeTime, Column: verification.FieldEvidencePurgedAt},
 		},
 	}
-	graph.Nodes[14] = &sqlgraph.Node{
+	graph.Nodes[15] = &sqlgraph.Node{
 		NodeSpec: sqlgraph.NodeSpec{
 			Table:   verificationfile.Table,
 			Columns: verificationfile.Columns,
@@ -397,7 +417,35 @@ var schemaGraph = func() *sqlgraph.Schema {
 			verificationfile.FieldSha256:         {Type: field.TypeBytes, Column: verificationfile.FieldSha256},
 		},
 	}
-	graph.Nodes[15] = &sqlgraph.Node{
+	graph.Nodes[16] = &sqlgraph.Node{
+		NodeSpec: sqlgraph.NodeSpec{
+			Table:   viewing.Table,
+			Columns: viewing.Columns,
+			ID: &sqlgraph.FieldSpec{
+				Type:   field.TypeUUID,
+				Column: viewing.FieldID,
+			},
+		},
+		Type: "Viewing",
+		Fields: map[string]*sqlgraph.FieldSpec{
+			viewing.FieldCreatedAt:       {Type: field.TypeTime, Column: viewing.FieldCreatedAt},
+			viewing.FieldUpdatedAt:       {Type: field.TypeTime, Column: viewing.FieldUpdatedAt},
+			viewing.FieldListingID:       {Type: field.TypeUUID, Column: viewing.FieldListingID},
+			viewing.FieldRenterID:        {Type: field.TypeUUID, Column: viewing.FieldRenterID},
+			viewing.FieldListerID:        {Type: field.TypeUUID, Column: viewing.FieldListerID},
+			viewing.FieldStatus:          {Type: field.TypeEnum, Column: viewing.FieldStatus},
+			viewing.FieldStartsAt:        {Type: field.TypeTime, Column: viewing.FieldStartsAt},
+			viewing.FieldDurationMin:     {Type: field.TypeInt, Column: viewing.FieldDurationMin},
+			viewing.FieldNote:            {Type: field.TypeString, Column: viewing.FieldNote},
+			viewing.FieldViewingFee:      {Type: field.TypeInt64, Column: viewing.FieldViewingFee},
+			viewing.FieldFeeAcknowledged: {Type: field.TypeBool, Column: viewing.FieldFeeAcknowledged},
+			viewing.FieldDeclineReason:   {Type: field.TypeString, Column: viewing.FieldDeclineReason},
+			viewing.FieldClosedBy:        {Type: field.TypeUUID, Column: viewing.FieldClosedBy},
+			viewing.FieldConfirmedAt:     {Type: field.TypeTime, Column: viewing.FieldConfirmedAt},
+			viewing.FieldLocationSeenAt:  {Type: field.TypeTime, Column: viewing.FieldLocationSeenAt},
+		},
+	}
+	graph.Nodes[17] = &sqlgraph.Node{
 		NodeSpec: sqlgraph.NodeSpec{
 			Table:   waitlistentry.Table,
 			Columns: waitlistentry.Columns,
@@ -1749,6 +1797,66 @@ func (f *RoleAssignmentFilter) WhereHasUserWith(preds ...predicate.User) {
 }
 
 // addPredicate implements the predicateAdder interface.
+func (_q *SavedListingQuery) addPredicate(pred func(s *sql.Selector)) {
+	_q.predicates = append(_q.predicates, pred)
+}
+
+// Filter returns a Filter implementation to apply filters on the SavedListingQuery builder.
+func (_q *SavedListingQuery) Filter() *SavedListingFilter {
+	return &SavedListingFilter{config: _q.config, predicateAdder: _q}
+}
+
+// addPredicate implements the predicateAdder interface.
+func (m *SavedListingMutation) addPredicate(pred func(s *sql.Selector)) {
+	m.predicates = append(m.predicates, pred)
+}
+
+// Filter returns an entql.Where implementation to apply filters on the SavedListingMutation builder.
+func (m *SavedListingMutation) Filter() *SavedListingFilter {
+	return &SavedListingFilter{config: m.config, predicateAdder: m}
+}
+
+// SavedListingFilter provides a generic filtering capability at runtime for SavedListingQuery.
+type SavedListingFilter struct {
+	predicateAdder
+	config
+}
+
+// Where applies the entql predicate on the query filter.
+func (f *SavedListingFilter) Where(p entql.P) {
+	f.addPredicate(func(s *sql.Selector) {
+		if err := schemaGraph.EvalP(schemaGraph.Nodes[10].Type, p, s); err != nil {
+			s.AddError(err)
+		}
+	})
+}
+
+// WhereID applies the entql [16]byte predicate on the id field.
+func (f *SavedListingFilter) WhereID(p entql.ValueP) {
+	f.Where(p.Field(savedlisting.FieldID))
+}
+
+// WhereCreatedAt applies the entql time.Time predicate on the created_at field.
+func (f *SavedListingFilter) WhereCreatedAt(p entql.TimeP) {
+	f.Where(p.Field(savedlisting.FieldCreatedAt))
+}
+
+// WhereUpdatedAt applies the entql time.Time predicate on the updated_at field.
+func (f *SavedListingFilter) WhereUpdatedAt(p entql.TimeP) {
+	f.Where(p.Field(savedlisting.FieldUpdatedAt))
+}
+
+// WhereUserID applies the entql [16]byte predicate on the user_id field.
+func (f *SavedListingFilter) WhereUserID(p entql.ValueP) {
+	f.Where(p.Field(savedlisting.FieldUserID))
+}
+
+// WhereListingID applies the entql [16]byte predicate on the listing_id field.
+func (f *SavedListingFilter) WhereListingID(p entql.ValueP) {
+	f.Where(p.Field(savedlisting.FieldListingID))
+}
+
+// addPredicate implements the predicateAdder interface.
 func (_q *SessionQuery) addPredicate(pred func(s *sql.Selector)) {
 	_q.predicates = append(_q.predicates, pred)
 }
@@ -1777,7 +1885,7 @@ type SessionFilter struct {
 // Where applies the entql predicate on the query filter.
 func (f *SessionFilter) Where(p entql.P) {
 	f.addPredicate(func(s *sql.Selector) {
-		if err := schemaGraph.EvalP(schemaGraph.Nodes[10].Type, p, s); err != nil {
+		if err := schemaGraph.EvalP(schemaGraph.Nodes[11].Type, p, s); err != nil {
 			s.AddError(err)
 		}
 	})
@@ -1876,7 +1984,7 @@ type UnitFilter struct {
 // Where applies the entql predicate on the query filter.
 func (f *UnitFilter) Where(p entql.P) {
 	f.addPredicate(func(s *sql.Selector) {
-		if err := schemaGraph.EvalP(schemaGraph.Nodes[11].Type, p, s); err != nil {
+		if err := schemaGraph.EvalP(schemaGraph.Nodes[12].Type, p, s); err != nil {
 			s.AddError(err)
 		}
 	})
@@ -2019,7 +2127,7 @@ type UserFilter struct {
 // Where applies the entql predicate on the query filter.
 func (f *UserFilter) Where(p entql.P) {
 	f.addPredicate(func(s *sql.Selector) {
-		if err := schemaGraph.EvalP(schemaGraph.Nodes[12].Type, p, s); err != nil {
+		if err := schemaGraph.EvalP(schemaGraph.Nodes[13].Type, p, s); err != nil {
 			s.AddError(err)
 		}
 	})
@@ -2098,6 +2206,11 @@ func (f *UserFilter) WhereIdentityVerifiedAt(p entql.TimeP) {
 // WhereLicenseVerifiedAt applies the entql time.Time predicate on the license_verified_at field.
 func (f *UserFilter) WhereLicenseVerifiedAt(p entql.TimeP) {
 	f.Where(p.Field(user.FieldLicenseVerifiedAt))
+}
+
+// WhereViewingHours applies the entql json.RawMessage predicate on the viewing_hours field.
+func (f *UserFilter) WhereViewingHours(p entql.BytesP) {
+	f.Where(p.Field(user.FieldViewingHours))
 }
 
 // WhereHasRoles applies a predicate to check if query has an edge roles.
@@ -2199,7 +2312,7 @@ type VerificationFilter struct {
 // Where applies the entql predicate on the query filter.
 func (f *VerificationFilter) Where(p entql.P) {
 	f.addPredicate(func(s *sql.Selector) {
-		if err := schemaGraph.EvalP(schemaGraph.Nodes[13].Type, p, s); err != nil {
+		if err := schemaGraph.EvalP(schemaGraph.Nodes[14].Type, p, s); err != nil {
 			s.AddError(err)
 		}
 	})
@@ -2337,7 +2450,7 @@ type VerificationFileFilter struct {
 // Where applies the entql predicate on the query filter.
 func (f *VerificationFileFilter) Where(p entql.P) {
 	f.addPredicate(func(s *sql.Selector) {
-		if err := schemaGraph.EvalP(schemaGraph.Nodes[14].Type, p, s); err != nil {
+		if err := schemaGraph.EvalP(schemaGraph.Nodes[15].Type, p, s); err != nil {
 			s.AddError(err)
 		}
 	})
@@ -2408,6 +2521,121 @@ func (f *VerificationFileFilter) WhereHasVerificationWith(preds ...predicate.Ver
 }
 
 // addPredicate implements the predicateAdder interface.
+func (_q *ViewingQuery) addPredicate(pred func(s *sql.Selector)) {
+	_q.predicates = append(_q.predicates, pred)
+}
+
+// Filter returns a Filter implementation to apply filters on the ViewingQuery builder.
+func (_q *ViewingQuery) Filter() *ViewingFilter {
+	return &ViewingFilter{config: _q.config, predicateAdder: _q}
+}
+
+// addPredicate implements the predicateAdder interface.
+func (m *ViewingMutation) addPredicate(pred func(s *sql.Selector)) {
+	m.predicates = append(m.predicates, pred)
+}
+
+// Filter returns an entql.Where implementation to apply filters on the ViewingMutation builder.
+func (m *ViewingMutation) Filter() *ViewingFilter {
+	return &ViewingFilter{config: m.config, predicateAdder: m}
+}
+
+// ViewingFilter provides a generic filtering capability at runtime for ViewingQuery.
+type ViewingFilter struct {
+	predicateAdder
+	config
+}
+
+// Where applies the entql predicate on the query filter.
+func (f *ViewingFilter) Where(p entql.P) {
+	f.addPredicate(func(s *sql.Selector) {
+		if err := schemaGraph.EvalP(schemaGraph.Nodes[16].Type, p, s); err != nil {
+			s.AddError(err)
+		}
+	})
+}
+
+// WhereID applies the entql [16]byte predicate on the id field.
+func (f *ViewingFilter) WhereID(p entql.ValueP) {
+	f.Where(p.Field(viewing.FieldID))
+}
+
+// WhereCreatedAt applies the entql time.Time predicate on the created_at field.
+func (f *ViewingFilter) WhereCreatedAt(p entql.TimeP) {
+	f.Where(p.Field(viewing.FieldCreatedAt))
+}
+
+// WhereUpdatedAt applies the entql time.Time predicate on the updated_at field.
+func (f *ViewingFilter) WhereUpdatedAt(p entql.TimeP) {
+	f.Where(p.Field(viewing.FieldUpdatedAt))
+}
+
+// WhereListingID applies the entql [16]byte predicate on the listing_id field.
+func (f *ViewingFilter) WhereListingID(p entql.ValueP) {
+	f.Where(p.Field(viewing.FieldListingID))
+}
+
+// WhereRenterID applies the entql [16]byte predicate on the renter_id field.
+func (f *ViewingFilter) WhereRenterID(p entql.ValueP) {
+	f.Where(p.Field(viewing.FieldRenterID))
+}
+
+// WhereListerID applies the entql [16]byte predicate on the lister_id field.
+func (f *ViewingFilter) WhereListerID(p entql.ValueP) {
+	f.Where(p.Field(viewing.FieldListerID))
+}
+
+// WhereStatus applies the entql string predicate on the status field.
+func (f *ViewingFilter) WhereStatus(p entql.StringP) {
+	f.Where(p.Field(viewing.FieldStatus))
+}
+
+// WhereStartsAt applies the entql time.Time predicate on the starts_at field.
+func (f *ViewingFilter) WhereStartsAt(p entql.TimeP) {
+	f.Where(p.Field(viewing.FieldStartsAt))
+}
+
+// WhereDurationMin applies the entql int predicate on the duration_min field.
+func (f *ViewingFilter) WhereDurationMin(p entql.IntP) {
+	f.Where(p.Field(viewing.FieldDurationMin))
+}
+
+// WhereNote applies the entql string predicate on the note field.
+func (f *ViewingFilter) WhereNote(p entql.StringP) {
+	f.Where(p.Field(viewing.FieldNote))
+}
+
+// WhereViewingFee applies the entql int64 predicate on the viewing_fee field.
+func (f *ViewingFilter) WhereViewingFee(p entql.Int64P) {
+	f.Where(p.Field(viewing.FieldViewingFee))
+}
+
+// WhereFeeAcknowledged applies the entql bool predicate on the fee_acknowledged field.
+func (f *ViewingFilter) WhereFeeAcknowledged(p entql.BoolP) {
+	f.Where(p.Field(viewing.FieldFeeAcknowledged))
+}
+
+// WhereDeclineReason applies the entql string predicate on the decline_reason field.
+func (f *ViewingFilter) WhereDeclineReason(p entql.StringP) {
+	f.Where(p.Field(viewing.FieldDeclineReason))
+}
+
+// WhereClosedBy applies the entql [16]byte predicate on the closed_by field.
+func (f *ViewingFilter) WhereClosedBy(p entql.ValueP) {
+	f.Where(p.Field(viewing.FieldClosedBy))
+}
+
+// WhereConfirmedAt applies the entql time.Time predicate on the confirmed_at field.
+func (f *ViewingFilter) WhereConfirmedAt(p entql.TimeP) {
+	f.Where(p.Field(viewing.FieldConfirmedAt))
+}
+
+// WhereLocationSeenAt applies the entql time.Time predicate on the location_seen_at field.
+func (f *ViewingFilter) WhereLocationSeenAt(p entql.TimeP) {
+	f.Where(p.Field(viewing.FieldLocationSeenAt))
+}
+
+// addPredicate implements the predicateAdder interface.
 func (_q *WaitlistEntryQuery) addPredicate(pred func(s *sql.Selector)) {
 	_q.predicates = append(_q.predicates, pred)
 }
@@ -2436,7 +2664,7 @@ type WaitlistEntryFilter struct {
 // Where applies the entql predicate on the query filter.
 func (f *WaitlistEntryFilter) Where(p entql.P) {
 	f.addPredicate(func(s *sql.Selector) {
-		if err := schemaGraph.EvalP(schemaGraph.Nodes[15].Type, p, s); err != nil {
+		if err := schemaGraph.EvalP(schemaGraph.Nodes[17].Type, p, s); err != nil {
 			s.AddError(err)
 		}
 	})

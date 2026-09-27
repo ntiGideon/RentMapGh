@@ -78,7 +78,7 @@ func (h *Handler) AreaPage(w http.ResponseWriter, r *http.Request) {
 	}
 	v := pages.AreaView{
 		Title: areaTitle(k, p), Place: p.Name, Kind: k.Plural, Total: res.Total, Radius: AreaRadius,
-		Cards:  h.cards(r.Context(), res.Items, p, h.saved.read(r)),
+		Cards:  h.cards(r.Context(), res.Items, p, h.savedFor(w, r)),
 		MapURL: "/search?" + f.Query().Encode(),
 	}
 	v.Intro = areaIntro(res, k, p)
@@ -262,4 +262,3 @@ func (h *Handler) Robots(w http.ResponseWriter, _ *http.Request) {
 		"Disallow: /search?\nDisallow: /search/\nDisallow: /places\n" +
 		"\nSitemap: " + h.baseURL + "/sitemap.xml\n"))
 }
-

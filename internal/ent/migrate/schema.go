@@ -357,6 +357,32 @@ var (
 			},
 		},
 	}
+	// SavedListingsColumns holds the columns for the "saved_listings" table.
+	SavedListingsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "user_id", Type: field.TypeUUID},
+		{Name: "listing_id", Type: field.TypeUUID},
+	}
+	// SavedListingsTable holds the schema information for the "saved_listings" table.
+	SavedListingsTable = &schema.Table{
+		Name:       "saved_listings",
+		Columns:    SavedListingsColumns,
+		PrimaryKey: []*schema.Column{SavedListingsColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "savedlisting_user_id_listing_id",
+				Unique:  true,
+				Columns: []*schema.Column{SavedListingsColumns[3], SavedListingsColumns[4]},
+			},
+			{
+				Name:    "savedlisting_user_id_created_at",
+				Unique:  false,
+				Columns: []*schema.Column{SavedListingsColumns[3], SavedListingsColumns[1]},
+			},
+		},
+	}
 	// SessionsColumns holds the columns for the "sessions" table.
 	SessionsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
@@ -453,6 +479,7 @@ var (
 		{Name: "notification_prefs", Type: field.TypeJSON, Nullable: true},
 		{Name: "identity_verified_at", Type: field.TypeTime, Nullable: true},
 		{Name: "license_verified_at", Type: field.TypeTime, Nullable: true},
+		{Name: "viewing_hours", Type: field.TypeJSON, Nullable: true},
 	}
 	// UsersTable holds the schema information for the "users" table.
 	UsersTable = &schema.Table{
@@ -553,6 +580,53 @@ var (
 			},
 		},
 	}
+	// ViewingsColumns holds the columns for the "viewings" table.
+	ViewingsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "listing_id", Type: field.TypeUUID},
+		{Name: "renter_id", Type: field.TypeUUID},
+		{Name: "lister_id", Type: field.TypeUUID},
+		{Name: "status", Type: field.TypeEnum, Enums: []string{"requested", "proposed", "confirmed", "declined", "cancelled", "completed", "no_show"}, Default: "requested"},
+		{Name: "starts_at", Type: field.TypeTime},
+		{Name: "duration_min", Type: field.TypeInt, Default: 30},
+		{Name: "note", Type: field.TypeString, Nullable: true, Size: 300},
+		{Name: "viewing_fee", Type: field.TypeInt64, Nullable: true},
+		{Name: "fee_acknowledged", Type: field.TypeBool, Default: false},
+		{Name: "decline_reason", Type: field.TypeString, Nullable: true, Size: 40},
+		{Name: "closed_by", Type: field.TypeUUID, Nullable: true},
+		{Name: "confirmed_at", Type: field.TypeTime, Nullable: true},
+		{Name: "location_seen_at", Type: field.TypeTime, Nullable: true},
+	}
+	// ViewingsTable holds the schema information for the "viewings" table.
+	ViewingsTable = &schema.Table{
+		Name:       "viewings",
+		Columns:    ViewingsColumns,
+		PrimaryKey: []*schema.Column{ViewingsColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "viewing_renter_id_starts_at",
+				Unique:  false,
+				Columns: []*schema.Column{ViewingsColumns[4], ViewingsColumns[7]},
+			},
+			{
+				Name:    "viewing_lister_id_starts_at",
+				Unique:  false,
+				Columns: []*schema.Column{ViewingsColumns[5], ViewingsColumns[7]},
+			},
+			{
+				Name:    "viewing_listing_id_status",
+				Unique:  false,
+				Columns: []*schema.Column{ViewingsColumns[3], ViewingsColumns[6]},
+			},
+			{
+				Name:    "viewing_status_starts_at",
+				Unique:  false,
+				Columns: []*schema.Column{ViewingsColumns[6], ViewingsColumns[7]},
+			},
+		},
+	}
 	// WaitlistEntriesColumns holds the columns for the "waitlist_entries" table.
 	WaitlistEntriesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
@@ -595,11 +669,13 @@ var (
 		OtpCodesTable,
 		PropertiesTable,
 		RoleAssignmentsTable,
+		SavedListingsTable,
 		SessionsTable,
 		UnitsTable,
 		UsersTable,
 		VerificationsTable,
 		VerificationFilesTable,
+		ViewingsTable,
 		WaitlistEntriesTable,
 	}
 )

@@ -33,6 +33,9 @@ type ListingPageView struct {
 	Nearby                                 []NearbyPlace
 	Similar                                []partials.ResultCard
 	Saved                                  bool
+	CanBook                                bool   // live, and not the viewer's own
+	ViewingURL                             string // booking form
+	MyViewingURL, MyViewingWhen            string // the viewer's open viewing, if any
 }
 
 type Fact struct{ Label, Value, Icon string }
@@ -194,6 +197,9 @@ templ ListingPage(m layouts.Meta, v ListingPageView) {
 				</div>
 				<aside class="space-y-4 lg:sticky lg:top-20 lg:self-start">
 					@priceCard(v)
+					<div class="hidden lg:block">
+						@bookButton(v, true)
+					</div>
 					@listerCard(v.Lister)
 					@shareRow(v)
 				</aside>
@@ -221,10 +227,14 @@ templ ListingPage(m layouts.Meta, v ListingPageView) {
 							<p class="text-xs tabular-nums text-fg-muted">{ v.MoveInTotal } to move in</p>
 						}
 					</div>
-					<a href={ templ.SafeURL(v.ShareURL) } target="_blank" rel="noopener" class="inline-flex h-11 items-center gap-1.5 rounded-lg bg-primary px-4 text-base font-medium text-on-primary shadow-btn">
-						@c.Icon("message", "size-4")
-						Share
-					</a>
+					if v.CanBook || v.MyViewingURL != "" {
+						@bookButton(v, false)
+					} else {
+						<a href={ templ.SafeURL(v.ShareURL) } target="_blank" rel="noopener" class="inline-flex h-11 items-center gap-1.5 rounded-lg bg-primary px-4 text-base font-medium text-on-primary shadow-btn">
+							@c.Icon("message", "size-4")
+							Share
+						</a>
+					}
 				</div>
 			</div>
 		}
@@ -395,8 +405,22 @@ templ listerCard(l ListerCard) {
 			</p>
 		}
 		<p class="mt-3 text-xs text-fg-subtle">{ l.Since }</p>
-		<p class="mt-3 border-t border-line pt-3 text-sm text-fg-muted">Viewing requests and messages are coming soon.</p>
 	</div>
+}
+
+// bookButton is the main call to action: book, or open the booking you have.
+templ bookButton(v ListingPageView, full bool) {
+	if v.MyViewingURL != "" {
+		<a href={ templ.SafeURL(v.MyViewingURL) } class={ "inline-flex h-11 items-center justify-center gap-1.5 rounded-lg border border-line bg-surface-raised px-4 text-base font-medium text-fg shadow-xs hover:bg-surface", templ.KV("w-full", full) }>
+			@c.Icon("calendar-check", "size-4")
+			Your viewing · { v.MyViewingWhen }
+		</a>
+	} else if v.CanBook {
+		<a href={ templ.SafeURL(v.ViewingURL) } class={ "inline-flex h-11 items-center justify-center gap-1.5 rounded-lg bg-primary px-4 text-base font-medium text-on-primary shadow-btn hover:bg-primary-hover", templ.KV("w-full", full) }>
+			@c.Icon("calendar-check", "size-4")
+			Request a viewing
+		</a>
+	}
 }
 
 templ shareRow(v ListingPageView) {

@@ -19,6 +19,12 @@ import (
 // liveListings publishes n listings from one ID-checked landlord and
 // returns their IDs (the rent differs per listing).
 func liveListings(t *testing.T, h http.Handler, d *db.DB, capture *sms.Capture, phone string, n int) []string {
+	_, ids := liveListingsBy(t, h, d, capture, phone, n)
+	return ids
+}
+
+// liveListingsBy is liveListings that also returns the landlord's browser.
+func liveListingsBy(t *testing.T, h http.Handler, d *db.DB, capture *sms.Capture, phone string, n int) (*browser, []string) {
 	t.Helper()
 	ctx := context.Background()
 	ll := signInAs(t, h, d, capture, phone, "Akua Owusu", "landlord")
@@ -40,7 +46,7 @@ func liveListings(t *testing.T, h http.Handler, d *db.DB, capture *sms.Capture, 
 		require.Equal(t, http.StatusSeeOther, rec.Code)
 		ids = append(ids, id)
 	}
-	return ids
+	return ll, ids
 }
 
 func TestSavedAndCompare(t *testing.T) {
@@ -100,4 +106,30 @@ func TestSavedAndCompare(t *testing.T) {
 	assert.Contains(t, page, `content="noindex"`)
 	rec = anon.do("GET", "/compare?ids="+a, nil, false)
 	assert.Contains(t, rec.Body.String(), "Pick at least two places")
+}
+
+func TestSavedMergeOnSignIn(t *testing.T) {
+	h, d, capture := newTestServerSMS(t)
+	ids := liveListings(t, h, d, capture, "0244000061", 2)
+	b := newBrowser(t, h)
+	for _, id := range ids {
+		require.Equal(t, http.StatusOK, b.do("POST", "/saved/"+id, url.Values{}, true).Code)
+	}
+	require.NotNil(t, b.cookies["saved"])
+
+	// Signing in on the same browser: the next page moves the saves into the
+	// account and clears the cookie.
+	signInWith(t, b, d, capture, "0244000062", "Ama", "renter")
+	rec := b.do("GET", "/saved", nil, false)
+	assert.Contains(t, rec.Body.String(), "2 places on your shortlist")
+	assert.Contains(t, rec.Body.String(), "Kept with your account")
+	assert.Nil(t, b.cookies["saved"], "cookie cleared")
+	n, err := d.Ent.SavedListing.Query().Count(context.Background())
+	require.NoError(t, err)
+	assert.Equal(t, 2, n)
+
+	// Toggling now works on the account, from any device.
+	require.Equal(t, http.StatusOK, b.do("POST", "/saved/"+ids[0], url.Values{}, true).Code)
+	other := signInAs(t, h, d, capture, "0244000062", "Ama", "renter")
+	assert.Contains(t, other.do("GET", "/saved", nil, false).Body.String(), "1 place on your shortlist")
 }

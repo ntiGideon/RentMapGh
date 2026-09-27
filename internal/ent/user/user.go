@@ -44,6 +44,8 @@ const (
 	FieldIdentityVerifiedAt = "identity_verified_at"
 	// FieldLicenseVerifiedAt holds the string denoting the license_verified_at field in the database.
 	FieldLicenseVerifiedAt = "license_verified_at"
+	// FieldViewingHours holds the string denoting the viewing_hours field in the database.
+	FieldViewingHours = "viewing_hours"
 	// EdgeRoles holds the string denoting the roles edge name in mutations.
 	EdgeRoles = "roles"
 	// EdgeSessions holds the string denoting the sessions edge name in mutations.
@@ -110,6 +112,7 @@ var Columns = []string{
 	FieldNotificationPrefs,
 	FieldIdentityVerifiedAt,
 	FieldLicenseVerifiedAt,
+	FieldViewingHours,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).

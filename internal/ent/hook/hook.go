@@ -128,6 +128,18 @@ func (f RoleAssignmentFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Val
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.RoleAssignmentMutation", m)
 }
 
+// The SavedListingFunc type is an adapter to allow the use of ordinary
+// function as SavedListing mutator.
+type SavedListingFunc func(context.Context, *ent.SavedListingMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f SavedListingFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.SavedListingMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.SavedListingMutation", m)
+}
+
 // The SessionFunc type is an adapter to allow the use of ordinary
 // function as Session mutator.
 type SessionFunc func(context.Context, *ent.SessionMutation) (ent.Value, error)
@@ -186,6 +198,18 @@ func (f VerificationFileFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.V
 		return f(ctx, mv)
 	}
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.VerificationFileMutation", m)
+}
+
+// The ViewingFunc type is an adapter to allow the use of ordinary
+// function as Viewing mutator.
+type ViewingFunc func(context.Context, *ent.ViewingMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f ViewingFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.ViewingMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.ViewingMutation", m)
 }
 
 // The WaitlistEntryFunc type is an adapter to allow the use of ordinary

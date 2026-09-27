@@ -12,6 +12,7 @@ import (
 type SavedView struct {
 	Cards []partials.ResultCard
 	Gone  []GoneItem // saved, but no longer live
+	SignedIn bool
 }
 
 type GoneItem struct{ Title, URL, Status string }
@@ -30,7 +31,11 @@ templ Saved(m layouts.Meta, v SavedView) {
 							default:
 								{ strconv.Itoa(len(v.Cards)) } places on your shortlist.
 						}
-						Saved on this phone or computer — no account needed.
+						if v.SignedIn {
+							Kept with your account, on every device.
+						} else {
+							Saved on this phone or computer — sign in to keep them on every device.
+						}
 					</p>
 				</div>
 				@c.LinkButton("/search", c.Ghost, c.SM) {
