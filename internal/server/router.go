@@ -17,6 +17,7 @@ import (
 	"rentmapgh/internal/modules/audit"
 	"rentmapgh/internal/modules/auth"
 	"rentmapgh/internal/modules/listings"
+	"rentmapgh/internal/modules/mandates"
 	"rentmapgh/internal/modules/users"
 	"rentmapgh/internal/modules/verification"
 	"rentmapgh/internal/modules/waitlist"
@@ -117,7 +118,9 @@ func New(d Deps) http.Handler {
 	if listingsSvc == nil {
 		listingsSvc = listings.NewService(d.DB.Ent, auditLog, d.Cfg.LocationSecret, d.Media)
 	}
-	listingsH := listings.NewHandler(listingsSvc)
+	mandatesSvc := mandates.NewService(d.DB.Ent, auditLog, d.SMS, d.Cfg.AuthSecret, d.Cfg.BaseURL)
+	listingsH := listings.NewHandler(listingsSvc, mandatesSvc)
+	mandatesH := mandates.NewHandler(mandatesSvc)
 	usersH := users.NewHandler(users.NewService(d.DB.Ent, auditLog, d.Files, verifySvc.PurgeUser), authH, verifySvc, auditLog)
 
 	r.Use(chimw.RequestID)
@@ -169,6 +172,9 @@ func New(d Deps) http.Handler {
 	r.Post("/logout", authH.Logout)
 	r.Get("/u/{id}/avatar.jpg", usersH.Avatar)
 	r.Get("/media/{id}/{file}", listingsH.Media)
+	// A landlord's answer to an agent's request: the SMS link is the key.
+	r.With(rateLimit(30, time.Minute), noStore).Get("/m/{token}", mandatesH.Offer)
+	r.With(rateLimit(10, time.Minute), noStore).Post("/m/{token}", mandatesH.Decide)
 	r.Get("/account/deleted", usersH.DeletedPage)
 
 	r.Group(func(r chi.Router) {
@@ -226,6 +232,9 @@ func New(d Deps) http.Handler {
 			r.Get("/video/uploads/{uploadID}", listingsH.VideoUploadOffset)
 			r.With(rateLimit(1200, time.Hour)).Post("/video/uploads/{uploadID}", listingsH.VideoChunk)
 			r.Post("/video/delete", listingsH.DeleteVideo)
+			r.With(auth.RequireRole("agent"), rateLimit(20, time.Hour)).Post("/owner", listingsH.OwnerAsk)
+			r.With(auth.RequireRole("agent"), rateLimit(20, time.Hour)).Post("/owner/resend", listingsH.OwnerResend)
+			r.With(auth.RequireRole("agent")).Post("/owner/cancel", listingsH.OwnerCancel)
 		})
 	})
 

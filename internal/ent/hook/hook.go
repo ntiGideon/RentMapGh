@@ -8,6 +8,18 @@ import (
 	"rentmapgh/internal/ent"
 )
 
+// The AgentMandateFunc type is an adapter to allow the use of ordinary
+// function as AgentMandate mutator.
+type AgentMandateFunc func(context.Context, *ent.AgentMandateMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f AgentMandateFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.AgentMandateMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.AgentMandateMutation", m)
+}
+
 // The AgentProfileFunc type is an adapter to allow the use of ordinary
 // function as AgentProfile mutator.
 type AgentProfileFunc func(context.Context, *ent.AgentProfileMutation) (ent.Value, error)

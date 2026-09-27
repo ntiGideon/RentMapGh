@@ -79,6 +79,9 @@ type WizardView struct {
 	Photos PhotosView
 	Video  VideoView
 
+	// review: agents only
+	Mandate *MandateView
+
 	// pricing
 	Rent, Period, Advance, Deposit, AgentFee, ServiceCharge, ViewingFee, MinLease string
 	Negotiable                                                                    bool
@@ -608,6 +611,9 @@ templ StepReview(v WizardView) {
 					}
 				</ul>
 			}
+		}
+		if v.Mandate != nil {
+			@OwnerAuthority(*v.Mandate)
 		}
 		for _, s := range v.Summary {
 			@c.Card("p-5") {

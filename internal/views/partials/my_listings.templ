@@ -19,6 +19,8 @@ type ListingCardView struct {
 	Updated                     string
 	CoverURL                    string
 	Photos                      int
+	IsAgent                     bool
+	Authority                   string // mandates.State, agent listings only
 }
 
 type MyListingsView struct {
@@ -133,8 +135,11 @@ templ listingCard(it ListingCardView) {
 			<div class="min-w-0 flex-1">
 				<div class="flex flex-wrap items-start justify-between gap-2">
 					<div class="min-w-0">
-						<div class="flex items-center gap-2">
+						<div class="flex flex-wrap items-center gap-2">
 							@ListingStatus(it.Status)
+							if it.IsAgent {
+								@AuthorityBadge(it.Authority)
+							}
 							<span class="text-xs text-fg-subtle">Updated { it.Updated }</span>
 						</div>
 						<h2 class="mt-1.5 truncate text-base font-semibold text-fg">{ it.Title }</h2>

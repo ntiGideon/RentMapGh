@@ -9,6 +9,48 @@ import (
 )
 
 var (
+	// AgentMandatesColumns holds the columns for the "agent_mandates" table.
+	AgentMandatesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "agent_id", Type: field.TypeUUID},
+		{Name: "property_id", Type: field.TypeUUID},
+		{Name: "landlord_phone", Type: field.TypeString, Size: 16},
+		{Name: "landlord_name", Type: field.TypeString, Nullable: true, Size: 80},
+		{Name: "granted_by", Type: field.TypeUUID, Nullable: true},
+		{Name: "status", Type: field.TypeEnum, Enums: []string{"pending", "approved", "declined", "revoked", "cancelled"}, Default: "pending"},
+		{Name: "months", Type: field.TypeInt, Default: 12},
+		{Name: "token_hash", Type: field.TypeBytes, Unique: true},
+		{Name: "sent_at", Type: field.TypeTime},
+		{Name: "sends", Type: field.TypeInt, Default: 1},
+		{Name: "decided_at", Type: field.TypeTime, Nullable: true},
+		{Name: "valid_until", Type: field.TypeTime, Nullable: true},
+		{Name: "reported", Type: field.TypeBool, Default: false},
+	}
+	// AgentMandatesTable holds the schema information for the "agent_mandates" table.
+	AgentMandatesTable = &schema.Table{
+		Name:       "agent_mandates",
+		Columns:    AgentMandatesColumns,
+		PrimaryKey: []*schema.Column{AgentMandatesColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "agentmandate_agent_id_property_id",
+				Unique:  false,
+				Columns: []*schema.Column{AgentMandatesColumns[3], AgentMandatesColumns[4]},
+			},
+			{
+				Name:    "agentmandate_agent_id_created_at",
+				Unique:  false,
+				Columns: []*schema.Column{AgentMandatesColumns[3], AgentMandatesColumns[1]},
+			},
+			{
+				Name:    "agentmandate_property_id_status",
+				Unique:  false,
+				Columns: []*schema.Column{AgentMandatesColumns[4], AgentMandatesColumns[8]},
+			},
+		},
+	}
 	// AgentProfilesColumns holds the columns for the "agent_profiles" table.
 	AgentProfilesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
@@ -543,6 +585,7 @@ var (
 	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
+		AgentMandatesTable,
 		AgentProfilesTable,
 		AuditEventsTable,
 		LandlordProfilesTable,

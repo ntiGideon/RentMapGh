@@ -1,4 +1,4 @@
-h1:go/aQgZEK/dnq55i48L6BM293qpbzEGuA9SSEDxMcmU=
+h1:X/TsjaytrxIt11eOQVoSRa5Y3j2JZtiu3CSf83fwg0o=
 20260925000000_extensions.up.sql h1:NDZzLVZ6nPPxceo1IS4KOUUR9iVnPVjTUM8Hlr/GVEU=
 20260925194014_waitlist.up.sql h1:VGa5c+12crcjeVGbsqD5hrM9BV4Ag4KMiXUumsoWfH8=
 20260925212329_auth.up.sql h1:1RHDKxh2oYBHqBC5DfzUTVIfPvmK5tgM4Ep0zm88fIg=
@@ -7,3 +7,4 @@ h1:go/aQgZEK/dnq55i48L6BM293qpbzEGuA9SSEDxMcmU=
 20260925231500_listings_geo.up.sql h1:ipSsZuEcmjpBkaxvGvvzQYLWtos6KVPB0IzbH2Oz8YQ=
 20260926091720_listing_media.up.sql h1:YK3FniHxc6TtFnhqjMKOVqsSLrLctq1jhzR/Npjf+Os=
 20260927172728_listing_video.up.sql h1:+N5WND/8eknXQe18F1CE2WIxTFBu+/iV2SZJ1h/m4XM=
+20260927180803_agent_mandates.up.sql h1:VFDmru8MheZKpyhghTBOexSsiuIP2SokK8t+PihDBgU=

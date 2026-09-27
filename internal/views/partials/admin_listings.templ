@@ -23,6 +23,9 @@ type AdminListingView struct {
 	MoveIn                        MoveInView
 	Photos                        []PhotoTile
 	Video                         VideoView
+	Authority                     string // agent listings: mandates.State; "" for owners
+	AuthorityReported             bool   // the landlord said they don't know this agent
+	IsAgent                       bool
 	Own                           bool
 	Errors                        map[string]string
 	Note                          string
@@ -141,6 +144,14 @@ templ AdminListingReviewBody(v AdminListingView) {
 					<p class="text-sm text-fg-muted">Listed by</p>
 					<p class="mt-0.5 font-semibold text-fg">{ orDash(v.ListerName) }</p>
 					<p class="text-sm tabular-nums text-fg-muted">{ v.ListerPhone } · { v.Kind }</p>
+					if v.IsAgent {
+						<div class="mt-2">
+							@AuthorityBadge(v.Authority)
+						</div>
+						if v.AuthorityReported {
+							<p class="mt-2 rounded-md bg-red-50 px-2.5 py-2 text-sm text-danger dark:bg-red-400/10 dark:text-red-300" role="alert">The owner's phone said they don't know this agent.</p>
+						}
+					}
 					<div class="mt-2">
 						if v.ListerVerified {
 							@c.Badge(c.Success) {

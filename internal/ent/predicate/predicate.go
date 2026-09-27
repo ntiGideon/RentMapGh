@@ -6,6 +6,9 @@ import (
 	"entgo.io/ent/dialect/sql"
 )
 
+// AgentMandate is the predicate function for agentmandate builders.
+type AgentMandate func(*sql.Selector)
+
 // AgentProfile is the predicate function for agentprofile builders.
 type AgentProfile func(*sql.Selector)
 

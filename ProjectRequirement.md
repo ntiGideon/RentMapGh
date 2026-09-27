@@ -518,7 +518,7 @@ Engineering:
 - [x] Media worker: variants, EXIF strip, blurhash, pHash. *Photos are processed in the request (bounded to 2 at a time); videos by an in-process ffmpeg worker (§16.10). No River yet.*
 - [x] Pricing & terms with mandatory fee disclosure; live **move-in cost preview** while typing.
 - [x] Properties with multiple units (hostels, apartment blocks, compound houses) — one property, many units, many listings.
-- [ ] Agent listing on behalf of a landlord: mandate request → landlord approves via SMS/WhatsApp link. Unmandated agent listings are allowed but labelled "Agent listing — owner authority not confirmed".
+- [x] Agent listing on behalf of a landlord: mandate request → landlord approves via SMS/WhatsApp link. Unmandated agent listings are allowed but labelled "Agent listing — owner authority not confirmed". *SMS link only (WhatsApp later); see §16.11.*
 - [x] Listing statuses & transitions (state machine in Go, tested).
 - [x] Listing quality score (photo count, description length, fees completed, video present) with tips: *"Add 3 more photos to get 2× more views"*.
 - [x] New listings from unverified accounts go to `pending_review`. *Moderator queue at `/admin/listings`.*
@@ -1058,5 +1058,16 @@ Sky Mint is step 200 of its scale; Graphite is step 900. Darker mint steps exist
 | Serving | CDN URLs | `/media/{id}/v480.mp4` and `v720.mp4` through Go with Range support (`http.ServeContent`), immutable for a year | Keeps `media-src 'self'`. Each request reads the whole object (≤~30 MB) from the store, which Cloudflare absorbs; switch to ranged store reads or signed CDN URLs if origin traffic grows |
 | Image | distroless static | Static `ffmpeg`/`ffprobe` copied from `mwader/static-ffmpeg:7.1`; `inbox` volume. Without ffmpeg the video section hides itself | Keeps the image distroless; dev uses the locally installed ffmpeg |
 | Schema | — | Migration `listing_video` adds `status` and `duration_ms` (they were in the Ent schema but never migrated); poster `blurhash`/`phash` became mutable | They're only known after transcoding |
+
+### 16.11 Decisions taken while building Phase 2 (slice 2c — agent mandates)
+
+| Area | Plan said | Built | Why |
+| --- | --- | --- | --- |
+| Model | `AgentMandate`: agent, property/unit, granted_by, scope, commission, valid_until, status | `agent_mandates`: agent, **property** (covers all its units), landlord phone + name as typed, `granted_by` (the landlord's account when one exists), status pending/approved/declined/revoked/cancelled, months (6 or 12), `valid_until`, `reported`, `token_hash` | Agents list a building's rooms one by one, so one yes covers them all. The agent fee is already disclosed on each listing, so there's no commission field |
+| Landlord answer | approve via SMS/WhatsApp link | `/m/{token}`: no account; holding the link (sent to the landlord's phone) is the proof. Approve / Decline / "I don't know this person" (declines and flags the agent to moderators); the same link later offers "Withdraw approval" | Many owners will never sign up. The SMS link proves possession of the phone as well as an OTP would, with one tap |
+| Token | — | 256-bit random, only an HMAC (AUTH_SECRET, domain-separated) stored; resend rotates it (the old link dies); pending links lapse after 14 days; approvals lapse at `valid_until` (computed, no job) | A database leak can't be turned into approvals |
+| Abuse | — | ≤10 mandate texts per agent per 24 h, 3 sends per request, 10 min between them; not to the agent's own phone; 7-day cool-off after a decline; conditional update so a double tap can't record two answers; per-IP limits on `/m/`; every step audited | Mandate texts cost money and reach people who didn't sign up |
+| Effects | trust score input | Approve sets `property.owner_id` when the landlord has an account; the agent gets an SMS about every answer; "Owner confirmed / asked / not confirmed" badges on Your listings, the review step and the admin review (with the "doesn't know this agent" warning). Public pages (Phase 3) use `mandates.Label` | Trust score itself is Phase 5 |
+| Channel | SMS/WhatsApp | SMS only | WhatsApp Business needs an approved template and account; add it as a second sender later |
 
 Phase 0 engineering status: repo skeleton, Compose dev stack (PostGIS + pgvector image, Mailpit, Valhalla behind a profile), config, slog, request IDs, graceful shutdown, `/healthz` + `/readyz`, Ent + migrations, design tokens + first components, landing page with waitlist, tests, CI and the production Dockerfile/Compose/Caddy are done. Still open: staging VPS + Cloudflare, i18n scaffolding, product/legal tasks.

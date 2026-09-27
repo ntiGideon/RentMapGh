@@ -11,6 +11,7 @@ import (
 
 	"rentmapgh/internal/ent/migrate"
 
+	"rentmapgh/internal/ent/agentmandate"
 	"rentmapgh/internal/ent/agentprofile"
 	"rentmapgh/internal/ent/auditevent"
 	"rentmapgh/internal/ent/landlordprofile"
@@ -41,6 +42,8 @@ type Client struct {
 	config
 	// Schema is the client for creating, migrating and dropping schema.
 	Schema *migrate.Schema
+	// AgentMandate is the client for interacting with the AgentMandate builders.
+	AgentMandate *AgentMandateClient
 	// AgentProfile is the client for interacting with the AgentProfile builders.
 	AgentProfile *AgentProfileClient
 	// AuditEvent is the client for interacting with the AuditEvent builders.
@@ -82,6 +85,7 @@ func NewClient(opts ...Option) *Client {
 
 func (c *Client) init() {
 	c.Schema = migrate.NewSchema(c.driver)
+	c.AgentMandate = NewAgentMandateClient(c.config)
 	c.AgentProfile = NewAgentProfileClient(c.config)
 	c.AuditEvent = NewAuditEventClient(c.config)
 	c.LandlordProfile = NewLandlordProfileClient(c.config)
@@ -189,6 +193,7 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 	return &Tx{
 		ctx:              ctx,
 		config:           cfg,
+		AgentMandate:     NewAgentMandateClient(cfg),
 		AgentProfile:     NewAgentProfileClient(cfg),
 		AuditEvent:       NewAuditEventClient(cfg),
 		LandlordProfile:  NewLandlordProfileClient(cfg),
@@ -223,6 +228,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 	return &Tx{
 		ctx:              ctx,
 		config:           cfg,
+		AgentMandate:     NewAgentMandateClient(cfg),
 		AgentProfile:     NewAgentProfileClient(cfg),
 		AuditEvent:       NewAuditEventClient(cfg),
 		LandlordProfile:  NewLandlordProfileClient(cfg),
@@ -244,7 +250,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 // Debug returns a new debug-client. It's used to get verbose logging on specific operations.
 //
 //	client.Debug().
-//		AgentProfile.
+//		AgentMandate.
 //		Query().
 //		Count(ctx)
 func (c *Client) Debug() *Client {
@@ -267,9 +273,9 @@ func (c *Client) Close() error {
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
 	for _, n := range []interface{ Use(...Hook) }{
-		c.AgentProfile, c.AuditEvent, c.LandlordProfile, c.Listing, c.ListingMedia,
-		c.ListingTerms, c.OTPCode, c.Property, c.RoleAssignment, c.Session, c.Unit,
-		c.User, c.Verification, c.VerificationFile, c.WaitlistEntry,
+		c.AgentMandate, c.AgentProfile, c.AuditEvent, c.LandlordProfile, c.Listing,
+		c.ListingMedia, c.ListingTerms, c.OTPCode, c.Property, c.RoleAssignment,
+		c.Session, c.Unit, c.User, c.Verification, c.VerificationFile, c.WaitlistEntry,
 	} {
 		n.Use(hooks...)
 	}
@@ -279,9 +285,9 @@ func (c *Client) Use(hooks ...Hook) {
 // In order to add interceptors to a specific client, call: `client.Node.Intercept(...)`.
 func (c *Client) Intercept(interceptors ...Interceptor) {
 	for _, n := range []interface{ Intercept(...Interceptor) }{
-		c.AgentProfile, c.AuditEvent, c.LandlordProfile, c.Listing, c.ListingMedia,
-		c.ListingTerms, c.OTPCode, c.Property, c.RoleAssignment, c.Session, c.Unit,
-		c.User, c.Verification, c.VerificationFile, c.WaitlistEntry,
+		c.AgentMandate, c.AgentProfile, c.AuditEvent, c.LandlordProfile, c.Listing,
+		c.ListingMedia, c.ListingTerms, c.OTPCode, c.Property, c.RoleAssignment,
+		c.Session, c.Unit, c.User, c.Verification, c.VerificationFile, c.WaitlistEntry,
 	} {
 		n.Intercept(interceptors...)
 	}
@@ -290,6 +296,8 @@ func (c *Client) Intercept(interceptors ...Interceptor) {
 // Mutate implements the ent.Mutator interface.
 func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 	switch m := m.(type) {
+	case *AgentMandateMutation:
+		return c.AgentMandate.mutate(ctx, m)
 	case *AgentProfileMutation:
 		return c.AgentProfile.mutate(ctx, m)
 	case *AuditEventMutation:
@@ -322,6 +330,139 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.WaitlistEntry.mutate(ctx, m)
 	default:
 		return nil, fmt.Errorf("ent: unknown mutation type %T", m)
+	}
+}
+
+// AgentMandateClient is a client for the AgentMandate schema.
+type AgentMandateClient struct {
+	config
+}
+
+// NewAgentMandateClient returns a client for the AgentMandate from the given config.
+func NewAgentMandateClient(c config) *AgentMandateClient {
+	return &AgentMandateClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `agentmandate.Hooks(f(g(h())))`.
+func (c *AgentMandateClient) Use(hooks ...Hook) {
+	c.hooks.AgentMandate = append(c.hooks.AgentMandate, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `agentmandate.Intercept(f(g(h())))`.
+func (c *AgentMandateClient) Intercept(interceptors ...Interceptor) {
+	c.inters.AgentMandate = append(c.inters.AgentMandate, interceptors...)
+}
+
+// Create returns a builder for creating a AgentMandate entity.
+func (c *AgentMandateClient) Create() *AgentMandateCreate {
+	mutation := newAgentMandateMutation(c.config, OpCreate)
+	return &AgentMandateCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of AgentMandate entities.
+func (c *AgentMandateClient) CreateBulk(builders ...*AgentMandateCreate) *AgentMandateCreateBulk {
+	return &AgentMandateCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *AgentMandateClient) MapCreateBulk(slice any, setFunc func(*AgentMandateCreate, int)) *AgentMandateCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &AgentMandateCreateBulk{err: fmt.Errorf("calling to AgentMandateClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*AgentMandateCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &AgentMandateCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for AgentMandate.
+func (c *AgentMandateClient) Update() *AgentMandateUpdate {
+	mutation := newAgentMandateMutation(c.config, OpUpdate)
+	return &AgentMandateUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *AgentMandateClient) UpdateOne(_m *AgentMandate) *AgentMandateUpdateOne {
+	mutation := newAgentMandateMutation(c.config, OpUpdateOne, withAgentMandate(_m))
+	return &AgentMandateUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *AgentMandateClient) UpdateOneID(id uuid.UUID) *AgentMandateUpdateOne {
+	mutation := newAgentMandateMutation(c.config, OpUpdateOne, withAgentMandateID(id))
+	return &AgentMandateUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for AgentMandate.
+func (c *AgentMandateClient) Delete() *AgentMandateDelete {
+	mutation := newAgentMandateMutation(c.config, OpDelete)
+	return &AgentMandateDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *AgentMandateClient) DeleteOne(_m *AgentMandate) *AgentMandateDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *AgentMandateClient) DeleteOneID(id uuid.UUID) *AgentMandateDeleteOne {
+	builder := c.Delete().Where(agentmandate.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &AgentMandateDeleteOne{builder}
+}
+
+// Query returns a query builder for AgentMandate.
+func (c *AgentMandateClient) Query() *AgentMandateQuery {
+	return &AgentMandateQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeAgentMandate},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a AgentMandate entity by its id.
+func (c *AgentMandateClient) Get(ctx context.Context, id uuid.UUID) (*AgentMandate, error) {
+	return c.Query().Where(agentmandate.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *AgentMandateClient) GetX(ctx context.Context, id uuid.UUID) *AgentMandate {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *AgentMandateClient) Hooks() []Hook {
+	return c.hooks.AgentMandate
+}
+
+// Interceptors returns the client interceptors.
+func (c *AgentMandateClient) Interceptors() []Interceptor {
+	return c.inters.AgentMandate
+}
+
+func (c *AgentMandateClient) mutate(ctx context.Context, m *AgentMandateMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&AgentMandateCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&AgentMandateUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&AgentMandateUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&AgentMandateDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown AgentMandate mutation op: %q", m.Op())
 	}
 }
 
@@ -2645,14 +2786,14 @@ func (c *WaitlistEntryClient) mutate(ctx context.Context, m *WaitlistEntryMutati
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		AgentProfile, AuditEvent, LandlordProfile, Listing, ListingMedia, ListingTerms,
-		OTPCode, Property, RoleAssignment, Session, Unit, User, Verification,
-		VerificationFile, WaitlistEntry []ent.Hook
+		AgentMandate, AgentProfile, AuditEvent, LandlordProfile, Listing, ListingMedia,
+		ListingTerms, OTPCode, Property, RoleAssignment, Session, Unit, User,
+		Verification, VerificationFile, WaitlistEntry []ent.Hook
 	}
 	inters struct {
-		AgentProfile, AuditEvent, LandlordProfile, Listing, ListingMedia, ListingTerms,
-		OTPCode, Property, RoleAssignment, Session, Unit, User, Verification,
-		VerificationFile, WaitlistEntry []ent.Interceptor
+		AgentMandate, AgentProfile, AuditEvent, LandlordProfile, Listing, ListingMedia,
+		ListingTerms, OTPCode, Property, RoleAssignment, Session, Unit, User,
+		Verification, VerificationFile, WaitlistEntry []ent.Interceptor
 	}
 )
 

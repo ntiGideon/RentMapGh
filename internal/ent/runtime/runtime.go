@@ -4,6 +4,7 @@ package runtime
 
 import (
 	"context"
+	"rentmapgh/internal/ent/agentmandate"
 	"rentmapgh/internal/ent/agentprofile"
 	"rentmapgh/internal/ent/auditevent"
 	"rentmapgh/internal/ent/landlordprofile"
@@ -32,6 +33,69 @@ import (
 // (default values, validators, hooks and policies) and stitches it
 // to their package variables.
 func init() {
+	agentmandateMixin := schema.AgentMandate{}.Mixin()
+	agentmandateMixinFields0 := agentmandateMixin[0].Fields()
+	_ = agentmandateMixinFields0
+	agentmandateMixinFields1 := agentmandateMixin[1].Fields()
+	_ = agentmandateMixinFields1
+	agentmandateFields := schema.AgentMandate{}.Fields()
+	_ = agentmandateFields
+	// agentmandateDescCreatedAt is the schema descriptor for created_at field.
+	agentmandateDescCreatedAt := agentmandateMixinFields1[0].Descriptor()
+	// agentmandate.DefaultCreatedAt holds the default value on creation for the created_at field.
+	agentmandate.DefaultCreatedAt = agentmandateDescCreatedAt.Default.(func() time.Time)
+	// agentmandateDescUpdatedAt is the schema descriptor for updated_at field.
+	agentmandateDescUpdatedAt := agentmandateMixinFields1[1].Descriptor()
+	// agentmandate.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	agentmandate.DefaultUpdatedAt = agentmandateDescUpdatedAt.Default.(func() time.Time)
+	// agentmandate.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	agentmandate.UpdateDefaultUpdatedAt = agentmandateDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// agentmandateDescLandlordPhone is the schema descriptor for landlord_phone field.
+	agentmandateDescLandlordPhone := agentmandateFields[2].Descriptor()
+	// agentmandate.LandlordPhoneValidator is a validator for the "landlord_phone" field. It is called by the builders before save.
+	agentmandate.LandlordPhoneValidator = func() func(string) error {
+		validators := agentmandateDescLandlordPhone.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(landlord_phone string) error {
+			for _, fn := range fns {
+				if err := fn(landlord_phone); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// agentmandateDescLandlordName is the schema descriptor for landlord_name field.
+	agentmandateDescLandlordName := agentmandateFields[3].Descriptor()
+	// agentmandate.LandlordNameValidator is a validator for the "landlord_name" field. It is called by the builders before save.
+	agentmandate.LandlordNameValidator = agentmandateDescLandlordName.Validators[0].(func(string) error)
+	// agentmandateDescMonths is the schema descriptor for months field.
+	agentmandateDescMonths := agentmandateFields[6].Descriptor()
+	// agentmandate.DefaultMonths holds the default value on creation for the months field.
+	agentmandate.DefaultMonths = agentmandateDescMonths.Default.(int)
+	// agentmandate.MonthsValidator is a validator for the "months" field. It is called by the builders before save.
+	agentmandate.MonthsValidator = agentmandateDescMonths.Validators[0].(func(int) error)
+	// agentmandateDescTokenHash is the schema descriptor for token_hash field.
+	agentmandateDescTokenHash := agentmandateFields[7].Descriptor()
+	// agentmandate.TokenHashValidator is a validator for the "token_hash" field. It is called by the builders before save.
+	agentmandate.TokenHashValidator = agentmandateDescTokenHash.Validators[0].(func([]byte) error)
+	// agentmandateDescSends is the schema descriptor for sends field.
+	agentmandateDescSends := agentmandateFields[9].Descriptor()
+	// agentmandate.DefaultSends holds the default value on creation for the sends field.
+	agentmandate.DefaultSends = agentmandateDescSends.Default.(int)
+	// agentmandate.SendsValidator is a validator for the "sends" field. It is called by the builders before save.
+	agentmandate.SendsValidator = agentmandateDescSends.Validators[0].(func(int) error)
+	// agentmandateDescReported is the schema descriptor for reported field.
+	agentmandateDescReported := agentmandateFields[12].Descriptor()
+	// agentmandate.DefaultReported holds the default value on creation for the reported field.
+	agentmandate.DefaultReported = agentmandateDescReported.Default.(bool)
+	// agentmandateDescID is the schema descriptor for id field.
+	agentmandateDescID := agentmandateMixinFields0[0].Descriptor()
+	// agentmandate.DefaultID holds the default value on creation for the id field.
+	agentmandate.DefaultID = agentmandateDescID.Default.(func() uuid.UUID)
 	agentprofileMixin := schema.AgentProfile{}.Mixin()
 	agentprofileMixinFields0 := agentprofileMixin[0].Fields()
 	_ = agentprofileMixinFields0

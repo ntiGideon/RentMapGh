@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"rentmapgh/internal/ent/agentmandate"
 	"rentmapgh/internal/ent/agentprofile"
 	"rentmapgh/internal/ent/auditevent"
 	"rentmapgh/internal/ent/landlordprofile"
@@ -87,6 +88,7 @@ var (
 func checkColumn(t, c string) error {
 	initCheck.Do(func() {
 		columnCheck = sql.NewColumnCheck(map[string]func(string) bool{
+			agentmandate.Table:     agentmandate.ValidColumn,
 			agentprofile.Table:     agentprofile.ValidColumn,
 			auditevent.Table:       auditevent.ValidColumn,
 			landlordprofile.Table:  landlordprofile.ValidColumn,

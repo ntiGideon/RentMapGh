@@ -13,6 +13,7 @@ import (
 
 	"rentmapgh/internal/ent/unit"
 	"rentmapgh/internal/modules/auth"
+	"rentmapgh/internal/modules/mandates"
 	"rentmapgh/internal/server/htmx"
 	"rentmapgh/internal/server/render"
 	"rentmapgh/internal/server/reqctx"
@@ -20,9 +21,12 @@ import (
 	"rentmapgh/internal/views/partials"
 )
 
-type Handler struct{ svc *Service }
+type Handler struct {
+	svc      *Service
+	mandates *mandates.Service // owner authority for agent listings (nil: off)
+}
 
-func NewHandler(svc *Service) *Handler { return &Handler{svc: svc} }
+func NewHandler(svc *Service, m *mandates.Service) *Handler { return &Handler{svc: svc, mandates: m} }
 
 // Service exposes the service (admin wiring).
 func (h *Handler) Service() *Service { return h.svc }
@@ -43,8 +47,24 @@ func (h *Handler) Mine(w http.ResponseWriter, r *http.Request) {
 	}
 	v := partials.MyListingsView{IdentityVerified: a.IdentityVerified, Counts: map[string]int{}}
 	now := time.Now()
+	var props []uuid.UUID
 	for _, d := range items {
-		v.Items = append(v.Items, cardView(d, now))
+		if d.L.ListerKind == "agent" && d.P != nil {
+			props = append(props, d.P.ID)
+		}
+	}
+	var states map[uuid.UUID]mandates.State
+	if h.mandates != nil {
+		if states, err = h.mandates.States(r.Context(), a.UserID, props); err != nil {
+			slog.ErrorContext(r.Context(), "listings: owner authority", "err", err)
+		}
+	}
+	for _, d := range items {
+		cv := cardView(d, now)
+		if d.L.ListerKind == "agent" && d.P != nil {
+			cv.IsAgent, cv.Authority = true, string(states[d.P.ID])
+		}
+		v.Items = append(v.Items, cv)
 		v.Counts[string(d.L.Status)]++
 	}
 	switch r.URL.Query().Get("done") {
@@ -206,6 +226,13 @@ func (h *Handler) renderStep(w http.ResponseWriter, r *http.Request, status int,
 	}
 	v := buildView(d, step, actor(r).IdentityVerified, form, errs, units)
 	v.Video = videoView(d, h.svc.VideoEnabled(), reqctx.DataSaver(r.Context()), errs["video"])
+	if step == "review" {
+		mv, err := h.mandateView(r.Context(), d, form, errs)
+		if err != nil {
+			slog.ErrorContext(r.Context(), "listings: owner authority", "err", err)
+		}
+		v.Mandate = mv
+	}
 	body := map[string]func(partials.WizardView) templ.Component{
 		"location": partials.StepLocation, "property": partials.StepProperty, "unit": partials.StepUnit,
 		"amenities": partials.StepAmenities, "photos": partials.StepPhotos, "pricing": partials.StepPricing, "details": partials.StepDetails,

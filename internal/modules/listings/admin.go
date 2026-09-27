@@ -7,6 +7,8 @@ import (
 	"strconv"
 	"time"
 
+	"rentmapgh/internal/ent/listing"
+	"rentmapgh/internal/modules/mandates"
 	"rentmapgh/internal/platform/geo"
 	"rentmapgh/internal/platform/phone"
 	"rentmapgh/internal/server/render"
@@ -77,6 +79,13 @@ func (h *Handler) renderReview(w http.ResponseWriter, r *http.Request, status in
 	v.ExactPin, v.ApproxPin = fmtPin(d.P.Lat, d.P.Lng), fmtPin(d.P.ApproxLat, d.P.ApproxLng)
 	v.Photos = photosView(d, "").Tiles
 	v.Video = videoView(d, true, reqctx.DataSaver(r.Context()), "")
+	if d.L.ListerKind == listing.ListerKindAgent && h.mandates != nil {
+		v.IsAgent = true
+		if m, err := h.mandates.Latest(r.Context(), d.L.ListerID, d.P.ID); err == nil {
+			v.Authority = string(mandates.StateOf(m, h.mandates.Now()))
+			v.AuthorityReported = m != nil && m.Reported
+		}
+	}
 	v.Video.Editable = false
 	render.Component(w, r, status, pages.AdminListingReview(v))
 }

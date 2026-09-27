@@ -1,0 +1,145 @@
+package pages
+
+import (
+	"strconv"
+
+	c "rentmapgh/internal/views/components"
+	"rentmapgh/internal/views/layouts"
+)
+
+// MandateOfferView is the landlord's page behind the SMS link.
+type MandateOfferView struct {
+	Action           string // the link itself; forms post back to it
+	State            string // mandates.State
+	AgentName        string
+	AgentTel         string
+	Agency           string
+	IdentityVerified bool
+	LicenceVerified  bool
+	PropertyName     string
+	Area             string // "Ayigya · Behind the Zongo mosque"
+	Months           int
+	ValidUntil       string
+	Answered         string // "approved", "declined", "reported", "withdrawn" right after a decision
+	Error            string
+}
+
+var mandateMeta = layouts.Meta{Title: "Agent request", NoIndex: true}
+
+templ MandateOffer(v MandateOfferView) {
+	@layouts.Focused(mandateMeta, "max-w-md") {
+		@c.Card("p-6") {
+			switch v.Answered {
+				case "approved":
+					@mandateDone("check", "Approved", "Thank you. "+v.AgentName+" can list this property on RentMap until "+v.ValidUntil+". Keep this text: the same link lets you withdraw it.")
+				case "declined":
+					@mandateDone("x", "Declined", "We've told "+v.AgentName+". Nothing is listed with your approval.")
+				case "reported":
+					@mandateDone("shield-check", "Thanks for telling us", "We've declined the request and our team will look at this agent's listings.")
+				case "withdrawn":
+					@mandateDone("x", "Approval withdrawn", "Their listings now show that the owner hasn't confirmed them.")
+				default:
+					@mandateBody(v)
+			}
+		}
+		<p class="mt-4 px-2 text-center text-xs text-fg-subtle">RentMap never asks owners for money, a PIN or a code to approve an agent.</p>
+	}
+}
+
+templ mandateDone(icon, title, body string) {
+	<div class="text-center">
+		<span class="mx-auto grid size-11 place-items-center rounded-full bg-surface text-fg ring-1 ring-line">
+			@c.Icon(icon, "size-5")
+		</span>
+		<h1 class="mt-4 text-xl font-semibold text-fg">{ title }</h1>
+		<p class="mt-2 text-base text-fg-muted">{ body }</p>
+	</div>
+}
+
+templ mandateBody(v MandateOfferView) {
+	<p class="text-xs font-medium uppercase tracking-wider text-fg-subtle">Agent request</p>
+	<h1 class="mt-1.5 text-xl font-semibold text-fg">
+		switch v.State {
+			case "approved":
+				You approved this agent
+			case "pending":
+				May this agent list your property?
+			default:
+				This request is closed
+		}
+	</h1>
+	<dl class="mt-5 divide-y divide-line rounded-lg border border-line text-sm">
+		<div class="px-4 py-3">
+			<dt class="text-fg-muted">Agent</dt>
+			<dd class="mt-0.5 font-medium text-fg">{ v.AgentName }</dd>
+			<dd class="tabular-nums text-fg-muted">{ v.AgentTel }</dd>
+			if v.Agency != "" {
+				<dd class="text-fg-muted">{ v.Agency }</dd>
+			}
+			if v.IdentityVerified || v.LicenceVerified {
+				<dd class="mt-2 flex flex-wrap gap-1.5">
+					if v.IdentityVerified {
+						@c.Badge(c.Verified) {
+							@c.Icon("badge-check", "size-3")
+							ID checked
+						}
+					}
+					if v.LicenceVerified {
+						@c.Badge(c.Verified) {
+							@c.Icon("badge-check", "size-3")
+							Licensed agent
+						}
+					}
+				</dd>
+			}
+		</div>
+		<div class="px-4 py-3">
+			<dt class="text-fg-muted">Property</dt>
+			<dd class="mt-0.5 font-medium text-fg">{ v.PropertyName }</dd>
+			if v.Area != "" {
+				<dd class="text-fg-muted">{ v.Area }</dd>
+			}
+		</div>
+	</dl>
+	if v.Error != "" {
+		<div class="mt-4 rounded-lg border border-red-600/15 bg-red-50 px-3 py-2.5 text-sm text-danger dark:bg-red-400/10 dark:text-red-300" role="alert">{ v.Error }</div>
+	}
+	switch v.State {
+		case "pending":
+			<p class="mt-5 text-sm text-fg-muted">
+				If you approve, { v.AgentName } may advertise and arrange viewings for this property on RentMap for { strconv.Itoa(v.Months) } months, and renters will see that you confirmed it. You can withdraw any time from this link.
+			</p>
+			<form method="post" action={ templ.SafeURL(v.Action) } class="mt-5 grid gap-2">
+				@c.Button(c.ButtonProps{Type: "submit", Full: true, Attrs: templ.Attributes{"name": "decision", "value": "approve"}}) {
+					Approve
+				}
+				@c.Button(c.ButtonProps{Type: "submit", Variant: c.Ghost, Full: true, Attrs: templ.Attributes{"name": "decision", "value": "decline"}}) {
+					Decline
+				}
+				<button type="submit" name="decision" value="report" class="mt-1 h-10 rounded-lg text-sm font-medium text-fg-muted underline-offset-4 hover:text-danger hover:underline">
+					I don't know this person
+				</button>
+			</form>
+		case "approved":
+			<p class="mt-5 text-sm text-fg-muted">Your approval lasts until { v.ValidUntil }.</p>
+			<form method="post" action={ templ.SafeURL(v.Action) } class="mt-4">
+				@c.Button(c.ButtonProps{Type: "submit", Variant: c.DangerSoft, Full: true, Attrs: templ.Attributes{"name": "decision", "value": "withdraw"}}) {
+					Withdraw approval
+				}
+			</form>
+		default:
+			<p class="mt-5 text-sm text-fg-muted">
+				switch v.State {
+					case "declined":
+						You declined this request.
+					case "revoked":
+						You withdrew this approval.
+					case "cancelled":
+						The agent cancelled this request.
+					default:
+						This link has expired.
+				}
+				If the agent needs your approval again, they can send a new request.
+			</p>
+	}
+}

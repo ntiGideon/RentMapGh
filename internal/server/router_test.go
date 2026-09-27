@@ -55,7 +55,7 @@ func newTestServerFull(t *testing.T, withVideo bool) (http.Handler, *db.DB, *sms
 	t.Cleanup(d.Close)
 	_, err = d.Ent.WaitlistEntry.Delete().Exec(ctx)
 	require.NoError(t, err)
-	_, err = d.SQL.ExecContext(ctx, "TRUNCATE listing_media, listing_terms, listings, units, properties, audit_events, sessions, role_assignments, otp_codes, verification_files, verifications, agent_profiles, landlord_profiles, users")
+	_, err = d.SQL.ExecContext(ctx, "TRUNCATE agent_mandates, listing_media, listing_terms, listings, units, properties, audit_events, sessions, role_assignments, otp_codes, verification_files, verifications, agent_profiles, landlord_profiles, users")
 	require.NoError(t, err)
 
 	cfg := config.Config{Env: config.EnvDevelopment, BaseURL: "http://example.test",
