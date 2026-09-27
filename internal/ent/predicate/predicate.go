@@ -27,6 +27,9 @@ type Listing func(*sql.Selector)
 // ListingMedia is the predicate function for listingmedia builders.
 type ListingMedia func(*sql.Selector)
 
+// ListingStat is the predicate function for listingstat builders.
+type ListingStat func(*sql.Selector)
+
 // ListingTerms is the predicate function for listingterms builders.
 type ListingTerms func(*sql.Selector)
 

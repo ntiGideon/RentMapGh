@@ -569,12 +569,12 @@ Engineering:
 
 Landlord/agent dashboard:
 
-- [ ] Overview: active listings, views, saves, messages, viewing requests, response time.
-- [ ] Listings table with quick actions (pause, confirm availability, edit price, mark rented).
-- [ ] Viewing calendar (week view).
-- [ ] Inbox.
-- [ ] Per-listing stats (views/day, saves, contact rate).
-- [ ] Agent: mandates, clients (landlords), leads pipeline.
+- [x] Overview: active listings, views, saves, messages, viewing requests, response time.
+- [x] Listings table with quick actions (pause, confirm availability, edit price, mark rented).
+- [x] Viewing calendar (week view).
+- [x] Inbox.
+- [x] Per-listing stats (views/day, saves, contact rate).
+- [x] Agent: mandates, clients (landlords), leads pipeline.
 
 Admin back-office:
 
@@ -1170,5 +1170,17 @@ Sky Mint is step 200 of its scale; Graphite is step 900. Darker mint steps exist
 | No-shows | tracked both ways, shown on profiles | Renter no-shows: the lister's "They didn't come" or the renter's own answer. Lister no-shows: the renter's "the lister didn't show". Listers see a renter's record on each request ("2 of 3 past viewings attended"); listers' record feeds badges | |
 | Trust | weighted sum; badges not a number; ranking | `listings.trust_score` recomputed hourly: ID checked 25, phone 10, account >90 days 5, authority 20 (owner's own listing, or agent licence 5 + confirmed mandate 15), replies within a day 10, reliable for viewings 10, as described 10, fresh 5; −10 per "not as described" (max 3), −15 per upheld report in a year. Recommended = promoted → fresh → trust + quality. Renters see badges: "Replies within a day" (≥3 requests, ≥80 % answered in 24 h — `responded_at`), "Reliable for viewings" (≥3 held, none missed), "As described" (≥2, no negatives) | §6.10. Response rate uses viewing requests; message response time can join later |
 | Reports | listing / user / message | "Report listing" on the lister card (reasons: scam, fake, wrong price, not theirs, discrimination, other), one open report per reporter per listing; the admin queue now shows listing reports with a link to the listing review. A user is reported through their messages or their listing (the report records the subject) | No separate "report user" page until profiles exist |
+
+### 16.20 Decisions taken while building Phase 5 (slice 5a — lister dashboard)
+
+| Area | Plan said | Built | Why |
+| --- | --- | --- | --- |
+| Counters | views, saves, contacts per listing | `listing_stats` (listing, UTC day, views, saves, contacts), bumped with one `INSERT … ON CONFLICT DO UPDATE`. A view is the canonical public page, once per visitor per day (signed-in user, else IP + user agent; in-memory, capped at 200k keys), never the lister, never bots or link previews (WhatsApp, Facebook, Telegram, crawlers). A save is adding to Saved; a contact is a new conversation or a viewing request | No event table or analytics service at this size; daily rows stay small and the dedupe loss on restart is a few extra views |
+| Overview | active listings, views, saves, messages, requests, response time | Six tiles on `/listings`: views, saves and contacts (last 7 days, across live, paused, expired and rented listings), requests waiting for you, unread conversations, and median reply time to viewing requests (last 30 days). Links to the calendar, leads, inbox and viewing hours | Reply time uses `responded_at` (as the trust badge does) |
+| Listings table | quick actions | Each card shows "Last 7 days: views · saves · contacts" and gains "Edit price" (rent only, from the card; a blank, zero or unparseable rent is refused — a live price can't be cleared) and "Stats" next to pause / still available / mark rented | Other fees go through the full editor so the move-in total is re-checked |
+| Stats | views/day, saves, contact rate | `/listings/{id}/stats`: four tiles (30-day views, saves, contacts, contact rate = contacts per 100 views), a server-rendered SVG column chart of views per day (one series, no legend; ≤24px columns with 4px rounded tops, 2px gaps, hairline grid, clean even top tick), a tooltip per day on hover or focus (`stats-chart.js`), and a "Show as a table" view with every value. On phones the labels use a larger user-unit size so they stay readable | No chart library; CSP-safe; works without JS through the table |
+| Calendar | week view | `/viewings/calendar?week=YYYY-MM-DD`: Monday–Sunday, 6:00–20:00 (Accra time), with the lister's viewing hours shaded and requests (amber) / confirmed (solid) / completed blocks linking to each viewing. Blocks are placed by `calendar.js` from data attributes (no inline styles); phones and no-JS get a day-by-day list | The `.ics` feed per viewing stays for phone calendars |
+| Leads | leads pipeline | `/listings/leads`: one card per renter per listing in its furthest stage — messaged, viewing requested, viewing booked, viewed, didn't come, closed — newest first, each linking to the conversation or viewing | Derived from conversations and viewings; no separate CRM table to keep in sync |
+| Agents | mandates, clients | Agents also see their newest mandate per property (state, landlord, masked phone, valid-until) and clients: landlords with a confirmed mandate and how many properties | |
 
 Phase 0 engineering status: repo skeleton, Compose dev stack (PostGIS + pgvector image, Mailpit, Valhalla behind a profile), config, slog, request IDs, graceful shutdown, `/healthz` + `/readyz`, Ent + migrations, design tokens + first components, landing page with waitlist, tests, CI and the production Dockerfile/Compose/Caddy are done. Still open: staging VPS + Cloudflare, i18n scaffolding, product/legal tasks.

@@ -28,6 +28,8 @@ type Tx struct {
 	Listing *ListingClient
 	// ListingMedia is the client for interacting with the ListingMedia builders.
 	ListingMedia *ListingMediaClient
+	// ListingStat is the client for interacting with the ListingStat builders.
+	ListingStat *ListingStatClient
 	// ListingTerms is the client for interacting with the ListingTerms builders.
 	ListingTerms *ListingTermsClient
 	// Message is the client for interacting with the Message builders.
@@ -196,6 +198,7 @@ func (tx *Tx) init() {
 	tx.LandlordProfile = NewLandlordProfileClient(tx.config)
 	tx.Listing = NewListingClient(tx.config)
 	tx.ListingMedia = NewListingMediaClient(tx.config)
+	tx.ListingStat = NewListingStatClient(tx.config)
 	tx.ListingTerms = NewListingTermsClient(tx.config)
 	tx.Message = NewMessageClient(tx.config)
 	tx.Notification = NewNotificationClient(tx.config)

@@ -267,6 +267,33 @@ var (
 			},
 		},
 	}
+	// ListingStatsColumns holds the columns for the "listing_stats" table.
+	ListingStatsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "listing_id", Type: field.TypeUUID},
+		{Name: "day", Type: field.TypeTime},
+		{Name: "views", Type: field.TypeInt, Default: 0},
+		{Name: "saves", Type: field.TypeInt, Default: 0},
+		{Name: "contacts", Type: field.TypeInt, Default: 0},
+	}
+	// ListingStatsTable holds the schema information for the "listing_stats" table.
+	ListingStatsTable = &schema.Table{
+		Name:       "listing_stats",
+		Columns:    ListingStatsColumns,
+		PrimaryKey: []*schema.Column{ListingStatsColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "listingstat_listing_id_day",
+				Unique:  true,
+				Columns: []*schema.Column{ListingStatsColumns[1], ListingStatsColumns[2]},
+			},
+			{
+				Name:    "listingstat_day",
+				Unique:  false,
+				Columns: []*schema.Column{ListingStatsColumns[2]},
+			},
+		},
+	}
 	// ListingTermsColumns holds the columns for the "listing_terms" table.
 	ListingTermsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
@@ -809,6 +836,7 @@ var (
 		LandlordProfilesTable,
 		ListingsTable,
 		ListingMediaTable,
+		ListingStatsTable,
 		ListingTermsTable,
 		MessagesTable,
 		NotificationsTable,

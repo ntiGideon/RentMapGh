@@ -70,13 +70,17 @@ type Actor struct {
 }
 
 type Service struct {
-	db      *ent.Client
-	audit   *audit.Log
-	sms     sms.Sender      // used directly only when no notifier is set (tests)
-	notify  *notify.Service // in-app + SMS per the user's preferences
-	baseURL string
-	now     func() time.Time
+	db        *ent.Client
+	audit     *audit.Log
+	sms       sms.Sender      // used directly only when no notifier is set (tests)
+	notify    *notify.Service // in-app + SMS per the user's preferences
+	onContact func(ctx context.Context, listingID uuid.UUID)
+	baseURL   string
+	now       func() time.Time
 }
+
+// OnContact registers a hook for new viewing requests (listing stats).
+func (s *Service) OnContact(f func(ctx context.Context, listingID uuid.UUID)) { s.onContact = f }
 
 // SetNotifier routes messages through the notification centre.
 func (s *Service) SetNotifier(n *notify.Service) { s.notify = n }
@@ -259,6 +263,9 @@ func (s *Service) Ask(ctx context.Context, a Actor, listingID uuid.UUID, req Req
 		return nil, fmt.Errorf("viewings: create: %w", err)
 	}
 	s.record(ctx, a, "viewing.requested", v, nil)
+	if s.onContact != nil {
+		s.onContact(ctx, listingID)
+	}
 	renter, _ := s.db.User.Get(ctx, a.UserID)
 	s.tell(ctx, p.Lister, "viewing.requested", firstName(renter)+" wants to view "+headline(p)+" on "+When(v.StartsAt), s.path(v), false,
 		fmt.Sprintf("RentMap: %s wants to view %s on %s. Reply: %s", firstName(renter), unitLabel(p), When(v.StartsAt), s.link(v)))

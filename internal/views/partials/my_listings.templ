@@ -22,6 +22,9 @@ type ListingCardView struct {
 	Photos                      int
 	IsAgent                     bool
 	Stale                       bool // live but not confirmed recently
+	Views7, Saves7, Contacts7   int
+	StatsURL                    string
+	RentInput                   string // for the quick price edit ("" = no edit)
 	Authority                   string // mandates.State, agent listings only
 }
 
@@ -30,6 +33,16 @@ type MyListingsView struct {
 	Notice           string
 	IdentityVerified bool
 	Counts           map[string]int
+	Overview         Overview
+}
+
+// Overview is the dashboard's top row (last 7 days, live listings).
+type Overview struct {
+	Show                               bool
+	Views, Saves, Contacts             int
+	Pending, Unread                    int
+	Response                           string // median time to answer a viewing request
+	IsAgent                            bool
 }
 
 func StatusLabel(s string) string {
@@ -93,6 +106,9 @@ templ MyListings(v MyListingsView) {
 				@c.Icon("check", "mt-0.5 size-3.5")
 				{ v.Notice }
 			</div>
+		}
+		if v.Overview.Show {
+			@overview(v.Overview)
 		}
 		if !v.IdentityVerified {
 			<div class="mt-6 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-line bg-surface px-4 py-3">
@@ -162,6 +178,27 @@ templ listingCard(it ListingCardView) {
 				if it.ReviewNote != "" {
 					<p class="mt-2 rounded-md bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:bg-amber-400/10 dark:text-amber-200">{ it.ReviewNote }</p>
 				}
+				if it.StatsURL != "" {
+					<div class="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-fg-muted">
+						<span class="tabular-nums">
+							Last 7 days: { strconv.Itoa(it.Views7) } views · { strconv.Itoa(it.Saves7) } saves · { strconv.Itoa(it.Contacts7) } contacts
+						</span>
+						if it.RentInput != "" {
+							<details class="group relative">
+								<summary class="cursor-pointer list-none font-medium text-link">Edit price</summary>
+								<form method="post" action={ templ.SafeURL("/listings/" + it.ID + "/price") } class="absolute right-0 z-10 mt-2 flex w-64 items-end gap-2 rounded-lg border border-line bg-bg p-3 shadow-card">
+									<label class="block flex-1">
+										<span class="text-xs text-fg-muted">Rent per { it.Per }</span>
+										<input type="text" inputmode="decimal" name="rent" value={ it.RentInput } required class="mt-1 h-9 w-full rounded-md border border-line bg-surface-raised px-2 text-sm tabular-nums text-fg"/>
+									</label>
+									@c.Button(c.ButtonProps{Type: "submit", Size: c.SM}) {
+										Save
+									}
+								</form>
+							</details>
+						}
+					</div>
+				}
 				<div class="mt-3 flex flex-wrap items-center justify-between gap-3 border-t border-line pt-3">
 					<div class="flex items-center gap-2 text-xs text-fg-muted">
 						<span class="h-1.5 w-20 overflow-hidden rounded-full bg-surface">
@@ -190,6 +227,11 @@ templ listingCard(it ListingCardView) {
 								View
 							}
 						}
+						if it.StatsURL != "" {
+							@c.LinkButton(it.StatsURL, c.Ghost, c.SM) {
+								Stats
+							}
+						}
 						@c.LinkButton(it.EditURL, c.Primary, c.SM) {
 							{ it.EditLabel }
 						}
@@ -214,4 +256,31 @@ func scoreWidth(score int) string {
 		return "w-1/12"
 	}
 	return "w-0"
+}
+
+templ overview(o Overview) {
+	<section class="mt-6" aria-label="Last 7 days">
+		<div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+			@tile("Views", strconv.Itoa(o.Views), "last 7 days")
+			@tile("Saves", strconv.Itoa(o.Saves), "last 7 days")
+			@tile("Contacts", strconv.Itoa(o.Contacts), "messages + viewing requests")
+			@tile("Waiting for you", strconv.Itoa(o.Pending), "viewing requests")
+			@tile("Unread", strconv.Itoa(o.Unread), "conversations")
+			@tile("Reply time", o.Response, "median, viewing requests")
+		</div>
+		<div class="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-sm">
+			<a href="/viewings/calendar" class="font-medium text-link">Viewing calendar</a>
+			<a href="/listings/leads" class="font-medium text-link">Leads</a>
+			<a href="/messages" class="font-medium text-link">Inbox</a>
+			<a href="/viewings/hours" class="font-medium text-link">Viewing hours</a>
+		</div>
+	</section>
+}
+
+templ tile(label, value, hint string) {
+	<div class="rounded-card border border-line bg-surface-raised px-4 py-3">
+		<p class="text-xs text-fg-muted">{ label }</p>
+		<p class="mt-1 text-2xl font-semibold tracking-tight text-fg">{ value }</p>
+		<p class="text-2xs text-fg-subtle">{ hint }</p>
+	</div>
 }

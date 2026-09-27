@@ -13,6 +13,7 @@ import (
 	"rentmapgh/internal/ent/landlordprofile"
 	"rentmapgh/internal/ent/listing"
 	"rentmapgh/internal/ent/listingmedia"
+	"rentmapgh/internal/ent/listingstat"
 	"rentmapgh/internal/ent/listingterms"
 	"rentmapgh/internal/ent/message"
 	"rentmapgh/internal/ent/notification"
@@ -55,6 +56,7 @@ const (
 	TypeLandlordProfile  = "LandlordProfile"
 	TypeListing          = "Listing"
 	TypeListingMedia     = "ListingMedia"
+	TypeListingStat      = "ListingStat"
 	TypeListingTerms     = "ListingTerms"
 	TypeMessage          = "Message"
 	TypeNotification     = "Notification"
@@ -7845,6 +7847,656 @@ func (m *ListingMediaMutation) ResetEdge(name string) error {
 		return nil
 	}
 	return fmt.Errorf("unknown ListingMedia edge %s", name)
+}
+
+// ListingStatMutation represents an operation that mutates the ListingStat nodes in the graph.
+type ListingStatMutation struct {
+	config
+	op            Op
+	typ           string
+	id            *uuid.UUID
+	listing_id    *uuid.UUID
+	day           *time.Time
+	views         *int
+	addviews      *int
+	saves         *int
+	addsaves      *int
+	contacts      *int
+	addcontacts   *int
+	clearedFields map[string]struct{}
+	done          bool
+	oldValue      func(context.Context) (*ListingStat, error)
+	predicates    []predicate.ListingStat
+}
+
+var _ ent.Mutation = (*ListingStatMutation)(nil)
+
+// listingstatOption allows management of the mutation configuration using functional options.
+type listingstatOption func(*ListingStatMutation)
+
+// newListingStatMutation creates new mutation for the ListingStat entity.
+func newListingStatMutation(c config, op Op, opts ...listingstatOption) *ListingStatMutation {
+	m := &ListingStatMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeListingStat,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withListingStatID sets the ID field of the mutation.
+func withListingStatID(id uuid.UUID) listingstatOption {
+	return func(m *ListingStatMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *ListingStat
+		)
+		m.oldValue = func(ctx context.Context) (*ListingStat, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().ListingStat.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withListingStat sets the old ListingStat of the mutation.
+func withListingStat(node *ListingStat) listingstatOption {
+	return func(m *ListingStatMutation) {
+		m.oldValue = func(context.Context) (*ListingStat, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m ListingStatMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m ListingStatMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of ListingStat entities.
+func (m *ListingStatMutation) SetID(id uuid.UUID) {
+	m.id = &id
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *ListingStatMutation) ID() (id uuid.UUID, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *ListingStatMutation) IDs(ctx context.Context) ([]uuid.UUID, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []uuid.UUID{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().ListingStat.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetListingID sets the "listing_id" field.
+func (m *ListingStatMutation) SetListingID(u uuid.UUID) {
+	m.listing_id = &u
+}
+
+// ListingID returns the value of the "listing_id" field in the mutation.
+func (m *ListingStatMutation) ListingID() (r uuid.UUID, exists bool) {
+	v := m.listing_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldListingID returns the old "listing_id" field's value of the ListingStat entity.
+// If the ListingStat object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ListingStatMutation) OldListingID(ctx context.Context) (v uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldListingID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldListingID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldListingID: %w", err)
+	}
+	return oldValue.ListingID, nil
+}
+
+// ResetListingID resets all changes to the "listing_id" field.
+func (m *ListingStatMutation) ResetListingID() {
+	m.listing_id = nil
+}
+
+// SetDay sets the "day" field.
+func (m *ListingStatMutation) SetDay(t time.Time) {
+	m.day = &t
+}
+
+// Day returns the value of the "day" field in the mutation.
+func (m *ListingStatMutation) Day() (r time.Time, exists bool) {
+	v := m.day
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDay returns the old "day" field's value of the ListingStat entity.
+// If the ListingStat object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ListingStatMutation) OldDay(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldDay is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldDay requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDay: %w", err)
+	}
+	return oldValue.Day, nil
+}
+
+// ResetDay resets all changes to the "day" field.
+func (m *ListingStatMutation) ResetDay() {
+	m.day = nil
+}
+
+// SetViews sets the "views" field.
+func (m *ListingStatMutation) SetViews(i int) {
+	m.views = &i
+	m.addviews = nil
+}
+
+// Views returns the value of the "views" field in the mutation.
+func (m *ListingStatMutation) Views() (r int, exists bool) {
+	v := m.views
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldViews returns the old "views" field's value of the ListingStat entity.
+// If the ListingStat object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ListingStatMutation) OldViews(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldViews is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldViews requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldViews: %w", err)
+	}
+	return oldValue.Views, nil
+}
+
+// AddViews adds i to the "views" field.
+func (m *ListingStatMutation) AddViews(i int) {
+	if m.addviews != nil {
+		*m.addviews += i
+	} else {
+		m.addviews = &i
+	}
+}
+
+// AddedViews returns the value that was added to the "views" field in this mutation.
+func (m *ListingStatMutation) AddedViews() (r int, exists bool) {
+	v := m.addviews
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetViews resets all changes to the "views" field.
+func (m *ListingStatMutation) ResetViews() {
+	m.views = nil
+	m.addviews = nil
+}
+
+// SetSaves sets the "saves" field.
+func (m *ListingStatMutation) SetSaves(i int) {
+	m.saves = &i
+	m.addsaves = nil
+}
+
+// Saves returns the value of the "saves" field in the mutation.
+func (m *ListingStatMutation) Saves() (r int, exists bool) {
+	v := m.saves
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSaves returns the old "saves" field's value of the ListingStat entity.
+// If the ListingStat object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ListingStatMutation) OldSaves(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSaves is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSaves requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSaves: %w", err)
+	}
+	return oldValue.Saves, nil
+}
+
+// AddSaves adds i to the "saves" field.
+func (m *ListingStatMutation) AddSaves(i int) {
+	if m.addsaves != nil {
+		*m.addsaves += i
+	} else {
+		m.addsaves = &i
+	}
+}
+
+// AddedSaves returns the value that was added to the "saves" field in this mutation.
+func (m *ListingStatMutation) AddedSaves() (r int, exists bool) {
+	v := m.addsaves
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetSaves resets all changes to the "saves" field.
+func (m *ListingStatMutation) ResetSaves() {
+	m.saves = nil
+	m.addsaves = nil
+}
+
+// SetContacts sets the "contacts" field.
+func (m *ListingStatMutation) SetContacts(i int) {
+	m.contacts = &i
+	m.addcontacts = nil
+}
+
+// Contacts returns the value of the "contacts" field in the mutation.
+func (m *ListingStatMutation) Contacts() (r int, exists bool) {
+	v := m.contacts
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldContacts returns the old "contacts" field's value of the ListingStat entity.
+// If the ListingStat object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ListingStatMutation) OldContacts(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldContacts is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldContacts requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldContacts: %w", err)
+	}
+	return oldValue.Contacts, nil
+}
+
+// AddContacts adds i to the "contacts" field.
+func (m *ListingStatMutation) AddContacts(i int) {
+	if m.addcontacts != nil {
+		*m.addcontacts += i
+	} else {
+		m.addcontacts = &i
+	}
+}
+
+// AddedContacts returns the value that was added to the "contacts" field in this mutation.
+func (m *ListingStatMutation) AddedContacts() (r int, exists bool) {
+	v := m.addcontacts
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetContacts resets all changes to the "contacts" field.
+func (m *ListingStatMutation) ResetContacts() {
+	m.contacts = nil
+	m.addcontacts = nil
+}
+
+// Where appends a list predicates to the ListingStatMutation builder.
+func (m *ListingStatMutation) Where(ps ...predicate.ListingStat) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the ListingStatMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *ListingStatMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.ListingStat, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *ListingStatMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *ListingStatMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (ListingStat).
+func (m *ListingStatMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *ListingStatMutation) Fields() []string {
+	fields := make([]string, 0, 5)
+	if m.listing_id != nil {
+		fields = append(fields, listingstat.FieldListingID)
+	}
+	if m.day != nil {
+		fields = append(fields, listingstat.FieldDay)
+	}
+	if m.views != nil {
+		fields = append(fields, listingstat.FieldViews)
+	}
+	if m.saves != nil {
+		fields = append(fields, listingstat.FieldSaves)
+	}
+	if m.contacts != nil {
+		fields = append(fields, listingstat.FieldContacts)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *ListingStatMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case listingstat.FieldListingID:
+		return m.ListingID()
+	case listingstat.FieldDay:
+		return m.Day()
+	case listingstat.FieldViews:
+		return m.Views()
+	case listingstat.FieldSaves:
+		return m.Saves()
+	case listingstat.FieldContacts:
+		return m.Contacts()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *ListingStatMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case listingstat.FieldListingID:
+		return m.OldListingID(ctx)
+	case listingstat.FieldDay:
+		return m.OldDay(ctx)
+	case listingstat.FieldViews:
+		return m.OldViews(ctx)
+	case listingstat.FieldSaves:
+		return m.OldSaves(ctx)
+	case listingstat.FieldContacts:
+		return m.OldContacts(ctx)
+	}
+	return nil, fmt.Errorf("unknown ListingStat field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *ListingStatMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case listingstat.FieldListingID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetListingID(v)
+		return nil
+	case listingstat.FieldDay:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDay(v)
+		return nil
+	case listingstat.FieldViews:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetViews(v)
+		return nil
+	case listingstat.FieldSaves:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSaves(v)
+		return nil
+	case listingstat.FieldContacts:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetContacts(v)
+		return nil
+	}
+	return fmt.Errorf("unknown ListingStat field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *ListingStatMutation) AddedFields() []string {
+	var fields []string
+	if m.addviews != nil {
+		fields = append(fields, listingstat.FieldViews)
+	}
+	if m.addsaves != nil {
+		fields = append(fields, listingstat.FieldSaves)
+	}
+	if m.addcontacts != nil {
+		fields = append(fields, listingstat.FieldContacts)
+	}
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *ListingStatMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case listingstat.FieldViews:
+		return m.AddedViews()
+	case listingstat.FieldSaves:
+		return m.AddedSaves()
+	case listingstat.FieldContacts:
+		return m.AddedContacts()
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *ListingStatMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	case listingstat.FieldViews:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddViews(v)
+		return nil
+	case listingstat.FieldSaves:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddSaves(v)
+		return nil
+	case listingstat.FieldContacts:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddContacts(v)
+		return nil
+	}
+	return fmt.Errorf("unknown ListingStat numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *ListingStatMutation) ClearedFields() []string {
+	return nil
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *ListingStatMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *ListingStatMutation) ClearField(name string) error {
+	return fmt.Errorf("unknown ListingStat nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *ListingStatMutation) ResetField(name string) error {
+	switch name {
+	case listingstat.FieldListingID:
+		m.ResetListingID()
+		return nil
+	case listingstat.FieldDay:
+		m.ResetDay()
+		return nil
+	case listingstat.FieldViews:
+		m.ResetViews()
+		return nil
+	case listingstat.FieldSaves:
+		m.ResetSaves()
+		return nil
+	case listingstat.FieldContacts:
+		m.ResetContacts()
+		return nil
+	}
+	return fmt.Errorf("unknown ListingStat field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *ListingStatMutation) AddedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *ListingStatMutation) AddedIDs(name string) []ent.Value {
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *ListingStatMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *ListingStatMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *ListingStatMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *ListingStatMutation) EdgeCleared(name string) bool {
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *ListingStatMutation) ClearEdge(name string) error {
+	return fmt.Errorf("unknown ListingStat unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *ListingStatMutation) ResetEdge(name string) error {
+	return fmt.Errorf("unknown ListingStat edge %s", name)
 }
 
 // ListingTermsMutation represents an operation that mutates the ListingTerms nodes in the graph.

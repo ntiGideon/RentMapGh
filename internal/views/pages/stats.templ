@@ -1,0 +1,119 @@
+package pages
+
+import (
+	"strconv"
+
+	c "rentmapgh/internal/views/components"
+	"rentmapgh/internal/views/layouts"
+)
+
+// Chart is a precomputed single-series column chart (SVG user units).
+type Chart struct {
+	W, H, PlotL, PlotR int
+	Base               int
+	Ticks              []Tick
+	Bars               []Bar
+}
+
+type Tick struct{ Y, Label string }
+
+type Bar struct {
+	Path          string // "" for a zero day
+	HitX, HitW    string
+	Tip           string
+	Label, LabelX string // a date under some columns
+	Anchor        string // text-anchor: the last label ends at the edge
+}
+
+type StatRow struct {
+	Day                    string
+	Views, Saves, Contacts int
+}
+
+type StatsView struct {
+	Title, ListingURL      string
+	Views, Saves, Contacts int
+	Rate                   string
+	Chart                  Chart
+	Rows                   []StatRow
+}
+
+templ Stats(m layouts.Meta, v StatsView) {
+	@layouts.Site(m) {
+		<div class="mx-auto max-w-4xl px-4 pb-24 pt-8 sm:px-6">
+			<a href="/listings" class="inline-flex items-center gap-1 text-sm text-fg-muted hover:text-fg">
+				@c.Icon("chevron-left", "size-4")
+				Your listings
+			</a>
+			<div class="mt-3 flex flex-wrap items-end justify-between gap-3">
+				<div class="min-w-0">
+					<h1 class="truncate text-2xl font-semibold tracking-tight text-fg">{ v.Title }</h1>
+					<p class="mt-1 text-sm text-fg-muted">Last 30 days</p>
+				</div>
+				<a href={ templ.SafeURL(v.ListingURL) } class="text-sm font-medium text-link">View listing</a>
+			</div>
+			<div class="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+				@statTile("Views", strconv.Itoa(v.Views))
+				@statTile("Saves", strconv.Itoa(v.Saves))
+				@statTile("Contacts", strconv.Itoa(v.Contacts))
+				@statTile("Contact rate", v.Rate)
+			</div>
+			<section class="mt-6 rounded-card border border-line bg-surface-raised p-4 sm:p-5" aria-labelledby="views-h">
+				<h2 id="views-h" class="text-sm font-semibold text-fg">Views per day</h2>
+				<div class="relative mt-3" data-chart>
+					<svg viewBox={ "0 0 " + strconv.Itoa(v.Chart.W) + " " + strconv.Itoa(v.Chart.H) } class="h-auto w-full" role="img" aria-label="Views per day over the last 30 days; the table below lists every value">
+						for _, t := range v.Chart.Ticks {
+							<line x1={ strconv.Itoa(v.Chart.PlotL) } x2={ strconv.Itoa(v.Chart.PlotR) } y1={ t.Y } y2={ t.Y } class="stroke-line" stroke-width="1" vector-effect="non-scaling-stroke"></line>
+							<text x={ strconv.Itoa(v.Chart.PlotL - 8) } y={ t.Y } dy="0.32em" text-anchor="end" class="fill-fg-subtle text-[11px] tabular-nums max-sm:text-[22px]">{ t.Label }</text>
+						}
+						for _, b := range v.Chart.Bars {
+							<g data-tip={ b.Tip }>
+								<rect x={ b.HitX } y="0" width={ b.HitW } height={ strconv.Itoa(v.Chart.Base) } fill="transparent"></rect>
+								if b.Path != "" {
+									<path d={ b.Path } class="fill-graphite-900 dark:fill-mint-200"></path>
+								}
+								if b.Label != "" {
+									<text x={ b.LabelX } y={ strconv.Itoa(v.Chart.Base + 20) } text-anchor={ b.Anchor } class="fill-fg-subtle text-[11px] max-sm:text-[22px]">{ b.Label }</text>
+								}
+							</g>
+						}
+					</svg>
+					<div data-chart-tip hidden class="pointer-events-none absolute z-10 -translate-x-1/2 -translate-y-full rounded-md border border-line bg-bg px-2 py-1 text-xs font-medium text-fg shadow-card"></div>
+				</div>
+				<details class="mt-3 text-sm">
+					<summary class="cursor-pointer text-fg-muted hover:text-fg">Show as a table</summary>
+					<div class="mt-3 max-h-80 overflow-y-auto">
+						<table class="w-full text-left tabular-nums">
+							<thead class="text-xs text-fg-muted">
+								<tr>
+									<th class="py-1.5 font-medium">Day</th>
+									<th class="py-1.5 text-right font-medium">Views</th>
+									<th class="py-1.5 text-right font-medium">Saves</th>
+									<th class="py-1.5 text-right font-medium">Contacts</th>
+								</tr>
+							</thead>
+							<tbody>
+								for _, r := range v.Rows {
+									<tr class="border-t border-line">
+										<td class="py-1.5 text-fg">{ r.Day }</td>
+										<td class="py-1.5 text-right text-fg">{ strconv.Itoa(r.Views) }</td>
+										<td class="py-1.5 text-right text-fg">{ strconv.Itoa(r.Saves) }</td>
+										<td class="py-1.5 text-right text-fg">{ strconv.Itoa(r.Contacts) }</td>
+									</tr>
+								}
+							</tbody>
+						</table>
+					</div>
+				</details>
+			</section>
+			<p class="mt-4 text-xs text-fg-subtle">Views count real visitors once a day (not you, and not link previews). Contacts are first messages and viewing requests.</p>
+		</div>
+	}
+}
+
+templ statTile(label, value string) {
+	<div class="rounded-card border border-line bg-surface-raised px-4 py-3">
+		<p class="text-xs text-fg-muted">{ label }</p>
+		<p class="mt-1 text-2xl font-semibold tracking-tight tabular-nums text-fg">{ value }</p>
+	</div>
+}

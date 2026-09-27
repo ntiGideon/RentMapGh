@@ -48,6 +48,9 @@ func (h *Handler) ToggleSaved(w http.ResponseWriter, r *http.Request) {
 		}
 		h.saved.write(w, ids)
 	}
+	if saved {
+		h.svc.Bump(r.Context(), id, StatSave)
+	}
 	back := safeBack(r.PostFormValue("back"))
 	if !htmx.IsPartial(r) {
 		redirect(w, r, back)

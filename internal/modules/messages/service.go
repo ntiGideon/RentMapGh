@@ -60,18 +60,22 @@ type Actor struct {
 }
 
 type Service struct {
-	db      *ent.Client
-	audit   *audit.Log
-	sms     sms.Sender
-	hub     *Hub
-	baseURL string
-	now     func() time.Time
+	onContact func(ctx context.Context, listingID uuid.UUID) // a renter got in touch (stats)
+	db        *ent.Client
+	audit     *audit.Log
+	sms       sms.Sender
+	hub       *Hub
+	baseURL   string
+	now       func() time.Time
 }
 
 func NewService(db *ent.Client, log *audit.Log, sender sms.Sender, hub *Hub, baseURL string) *Service {
 	return &Service{db: db, audit: log, sms: sender, hub: hub, baseURL: strings.TrimRight(baseURL, "/"),
 		now: func() time.Time { return time.Now().UTC() }}
 }
+
+// OnContact registers a hook for new conversations (listing stats).
+func (s *Service) OnContact(f func(ctx context.Context, listingID uuid.UUID)) { s.onContact = f }
 
 // Hub is the event hub (the stream endpoint subscribes to it).
 func (s *Service) Hub() *Hub { return s.hub }
@@ -110,6 +114,9 @@ func (s *Service) Start(ctx context.Context, a Actor, listingID uuid.UUID) (*ent
 	}
 	if err != nil {
 		return nil, fmt.Errorf("messages: create: %w", err)
+	}
+	if s.onContact != nil {
+		s.onContact(ctx, listingID)
 	}
 	return c, nil
 }

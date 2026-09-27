@@ -188,8 +188,15 @@ func New(d Deps) http.Handler {
 	messagesSvc := messages.NewService(d.DB.Ent, auditLog, d.SMS, hub, d.Cfg.BaseURL)
 	notifySvc := notify.NewService(d.DB.Ent, d.SMS, hub)
 	viewingsSvc.SetNotifier(notifySvc)
+	contact := func(ctx context.Context, id uuid.UUID) { listingsSvc.Bump(ctx, id, listings.StatContact) }
+	viewingsSvc.OnContact(contact)
+	messagesSvc.OnContact(contact)
 	listingsH := listings.NewHandler(listingsSvc, mandatesSvc, listings.HandlerConfig{
 		BaseURL: d.Cfg.BaseURL, Secret: d.Cfg.AuthSecret, Secure: d.Cfg.IsHTTPS(),
+		Dashboard: func(ctx context.Context, lister uuid.UUID) (time.Duration, int) {
+			d, n, _ := viewingsSvc.ResponseTime(ctx, lister)
+			return d, n
+		},
 		Reliability: func(ctx context.Context, lister uuid.UUID) listings.Badges {
 			r, err := viewingsSvc.ReliabilityOf(ctx, lister)
 			if err != nil {
@@ -323,6 +330,7 @@ func New(d Deps) http.Handler {
 	r.Route("/listings", func(r chi.Router) {
 		r.Use(auth.RequireAuth, auth.RequireOnboarded, auth.RequireRole("landlord", "agent"), noStore)
 		r.Get("/", listingsH.Mine)
+		r.Get("/leads", listingsH.Leads)
 		r.With(rateLimit(20, time.Hour)).Post("/new", listingsH.Create)
 		r.Route("/{id}", func(r chi.Router) {
 			r.Get("/edit/{step}", listingsH.Edit)
@@ -334,6 +342,8 @@ func New(d Deps) http.Handler {
 			r.With(rateLimit(240, time.Hour)).Post("/photos", listingsH.UploadPhotos)
 			r.Post("/photos/order", listingsH.ReorderPhotos)
 			r.Post("/photos/{mediaID}/{action}", listingsH.PhotoAction)
+			r.Get("/stats", listingsH.Stats)
+			r.Post("/price", listingsH.UpdatePrice)
 			r.Get("/rented", availH.RentedPage)
 			r.Post("/rented", availH.RentedAnswer)
 			r.Get("/video", listingsH.VideoPanel)
@@ -354,6 +364,7 @@ func New(d Deps) http.Handler {
 		r.Get("/l/{id}/viewing", viewingsH.RequestPage)
 		r.With(rateLimit(20, time.Hour)).Post("/l/{id}/viewing", viewingsH.Create)
 		r.Get("/viewings", viewingsH.List)
+		r.With(auth.RequireRole("landlord", "agent")).Get("/viewings/calendar", viewingsH.Week)
 		r.With(auth.RequireRole("landlord", "agent")).Get("/viewings/hours", viewingsH.HoursPage)
 		r.With(auth.RequireRole("landlord", "agent")).Post("/viewings/hours", viewingsH.SaveHours)
 		r.Get("/viewings/{id}", viewingsH.Show)

@@ -10,6 +10,7 @@ import (
 	"github.com/google/uuid"
 
 	"rentmapgh/internal/ent/listing"
+	"rentmapgh/internal/modules/auth"
 	"rentmapgh/internal/modules/mandates"
 	"rentmapgh/internal/server/render"
 	"rentmapgh/internal/server/reqctx"
@@ -34,6 +35,9 @@ func (h *Handler) ListingPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	path := PublicPath(d)
+	if r.URL.Path == path {
+		h.svc.CountView(r.Context(), d.L, viewer, auth.ClientIP(r), r.UserAgent())
+	}
 	if r.URL.Path != path {
 		http.Redirect(w, r, path, http.StatusMovedPermanently) //nolint:gosec // G710: built from the parsed UUID and our own slug
 		return

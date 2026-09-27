@@ -11,6 +11,7 @@ import (
 	"rentmapgh/internal/ent/landlordprofile"
 	"rentmapgh/internal/ent/listing"
 	"rentmapgh/internal/ent/listingmedia"
+	"rentmapgh/internal/ent/listingstat"
 	"rentmapgh/internal/ent/listingterms"
 	"rentmapgh/internal/ent/message"
 	"rentmapgh/internal/ent/notification"
@@ -356,6 +357,33 @@ func init() {
 	listingmediaDescID := listingmediaMixinFields0[0].Descriptor()
 	// listingmedia.DefaultID holds the default value on creation for the id field.
 	listingmedia.DefaultID = listingmediaDescID.Default.(func() uuid.UUID)
+	listingstatMixin := schema.ListingStat{}.Mixin()
+	listingstatMixinFields0 := listingstatMixin[0].Fields()
+	_ = listingstatMixinFields0
+	listingstatFields := schema.ListingStat{}.Fields()
+	_ = listingstatFields
+	// listingstatDescViews is the schema descriptor for views field.
+	listingstatDescViews := listingstatFields[2].Descriptor()
+	// listingstat.DefaultViews holds the default value on creation for the views field.
+	listingstat.DefaultViews = listingstatDescViews.Default.(int)
+	// listingstat.ViewsValidator is a validator for the "views" field. It is called by the builders before save.
+	listingstat.ViewsValidator = listingstatDescViews.Validators[0].(func(int) error)
+	// listingstatDescSaves is the schema descriptor for saves field.
+	listingstatDescSaves := listingstatFields[3].Descriptor()
+	// listingstat.DefaultSaves holds the default value on creation for the saves field.
+	listingstat.DefaultSaves = listingstatDescSaves.Default.(int)
+	// listingstat.SavesValidator is a validator for the "saves" field. It is called by the builders before save.
+	listingstat.SavesValidator = listingstatDescSaves.Validators[0].(func(int) error)
+	// listingstatDescContacts is the schema descriptor for contacts field.
+	listingstatDescContacts := listingstatFields[4].Descriptor()
+	// listingstat.DefaultContacts holds the default value on creation for the contacts field.
+	listingstat.DefaultContacts = listingstatDescContacts.Default.(int)
+	// listingstat.ContactsValidator is a validator for the "contacts" field. It is called by the builders before save.
+	listingstat.ContactsValidator = listingstatDescContacts.Validators[0].(func(int) error)
+	// listingstatDescID is the schema descriptor for id field.
+	listingstatDescID := listingstatMixinFields0[0].Descriptor()
+	// listingstat.DefaultID holds the default value on creation for the id field.
+	listingstat.DefaultID = listingstatDescID.Default.(func() uuid.UUID)
 	listingtermsMixin := schema.ListingTerms{}.Mixin()
 	listingtermsMixinFields0 := listingtermsMixin[0].Fields()
 	_ = listingtermsMixinFields0

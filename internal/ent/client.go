@@ -18,6 +18,7 @@ import (
 	"rentmapgh/internal/ent/landlordprofile"
 	"rentmapgh/internal/ent/listing"
 	"rentmapgh/internal/ent/listingmedia"
+	"rentmapgh/internal/ent/listingstat"
 	"rentmapgh/internal/ent/listingterms"
 	"rentmapgh/internal/ent/message"
 	"rentmapgh/internal/ent/notification"
@@ -62,6 +63,8 @@ type Client struct {
 	Listing *ListingClient
 	// ListingMedia is the client for interacting with the ListingMedia builders.
 	ListingMedia *ListingMediaClient
+	// ListingStat is the client for interacting with the ListingStat builders.
+	ListingStat *ListingStatClient
 	// ListingTerms is the client for interacting with the ListingTerms builders.
 	ListingTerms *ListingTermsClient
 	// Message is the client for interacting with the Message builders.
@@ -110,6 +113,7 @@ func (c *Client) init() {
 	c.LandlordProfile = NewLandlordProfileClient(c.config)
 	c.Listing = NewListingClient(c.config)
 	c.ListingMedia = NewListingMediaClient(c.config)
+	c.ListingStat = NewListingStatClient(c.config)
 	c.ListingTerms = NewListingTermsClient(c.config)
 	c.Message = NewMessageClient(c.config)
 	c.Notification = NewNotificationClient(c.config)
@@ -224,6 +228,7 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		LandlordProfile:  NewLandlordProfileClient(cfg),
 		Listing:          NewListingClient(cfg),
 		ListingMedia:     NewListingMediaClient(cfg),
+		ListingStat:      NewListingStatClient(cfg),
 		ListingTerms:     NewListingTermsClient(cfg),
 		Message:          NewMessageClient(cfg),
 		Notification:     NewNotificationClient(cfg),
@@ -265,6 +270,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		LandlordProfile:  NewLandlordProfileClient(cfg),
 		Listing:          NewListingClient(cfg),
 		ListingMedia:     NewListingMediaClient(cfg),
+		ListingStat:      NewListingStatClient(cfg),
 		ListingTerms:     NewListingTermsClient(cfg),
 		Message:          NewMessageClient(cfg),
 		Notification:     NewNotificationClient(cfg),
@@ -310,9 +316,10 @@ func (c *Client) Close() error {
 func (c *Client) Use(hooks ...Hook) {
 	for _, n := range []interface{ Use(...Hook) }{
 		c.AgentMandate, c.AgentProfile, c.AuditEvent, c.Conversation, c.LandlordProfile,
-		c.Listing, c.ListingMedia, c.ListingTerms, c.Message, c.Notification,
-		c.OTPCode, c.Property, c.Report, c.RoleAssignment, c.SavedListing, c.Session,
-		c.Unit, c.User, c.Verification, c.VerificationFile, c.Viewing, c.WaitlistEntry,
+		c.Listing, c.ListingMedia, c.ListingStat, c.ListingTerms, c.Message,
+		c.Notification, c.OTPCode, c.Property, c.Report, c.RoleAssignment,
+		c.SavedListing, c.Session, c.Unit, c.User, c.Verification, c.VerificationFile,
+		c.Viewing, c.WaitlistEntry,
 	} {
 		n.Use(hooks...)
 	}
@@ -323,9 +330,10 @@ func (c *Client) Use(hooks ...Hook) {
 func (c *Client) Intercept(interceptors ...Interceptor) {
 	for _, n := range []interface{ Intercept(...Interceptor) }{
 		c.AgentMandate, c.AgentProfile, c.AuditEvent, c.Conversation, c.LandlordProfile,
-		c.Listing, c.ListingMedia, c.ListingTerms, c.Message, c.Notification,
-		c.OTPCode, c.Property, c.Report, c.RoleAssignment, c.SavedListing, c.Session,
-		c.Unit, c.User, c.Verification, c.VerificationFile, c.Viewing, c.WaitlistEntry,
+		c.Listing, c.ListingMedia, c.ListingStat, c.ListingTerms, c.Message,
+		c.Notification, c.OTPCode, c.Property, c.Report, c.RoleAssignment,
+		c.SavedListing, c.Session, c.Unit, c.User, c.Verification, c.VerificationFile,
+		c.Viewing, c.WaitlistEntry,
 	} {
 		n.Intercept(interceptors...)
 	}
@@ -348,6 +356,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.Listing.mutate(ctx, m)
 	case *ListingMediaMutation:
 		return c.ListingMedia.mutate(ctx, m)
+	case *ListingStatMutation:
+		return c.ListingStat.mutate(ctx, m)
 	case *ListingTermsMutation:
 		return c.ListingTerms.mutate(ctx, m)
 	case *MessageMutation:
@@ -1407,6 +1417,139 @@ func (c *ListingMediaClient) mutate(ctx context.Context, m *ListingMediaMutation
 		return (&ListingMediaDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("ent: unknown ListingMedia mutation op: %q", m.Op())
+	}
+}
+
+// ListingStatClient is a client for the ListingStat schema.
+type ListingStatClient struct {
+	config
+}
+
+// NewListingStatClient returns a client for the ListingStat from the given config.
+func NewListingStatClient(c config) *ListingStatClient {
+	return &ListingStatClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `listingstat.Hooks(f(g(h())))`.
+func (c *ListingStatClient) Use(hooks ...Hook) {
+	c.hooks.ListingStat = append(c.hooks.ListingStat, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `listingstat.Intercept(f(g(h())))`.
+func (c *ListingStatClient) Intercept(interceptors ...Interceptor) {
+	c.inters.ListingStat = append(c.inters.ListingStat, interceptors...)
+}
+
+// Create returns a builder for creating a ListingStat entity.
+func (c *ListingStatClient) Create() *ListingStatCreate {
+	mutation := newListingStatMutation(c.config, OpCreate)
+	return &ListingStatCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of ListingStat entities.
+func (c *ListingStatClient) CreateBulk(builders ...*ListingStatCreate) *ListingStatCreateBulk {
+	return &ListingStatCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *ListingStatClient) MapCreateBulk(slice any, setFunc func(*ListingStatCreate, int)) *ListingStatCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &ListingStatCreateBulk{err: fmt.Errorf("calling to ListingStatClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*ListingStatCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &ListingStatCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for ListingStat.
+func (c *ListingStatClient) Update() *ListingStatUpdate {
+	mutation := newListingStatMutation(c.config, OpUpdate)
+	return &ListingStatUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *ListingStatClient) UpdateOne(_m *ListingStat) *ListingStatUpdateOne {
+	mutation := newListingStatMutation(c.config, OpUpdateOne, withListingStat(_m))
+	return &ListingStatUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *ListingStatClient) UpdateOneID(id uuid.UUID) *ListingStatUpdateOne {
+	mutation := newListingStatMutation(c.config, OpUpdateOne, withListingStatID(id))
+	return &ListingStatUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for ListingStat.
+func (c *ListingStatClient) Delete() *ListingStatDelete {
+	mutation := newListingStatMutation(c.config, OpDelete)
+	return &ListingStatDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *ListingStatClient) DeleteOne(_m *ListingStat) *ListingStatDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *ListingStatClient) DeleteOneID(id uuid.UUID) *ListingStatDeleteOne {
+	builder := c.Delete().Where(listingstat.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &ListingStatDeleteOne{builder}
+}
+
+// Query returns a query builder for ListingStat.
+func (c *ListingStatClient) Query() *ListingStatQuery {
+	return &ListingStatQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeListingStat},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a ListingStat entity by its id.
+func (c *ListingStatClient) Get(ctx context.Context, id uuid.UUID) (*ListingStat, error) {
+	return c.Query().Where(listingstat.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *ListingStatClient) GetX(ctx context.Context, id uuid.UUID) *ListingStat {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *ListingStatClient) Hooks() []Hook {
+	return c.hooks.ListingStat
+}
+
+// Interceptors returns the client interceptors.
+func (c *ListingStatClient) Interceptors() []Interceptor {
+	return c.inters.ListingStat
+}
+
+func (c *ListingStatClient) mutate(ctx context.Context, m *ListingStatMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&ListingStatCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&ListingStatUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&ListingStatUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&ListingStatDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown ListingStat mutation op: %q", m.Op())
 	}
 }
 
@@ -3635,15 +3778,15 @@ func (c *WaitlistEntryClient) mutate(ctx context.Context, m *WaitlistEntryMutati
 type (
 	hooks struct {
 		AgentMandate, AgentProfile, AuditEvent, Conversation, LandlordProfile, Listing,
-		ListingMedia, ListingTerms, Message, Notification, OTPCode, Property, Report,
-		RoleAssignment, SavedListing, Session, Unit, User, Verification,
-		VerificationFile, Viewing, WaitlistEntry []ent.Hook
+		ListingMedia, ListingStat, ListingTerms, Message, Notification, OTPCode,
+		Property, Report, RoleAssignment, SavedListing, Session, Unit, User,
+		Verification, VerificationFile, Viewing, WaitlistEntry []ent.Hook
 	}
 	inters struct {
 		AgentMandate, AgentProfile, AuditEvent, Conversation, LandlordProfile, Listing,
-		ListingMedia, ListingTerms, Message, Notification, OTPCode, Property, Report,
-		RoleAssignment, SavedListing, Session, Unit, User, Verification,
-		VerificationFile, Viewing, WaitlistEntry []ent.Interceptor
+		ListingMedia, ListingStat, ListingTerms, Message, Notification, OTPCode,
+		Property, Report, RoleAssignment, SavedListing, Session, Unit, User,
+		Verification, VerificationFile, Viewing, WaitlistEntry []ent.Interceptor
 	}
 )
 

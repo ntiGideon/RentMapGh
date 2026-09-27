@@ -6,6 +6,8 @@ import (
 	"log/slog"
 	"net/http"
 	"net/url"
+	"slices"
+	"strconv"
 	"strings"
 	"time"
 
@@ -16,6 +18,7 @@ import (
 	"rentmapgh/internal/ent/unit"
 	"rentmapgh/internal/modules/auth"
 	"rentmapgh/internal/modules/mandates"
+	"rentmapgh/internal/platform/money"
 	"rentmapgh/internal/server/htmx"
 	"rentmapgh/internal/server/render"
 	"rentmapgh/internal/server/reqctx"
@@ -30,6 +33,7 @@ type Handler struct {
 	saved       savedCodec
 	openViewing func(ctx context.Context, renter, listing uuid.UUID) (url, when string)
 	reliability func(ctx context.Context, lister uuid.UUID) Badges
+	dashboard   func(ctx context.Context, lister uuid.UUID) (response time.Duration, pending int)
 }
 
 // Badges are the reliability badges a lister has earned (viewings).
@@ -45,11 +49,13 @@ type HandlerConfig struct {
 	OpenViewing func(ctx context.Context, renter, listing uuid.UUID) (url, when string)
 	// Reliability gives the lister's viewing badges for the listing page.
 	Reliability func(ctx context.Context, lister uuid.UUID) Badges
+	// Dashboard gives the lister's median reply time and requests waiting.
+	Dashboard func(ctx context.Context, lister uuid.UUID) (response time.Duration, pending int)
 }
 
 func NewHandler(svc *Service, m *mandates.Service, cfg HandlerConfig) *Handler {
 	return &Handler{svc: svc, mandates: m, baseURL: strings.TrimRight(cfg.BaseURL, "/"),
-		saved: savedCodec{secret: []byte(cfg.Secret), secure: cfg.Secure}, openViewing: cfg.OpenViewing, reliability: cfg.Reliability}
+		saved: savedCodec{secret: []byte(cfg.Secret), secure: cfg.Secure}, openViewing: cfg.OpenViewing, reliability: cfg.Reliability, dashboard: cfg.Dashboard}
 }
 
 // Service exposes the service (admin wiring).
@@ -83,8 +89,42 @@ func (h *Handler) Mine(w http.ResponseWriter, r *http.Request) {
 			slog.ErrorContext(r.Context(), "listings: owner authority", "err", err)
 		}
 	}
+	var live []uuid.UUID
+	for _, d := range items {
+		if d.L.Status == "active" || d.L.Status == "paused" || d.L.Status == "expired" || d.L.Status == "rented" {
+			live = append(live, d.L.ID)
+		}
+	}
+	counts, err := h.svc.CountsFor(r.Context(), live, 7)
+	if err != nil {
+		slog.ErrorContext(r.Context(), "listings: counts", "err", err)
+	}
+	if len(live) > 0 {
+		o := partials.Overview{Show: true, Unread: reqctx.CurrentNavCounts(r.Context()).Messages, Response: "—",
+			IsAgent: slices.Contains(a.Roles, "agent")}
+		for _, c := range counts {
+			o.Views += c.Views
+			o.Saves += c.Saves
+			o.Contacts += c.Contacts
+		}
+		if h.dashboard != nil {
+			resp, pending := h.dashboard(r.Context(), a.UserID)
+			o.Pending = pending
+			if resp > 0 {
+				o.Response = humanDuration(resp)
+			}
+		}
+		v.Overview = o
+	}
 	for _, d := range items {
 		cv := cardView(d, now)
+		if c, ok := counts[d.L.ID]; ok || slices.Contains(live, d.L.ID) {
+			cv.Views7, cv.Saves7, cv.Contacts7 = c.Views, c.Saves, c.Contacts
+			cv.StatsURL = "/listings/" + d.L.ID.String() + "/stats"
+			if d.T != nil && d.T.Rent != nil && Editable(Status(d.L.Status)) {
+				cv.RentInput = d.T.Rent.Input()
+			}
+		}
 		if d.L.ListerKind == "agent" && d.P != nil {
 			cv.IsAgent, cv.Authority = true, string(states[d.P.ID])
 		}
@@ -102,6 +142,10 @@ func (h *Handler) Mine(w http.ResponseWriter, r *http.Request) {
 		v.Notice = "Marked as rented. Congratulations!"
 	case "confirmed":
 		v.Notice = "Thanks — marked available. It's back at the top of search."
+	case "price":
+		v.Notice = "Price updated. The move-in total on your listing has been recalculated."
+	case "price_error":
+		v.Notice = "That price didn't look right — enter an amount like 1,200."
 	}
 	render.Page(w, r, http.StatusOK, pages.MyListings(v), partials.MyListings(v))
 }
@@ -314,4 +358,37 @@ func parseID(w http.ResponseWriter, r *http.Request) (uuid.UUID, bool) {
 		return uuid.Nil, false
 	}
 	return id, true
+}
+
+// humanDuration: "35 min", "3 h", "2 days".
+func humanDuration(d time.Duration) string {
+	switch {
+	case d < time.Hour:
+		return strconv.Itoa(max(1, int(d.Minutes()))) + " min"
+	case d < 48*time.Hour:
+		return strconv.Itoa(int(d.Hours())) + " h"
+	}
+	return strconv.Itoa(int(d.Hours()/24)) + " days"
+}
+
+// UpdatePrice is the dashboard's quick "edit price": just the rent.
+func (h *Handler) UpdatePrice(w http.ResponseWriter, r *http.Request) {
+	id, ok := parseID(w, r)
+	if !ok {
+		return
+	}
+	// Non-strict saves accept a blank or zero rent (drafts); a live price can't.
+	if p, err := money.Parse(r.PostFormValue("rent")); err != nil || p <= 0 {
+		http.Redirect(w, r, "/listings?done=price_error", http.StatusSeeOther)
+		return
+	}
+	_, errs, err := h.svc.SaveStep(r.Context(), actor(r), id, "pricing", url.Values{"rent": {r.PostFormValue("rent")}}, false)
+	if h.notFound(w, r, err) {
+		return
+	}
+	if msg := errs["rent"]; msg != "" {
+		http.Redirect(w, r, "/listings?done=price_error", http.StatusSeeOther)
+		return
+	}
+	redirect(w, r, "/listings?done=price")
 }

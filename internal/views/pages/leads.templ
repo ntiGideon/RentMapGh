@@ -1,0 +1,144 @@
+package pages
+
+import (
+	"strconv"
+
+	c "rentmapgh/internal/views/components"
+	"rentmapgh/internal/views/layouts"
+)
+
+type LeadRow struct{ Name, Listing, URL, When string }
+
+type LeadStage struct {
+	Key, Label string
+	Rows       []LeadRow
+}
+
+type MandateRow struct{ Property, Landlord, Phone, State, Until string }
+
+type Client struct {
+	Name, Phone string
+	Properties  int
+}
+
+type LeadsView struct {
+	Stages   []LeadStage
+	IsAgent  bool
+	Mandates []MandateRow
+	Clients  []Client
+}
+
+func mandateTone(state string) c.Tone {
+	switch state {
+	case "approved":
+		return c.Success
+	case "pending":
+		return c.Warning
+	}
+	return c.Neutral
+}
+
+func mandateLabel(state string) string {
+	switch state {
+	case "approved":
+		return "Confirmed"
+	case "pending":
+		return "Waiting for owner"
+	case "":
+		return "None"
+	}
+	return map[string]string{"declined": "Declined", "revoked": "Withdrawn", "cancelled": "Cancelled", "expired": "Lapsed"}[state]
+}
+
+templ Leads(m layouts.Meta, v LeadsView) {
+	@layouts.Site(m) {
+		<div class="mx-auto max-w-6xl px-4 pb-24 pt-8 sm:px-6">
+			<a href="/listings" class="inline-flex items-center gap-1 text-sm text-fg-muted hover:text-fg">
+				@c.Icon("chevron-left", "size-4")
+				Your listings
+			</a>
+			<h1 class="mt-3 text-2xl font-semibold tracking-tight text-fg">Leads</h1>
+			<p class="mt-1 text-sm text-fg-muted">Everyone who got in touch about your places, by how far they've got.</p>
+			<div class="mt-6 grid gap-4 md:grid-cols-3 xl:grid-cols-6">
+				for _, s := range v.Stages {
+					<section class="min-w-0 rounded-card border border-line bg-surface-raised" aria-label={ s.Label }>
+						<h2 class="flex items-center justify-between border-b border-line px-3 py-2 text-sm font-semibold text-fg">
+							{ s.Label }
+							<span class="rounded-full bg-surface px-2 text-xs font-medium tabular-nums text-fg-muted ring-1 ring-line">{ strconv.Itoa(len(s.Rows)) }</span>
+						</h2>
+						if len(s.Rows) == 0 {
+							<p class="px-3 py-4 text-xs text-fg-subtle">None</p>
+						} else {
+							<ul class="divide-y divide-line">
+								for _, r := range s.Rows {
+									<li>
+										<a href={ templ.SafeURL(r.URL) } class="block px-3 py-2 hover:bg-surface">
+											<span class="flex items-baseline justify-between gap-2">
+												<span class="truncate text-sm font-medium text-fg">{ r.Name }</span>
+												<span class="shrink-0 text-2xs tabular-nums text-fg-subtle">{ r.When }</span>
+											</span>
+											<span class="block truncate text-xs text-fg-muted">{ r.Listing }</span>
+										</a>
+									</li>
+								}
+							</ul>
+						}
+					</section>
+				}
+			</div>
+			if v.IsAgent {
+				<div class="mt-10 grid gap-6 lg:grid-cols-[2fr_1fr]">
+					<section>
+						<h2 class="text-base font-semibold text-fg">Mandates</h2>
+						if len(v.Mandates) == 0 {
+							<p class="mt-2 text-sm text-fg-muted">No owner confirmations yet. Ask from the review step of any listing.</p>
+						} else {
+							<ul class="mt-3 divide-y divide-line rounded-card border border-line bg-surface-raised">
+								for _, m := range v.Mandates {
+									<li class="flex flex-wrap items-center justify-between gap-2 px-4 py-3 text-sm">
+										<span class="min-w-0">
+											<span class="block truncate font-medium text-fg">{ m.Property }</span>
+											<span class="block truncate text-fg-muted">{ m.Landlord } · { m.Phone }</span>
+										</span>
+										<span class="flex items-center gap-2">
+											if m.Until != "" {
+												<span class="text-xs text-fg-subtle">until { m.Until }</span>
+											}
+											@c.Badge(mandateTone(m.State)) {
+												{ mandateLabel(m.State) }
+											}
+										</span>
+									</li>
+								}
+							</ul>
+						}
+					</section>
+					<section>
+						<h2 class="text-base font-semibold text-fg">Clients</h2>
+						if len(v.Clients) == 0 {
+							<p class="mt-2 text-sm text-fg-muted">Landlords who confirmed you appear here.</p>
+						} else {
+							<ul class="mt-3 divide-y divide-line rounded-card border border-line bg-surface-raised">
+								for _, cl := range v.Clients {
+									<li class="flex items-center justify-between gap-2 px-4 py-3 text-sm">
+										<span class="min-w-0">
+											<span class="block truncate font-medium text-fg">{ cl.Name }</span>
+											<span class="block text-fg-muted">{ cl.Phone }</span>
+										</span>
+										<span class="text-xs text-fg-muted">
+											if cl.Properties == 1 {
+												1 property
+											} else {
+												{ strconv.Itoa(cl.Properties) } properties
+											}
+										</span>
+									</li>
+								}
+							</ul>
+						}
+					</section>
+				</div>
+			}
+		</div>
+	}
+}

@@ -279,6 +279,30 @@ func (f ListingMediaMutationRuleFunc) EvalMutation(ctx context.Context, m ent.Mu
 	return Denyf("ent/privacy: unexpected mutation type %T, expect *ent.ListingMediaMutation", m)
 }
 
+// The ListingStatQueryRuleFunc type is an adapter to allow the use of ordinary
+// functions as a query rule.
+type ListingStatQueryRuleFunc func(context.Context, *ent.ListingStatQuery) error
+
+// EvalQuery return f(ctx, q).
+func (f ListingStatQueryRuleFunc) EvalQuery(ctx context.Context, q ent.Query) error {
+	if q, ok := q.(*ent.ListingStatQuery); ok {
+		return f(ctx, q)
+	}
+	return Denyf("ent/privacy: unexpected query type %T, expect *ent.ListingStatQuery", q)
+}
+
+// The ListingStatMutationRuleFunc type is an adapter to allow the use of ordinary
+// functions as a mutation rule.
+type ListingStatMutationRuleFunc func(context.Context, *ent.ListingStatMutation) error
+
+// EvalMutation calls f(ctx, m).
+func (f ListingStatMutationRuleFunc) EvalMutation(ctx context.Context, m ent.Mutation) error {
+	if m, ok := m.(*ent.ListingStatMutation); ok {
+		return f(ctx, m)
+	}
+	return Denyf("ent/privacy: unexpected mutation type %T, expect *ent.ListingStatMutation", m)
+}
+
 // The ListingTermsQueryRuleFunc type is an adapter to allow the use of ordinary
 // functions as a query rule.
 type ListingTermsQueryRuleFunc func(context.Context, *ent.ListingTermsQuery) error
@@ -688,6 +712,8 @@ func queryFilter(q ent.Query) (Filter, error) {
 		return q.Filter(), nil
 	case *ent.ListingMediaQuery:
 		return q.Filter(), nil
+	case *ent.ListingStatQuery:
+		return q.Filter(), nil
 	case *ent.ListingTermsQuery:
 		return q.Filter(), nil
 	case *ent.MessageQuery:
@@ -738,6 +764,8 @@ func mutationFilter(m ent.Mutation) (Filter, error) {
 	case *ent.ListingMutation:
 		return m.Filter(), nil
 	case *ent.ListingMediaMutation:
+		return m.Filter(), nil
+	case *ent.ListingStatMutation:
 		return m.Filter(), nil
 	case *ent.ListingTermsMutation:
 		return m.Filter(), nil

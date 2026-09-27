@@ -1,0 +1,137 @@
+package pages
+
+import (
+	"strconv"
+
+	c "rentmapgh/internal/views/components"
+	"rentmapgh/internal/views/layouts"
+)
+
+// CalendarView is a lister's week of viewings. Positions are CSS
+// percentages applied by calendar.js (the CSP allows no inline styles).
+type CalendarView struct {
+	Title, Prev, Next, Today string
+	Hours                    []string
+	Days                     []CalDay
+	HoursText                string
+}
+
+type CalDay struct {
+	Label  string
+	Today  bool
+	Open   []CalSlot
+	Events []CalEvent
+}
+
+type CalSlot struct{ Top, Height string }
+
+type CalEvent struct {
+	URL, Time, Title, Who, Status string
+	Top, Height                   string
+}
+
+func calTone(status string) string {
+	switch status {
+	case "confirmed":
+		return "border-graphite-900 bg-graphite-900 text-white dark:border-mint-200 dark:bg-mint-200 dark:text-graphite-900"
+	case "completed":
+		return "border-line bg-surface text-fg-muted"
+	}
+	return "border-amber-500/50 bg-amber-50 text-amber-900 dark:bg-amber-400/15 dark:text-amber-100" // waiting for an answer
+}
+
+templ Calendar(m layouts.Meta, v CalendarView) {
+	@layouts.Site(m) {
+		<div class="mx-auto max-w-6xl px-4 pb-24 pt-8 sm:px-6">
+			<div class="flex flex-wrap items-end justify-between gap-3">
+				<div>
+					<h1 class="text-2xl font-semibold tracking-tight text-fg">Viewing calendar</h1>
+					<p class="mt-1 text-sm text-fg-muted">
+						{ v.Title }
+						if v.HoursText != "" {
+							· Hours: { v.HoursText }
+						}
+					</p>
+				</div>
+				<div class="flex items-center gap-1.5">
+					<a href={ templ.SafeURL(v.Prev) } aria-label="Previous week" class="grid size-9 place-items-center rounded-lg border border-line bg-surface-raised text-fg hover:bg-surface">
+						@c.Icon("chevron-left", "size-4")
+					</a>
+					<a href={ templ.SafeURL(v.Today) } class="inline-flex h-9 items-center rounded-lg border border-line bg-surface-raised px-3 text-sm font-medium text-fg hover:bg-surface">This week</a>
+					<a href={ templ.SafeURL(v.Next) } aria-label="Next week" class="grid size-9 place-items-center rounded-lg border border-line bg-surface-raised text-fg hover:bg-surface">
+						@c.Icon("chevron-right", "size-4")
+					</a>
+				</div>
+			</div>
+			<div class="mt-3 flex flex-wrap gap-3 text-xs text-fg-muted">
+				<span class="inline-flex items-center gap-1.5"><span class="size-3 rounded-sm bg-graphite-900 dark:bg-mint-200"></span>Confirmed</span>
+				<span class="inline-flex items-center gap-1.5"><span class="size-3 rounded-sm border border-amber-500/50 bg-amber-50 dark:bg-amber-400/15"></span>Waiting for your answer</span>
+				<span class="inline-flex items-center gap-1.5"><span class="size-3 rounded-sm bg-mint-200/40 dark:bg-mint-200/10"></span>Your viewing hours</span>
+			</div>
+			<!-- Week grid (needs calendar.js to place blocks; the list below always works). -->
+			<div data-calendar class="mt-5 hidden overflow-hidden rounded-card border border-line bg-surface-raised [.js_&]:md:grid md:grid-cols-[3.5rem_repeat(7,minmax(0,1fr))]">
+				<div class="border-b border-line"></div>
+				for _, d := range v.Days {
+					<div class={ "border-b border-l border-line px-2 py-2 text-center text-xs font-medium", templ.KV("text-fg", !d.Today), templ.KV("bg-surface text-fg", d.Today) }>{ d.Label }</div>
+				}
+				<div class="relative h-[42rem]">
+					for i, h := range v.Hours {
+						<span data-top={ hourPct(i, len(v.Hours)) } class="absolute right-2 -translate-y-1/2 text-[11px] tabular-nums text-fg-subtle">{ h }</span>
+					}
+				</div>
+				for _, d := range v.Days {
+					<div class="relative h-[42rem] border-l border-line">
+						for i := range v.Hours {
+							<span data-top={ hourPct(i, len(v.Hours)) } class="absolute inset-x-0 border-t border-line/60"></span>
+						}
+						for _, s := range d.Open {
+							<span data-top={ s.Top } data-height={ s.Height } class="absolute inset-x-0 bg-mint-200/40 dark:bg-mint-200/10"></span>
+						}
+						for _, e := range d.Events {
+							<a href={ templ.SafeURL(e.URL) } data-top={ e.Top } data-height={ e.Height } class={ "absolute inset-x-1 min-h-9 overflow-hidden rounded-md border px-1.5 py-1 text-[11px] leading-tight shadow-xs hover:opacity-90", calTone(e.Status) }>
+								<span class="block font-semibold tabular-nums">{ e.Time } · { e.Who }</span>
+								<span class="block truncate opacity-80">{ e.Title }</span>
+							</a>
+						}
+					</div>
+				}
+			</div>
+			<!-- List (phones, and without the script) -->
+			<ol class="mt-5 space-y-4 [.js_&]:md:hidden">
+				for _, d := range v.Days {
+					if len(d.Events) > 0 {
+						<li>
+							<p class="text-sm font-semibold text-fg">{ d.Label }</p>
+							<ul class="mt-2 space-y-2">
+								for _, e := range d.Events {
+									<li>
+										<a href={ templ.SafeURL(e.URL) } class={ "block rounded-lg border px-3 py-2 text-sm", calTone(e.Status) }>
+											<span class="font-semibold tabular-nums">{ e.Time } · { e.Who }</span>
+											<span class="block truncate opacity-80">{ e.Title }</span>
+										</a>
+									</li>
+								}
+							</ul>
+						</li>
+					}
+				}
+				if !hasEvents(v.Days) {
+					<li class="rounded-card border border-dashed border-line-strong px-4 py-6 text-center text-sm text-fg-muted">No viewings this week.</li>
+				}
+			</ol>
+		</div>
+	}
+}
+
+func hourPct(i, n int) string {
+	return strconv.FormatFloat(float64(i)*100/float64(n), 'f', 2, 64) + "%"
+}
+
+func hasEvents(ds []CalDay) bool {
+	for _, d := range ds {
+		if len(d.Events) > 0 {
+			return true
+		}
+	}
+	return false
+}

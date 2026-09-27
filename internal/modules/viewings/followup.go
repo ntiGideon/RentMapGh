@@ -266,3 +266,32 @@ func (s *Service) ReliabilityOf(ctx context.Context, userID uuid.UUID) (Reliabil
 	}
 	return r, nil
 }
+
+// ResponseTime is the lister's median time to answer a viewing request
+// over the last 30 days (0 if none answered), and how many are waiting.
+func (s *Service) ResponseTime(ctx context.Context, listerID uuid.UUID) (time.Duration, int, error) {
+	now := s.now()
+	vs, err := s.db.Viewing.Query().Where(viewing.ListerID(listerID), viewing.CreatedAtGT(now.Add(-30*24*time.Hour))).All(ctx)
+	if err != nil {
+		return 0, 0, fmt.Errorf("viewings: response time: %w", err)
+	}
+	var ds []time.Duration
+	waiting := 0
+	for _, v := range vs {
+		switch {
+		case v.RespondedAt != nil:
+			ds = append(ds, v.RespondedAt.Sub(v.CreatedAt))
+		case v.Status == viewing.StatusRequested && v.StartsAt.After(now):
+			waiting++
+		}
+	}
+	if len(ds) == 0 {
+		return 0, waiting, nil
+	}
+	for i := 1; i < len(ds); i++ {
+		for j := i; j > 0 && ds[j] < ds[j-1]; j-- {
+			ds[j], ds[j-1] = ds[j-1], ds[j]
+		}
+	}
+	return ds[len(ds)/2], waiting, nil
+}
