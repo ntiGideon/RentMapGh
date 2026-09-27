@@ -132,6 +132,47 @@ func (_u *ListingMediaUpdate) AddBytes(v int) *ListingMediaUpdate {
 	return _u
 }
 
+// SetBlurhash sets the "blurhash" field.
+func (_u *ListingMediaUpdate) SetBlurhash(v string) *ListingMediaUpdate {
+	_u.mutation.SetBlurhash(v)
+	return _u
+}
+
+// SetNillableBlurhash sets the "blurhash" field if the given value is not nil.
+func (_u *ListingMediaUpdate) SetNillableBlurhash(v *string) *ListingMediaUpdate {
+	if v != nil {
+		_u.SetBlurhash(*v)
+	}
+	return _u
+}
+
+// ClearBlurhash clears the value of the "blurhash" field.
+func (_u *ListingMediaUpdate) ClearBlurhash() *ListingMediaUpdate {
+	_u.mutation.ClearBlurhash()
+	return _u
+}
+
+// SetPhash sets the "phash" field.
+func (_u *ListingMediaUpdate) SetPhash(v int64) *ListingMediaUpdate {
+	_u.mutation.ResetPhash()
+	_u.mutation.SetPhash(v)
+	return _u
+}
+
+// SetNillablePhash sets the "phash" field if the given value is not nil.
+func (_u *ListingMediaUpdate) SetNillablePhash(v *int64) *ListingMediaUpdate {
+	if v != nil {
+		_u.SetPhash(*v)
+	}
+	return _u
+}
+
+// AddPhash adds value to the "phash" field.
+func (_u *ListingMediaUpdate) AddPhash(v int64) *ListingMediaUpdate {
+	_u.mutation.AddPhash(v)
+	return _u
+}
+
 // Mutation returns the ListingMediaMutation object of the builder.
 func (_u *ListingMediaUpdate) Mutation() *ListingMediaMutation {
 	return _u.mutation
@@ -200,6 +241,11 @@ func (_u *ListingMediaUpdate) check() error {
 			return &ValidationError{Name: "bytes", err: fmt.Errorf(`ent: validator failed for field "ListingMedia.bytes": %w`, err)}
 		}
 	}
+	if v, ok := _u.mutation.Blurhash(); ok {
+		if err := listingmedia.BlurhashValidator(v); err != nil {
+			return &ValidationError{Name: "blurhash", err: fmt.Errorf(`ent: validator failed for field "ListingMedia.blurhash": %w`, err)}
+		}
+	}
 	if _u.mutation.ListingCleared() && len(_u.mutation.ListingIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "ListingMedia.listing"`)
 	}
@@ -251,8 +297,17 @@ func (_u *ListingMediaUpdate) sqlSave(ctx context.Context) (_node int, err error
 	if _u.mutation.DurationMsCleared() {
 		_spec.ClearField(listingmedia.FieldDurationMs, field.TypeInt)
 	}
+	if value, ok := _u.mutation.Blurhash(); ok {
+		_spec.SetField(listingmedia.FieldBlurhash, field.TypeString, value)
+	}
 	if _u.mutation.BlurhashCleared() {
 		_spec.ClearField(listingmedia.FieldBlurhash, field.TypeString)
+	}
+	if value, ok := _u.mutation.Phash(); ok {
+		_spec.SetField(listingmedia.FieldPhash, field.TypeInt64, value)
+	}
+	if value, ok := _u.mutation.AddedPhash(); ok {
+		_spec.AddField(listingmedia.FieldPhash, field.TypeInt64, value)
 	}
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -378,6 +433,47 @@ func (_u *ListingMediaUpdateOne) AddBytes(v int) *ListingMediaUpdateOne {
 	return _u
 }
 
+// SetBlurhash sets the "blurhash" field.
+func (_u *ListingMediaUpdateOne) SetBlurhash(v string) *ListingMediaUpdateOne {
+	_u.mutation.SetBlurhash(v)
+	return _u
+}
+
+// SetNillableBlurhash sets the "blurhash" field if the given value is not nil.
+func (_u *ListingMediaUpdateOne) SetNillableBlurhash(v *string) *ListingMediaUpdateOne {
+	if v != nil {
+		_u.SetBlurhash(*v)
+	}
+	return _u
+}
+
+// ClearBlurhash clears the value of the "blurhash" field.
+func (_u *ListingMediaUpdateOne) ClearBlurhash() *ListingMediaUpdateOne {
+	_u.mutation.ClearBlurhash()
+	return _u
+}
+
+// SetPhash sets the "phash" field.
+func (_u *ListingMediaUpdateOne) SetPhash(v int64) *ListingMediaUpdateOne {
+	_u.mutation.ResetPhash()
+	_u.mutation.SetPhash(v)
+	return _u
+}
+
+// SetNillablePhash sets the "phash" field if the given value is not nil.
+func (_u *ListingMediaUpdateOne) SetNillablePhash(v *int64) *ListingMediaUpdateOne {
+	if v != nil {
+		_u.SetPhash(*v)
+	}
+	return _u
+}
+
+// AddPhash adds value to the "phash" field.
+func (_u *ListingMediaUpdateOne) AddPhash(v int64) *ListingMediaUpdateOne {
+	_u.mutation.AddPhash(v)
+	return _u
+}
+
 // Mutation returns the ListingMediaMutation object of the builder.
 func (_u *ListingMediaUpdateOne) Mutation() *ListingMediaMutation {
 	return _u.mutation
@@ -459,6 +555,11 @@ func (_u *ListingMediaUpdateOne) check() error {
 			return &ValidationError{Name: "bytes", err: fmt.Errorf(`ent: validator failed for field "ListingMedia.bytes": %w`, err)}
 		}
 	}
+	if v, ok := _u.mutation.Blurhash(); ok {
+		if err := listingmedia.BlurhashValidator(v); err != nil {
+			return &ValidationError{Name: "blurhash", err: fmt.Errorf(`ent: validator failed for field "ListingMedia.blurhash": %w`, err)}
+		}
+	}
 	if _u.mutation.ListingCleared() && len(_u.mutation.ListingIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "ListingMedia.listing"`)
 	}
@@ -527,8 +628,17 @@ func (_u *ListingMediaUpdateOne) sqlSave(ctx context.Context) (_node *ListingMed
 	if _u.mutation.DurationMsCleared() {
 		_spec.ClearField(listingmedia.FieldDurationMs, field.TypeInt)
 	}
+	if value, ok := _u.mutation.Blurhash(); ok {
+		_spec.SetField(listingmedia.FieldBlurhash, field.TypeString, value)
+	}
 	if _u.mutation.BlurhashCleared() {
 		_spec.ClearField(listingmedia.FieldBlurhash, field.TypeString)
+	}
+	if value, ok := _u.mutation.Phash(); ok {
+		_spec.SetField(listingmedia.FieldPhash, field.TypeInt64, value)
+	}
+	if value, ok := _u.mutation.AddedPhash(); ok {
+		_spec.AddField(listingmedia.FieldPhash, field.TypeInt64, value)
 	}
 	_node = &ListingMedia{config: _u.config}
 	_spec.Assign = _node.assignValues

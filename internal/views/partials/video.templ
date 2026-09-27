@@ -1,0 +1,165 @@
+package partials
+
+import (
+	"strconv"
+
+	c "rentmapgh/internal/views/components"
+)
+
+// VideoView is the walk-through video section of the photos step, and the
+// player on review pages.
+type VideoView struct {
+	ListingID string
+	Enabled   bool   // ffmpeg available
+	Editable  bool
+	State     string // "" (none), "processing", "ready", "failed"
+	Poster    string // 800 px poster frame
+	Src480    string
+	Src720    string
+	Width     int
+	Height    int
+	Duration  string // "1:05"
+	DataSaver bool   // only the 480p file, so a tap never pulls 720p
+	MaxMB     int
+	Error     string
+}
+
+func (v VideoView) base() string { return "/listings/" + v.ListingID + "/video" }
+
+// VideoPanel is swapped after every upload and delete, and polls itself
+// while the video is processing.
+templ VideoPanel(v VideoView) {
+	<section
+		id="video-panel"
+		aria-labelledby="video-heading"
+		class="rounded-card border border-line bg-surface-raised p-4 shadow-xs sm:p-5"
+		if v.State == "processing" {
+			hx-get={ v.base() }
+			hx-trigger="every 5s"
+			hx-swap="outerHTML"
+		}
+	>
+		<div class="flex flex-wrap items-center justify-between gap-2">
+			<h2 id="video-heading" class="flex items-center gap-2 text-base font-semibold text-fg">
+				Walk-through video
+				<span class="rounded-md bg-surface px-1.5 py-0.5 text-2xs font-medium text-fg-muted ring-1 ring-line">Optional</span>
+			</h2>
+			if v.State == "ready" && v.Duration != "" {
+				<span class="text-sm tabular-nums text-fg-muted">{ v.Duration }</span>
+			}
+		</div>
+		if v.Error != "" {
+			<div class="mt-3 flex items-center gap-2 rounded-lg border border-red-600/15 bg-red-50 px-3 py-2.5 text-sm text-danger dark:bg-red-400/10 dark:text-red-300" role="alert">
+				@c.Icon("alert", "size-3.5")
+				{ v.Error }
+			</div>
+		}
+		switch v.State {
+			case "processing":
+				<div class="mt-3 flex items-center gap-3 rounded-lg border border-line bg-surface px-3 py-3" role="status">
+					<span class="size-4 shrink-0 animate-spin rounded-full border-2 border-line-strong border-t-graphite-900 dark:border-t-mint-200" aria-hidden="true"></span>
+					<div class="min-w-0 flex-1">
+						<p class="text-sm font-medium text-fg">Preparing your video…</p>
+						<p class="text-sm text-fg-muted">Usually a minute or two. You can carry on — it'll be ready when you come back.</p>
+					</div>
+				</div>
+				if v.Editable {
+					<div class="mt-2 flex justify-end">
+						@videoDelete(v, "Cancel")
+					</div>
+				}
+			case "ready":
+				<video
+					controls
+					playsinline
+					preload="none"
+					poster={ v.Poster }
+					width={ strconv.Itoa(v.Width) }
+					height={ strconv.Itoa(v.Height) }
+					class="mt-3 max-h-[28rem] w-full rounded-lg bg-graphite-900 object-contain"
+				>
+					if !v.DataSaver {
+						<source src={ v.Src720 } type="video/mp4"/>
+					}
+					<source src={ v.Src480 } type="video/mp4"/>
+				</video>
+				if v.Editable {
+					<div class="mt-2 flex items-center justify-between gap-2">
+						<p class="text-sm text-fg-muted">Renters can play this on your listing. Location details are removed from the file.</p>
+						@videoDelete(v, "Delete")
+					</div>
+				}
+			case "failed":
+				<div class="mt-3 rounded-lg border border-line bg-surface px-3 py-3">
+					<p class="text-sm font-medium text-fg">We couldn't prepare this video.</p>
+					<p class="text-sm text-fg-muted">Remove it and try again, or record a new one with your phone's camera app.</p>
+				</div>
+				if v.Editable {
+					<div class="mt-2 flex justify-end">
+						@videoDelete(v, "Remove")
+					</div>
+				}
+			default:
+				<p class="mt-1 text-sm text-fg-muted">
+					Walk from the gate to the room, then the bathroom and kitchen. Hold the phone steady; up to 2 minutes. Listings with a video get more viewing requests.
+				</p>
+				if v.Editable {
+					@videoUploader(v)
+				}
+		}
+	</section>
+}
+
+// videoUploader is a plain multipart form; video-uploader.js takes it over
+// to send the file in resumable pieces with progress.
+templ videoUploader(v VideoView) {
+	<form
+		action={ templ.SafeURL(v.base()) }
+		method="post"
+		enctype="multipart/form-data"
+		class="mt-3"
+		data-video-uploader
+		data-start-url={ v.base() + "/uploads" }
+		data-max-bytes={ strconv.Itoa(v.MaxMB << 20) }
+	>
+		<label
+			for="video-input"
+			data-video-pick
+			class="flex cursor-pointer items-center gap-3 rounded-lg border border-dashed border-line-strong bg-surface px-4 py-3.5 transition-colors hover:border-graphite-400 hover:bg-surface-raised has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-focus"
+		>
+			<span class="grid size-9 shrink-0 place-items-center rounded-full bg-surface-raised text-fg shadow-xs ring-1 ring-line">
+				@c.Icon("video", "size-4")
+			</span>
+			<span class="min-w-0">
+				<span class="block text-sm font-semibold text-fg">Add a video</span>
+				<span class="block text-xs text-fg-subtle">MP4, MOV, 3GP or WebM · up to 2 min · { strconv.Itoa(v.MaxMB) } MB</span>
+			</span>
+			<input id="video-input" type="file" name="video" accept="video/mp4,video/quicktime,video/3gpp,video/webm,video/*" class="sr-only"/>
+		</label>
+		<div data-no-js class="mt-3 flex justify-end">
+			@c.Button(c.ButtonProps{Type: "submit", Variant: c.Ghost}) {
+				@c.Icon("upload", "size-4")
+				Upload video
+			}
+		</div>
+		<div data-video-progress hidden class="mt-3 rounded-lg border border-line bg-surface px-3 py-3">
+			<div class="flex items-center justify-between gap-3">
+				<p data-video-status class="min-w-0 flex-1 truncate text-sm text-fg" aria-live="polite">Starting…</p>
+				<button type="button" data-video-cancel class="rounded-md px-2 py-1 text-sm font-medium text-fg-muted hover:bg-surface-raised hover:text-fg">Cancel</button>
+			</div>
+			<div class="mt-2 h-1.5 overflow-hidden rounded-full bg-graphite-900/10 dark:bg-white/10">
+				<div data-video-bar class="h-full w-0 rounded-full bg-graphite-900 transition-[width] duration-200 dark:bg-mint-200"></div>
+			</div>
+			<p data-video-error hidden class="mt-2 text-sm text-danger dark:text-red-300" role="alert"></p>
+		</div>
+	</form>
+}
+
+templ videoDelete(v VideoView, label string) {
+	<form method="post" action={ templ.SafeURL(v.base() + "/delete") } hx-post={ v.base() + "/delete" } hx-target="#video-panel" hx-swap="outerHTML" hx-confirm="Delete this video?">
+		<button type="submit" class="inline-flex h-9 items-center gap-1.5 rounded-md px-2.5 text-sm font-medium text-fg-muted transition-colors hover:bg-surface hover:text-danger">
+			@c.Icon("trash", "size-4")
+			{ label }
+		</button>
+	</form>
+}

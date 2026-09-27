@@ -566,6 +566,42 @@ func (u *ListingMediaUpsert) AddBytes(v int) *ListingMediaUpsert {
 	return u
 }
 
+// SetBlurhash sets the "blurhash" field.
+func (u *ListingMediaUpsert) SetBlurhash(v string) *ListingMediaUpsert {
+	u.Set(listingmedia.FieldBlurhash, v)
+	return u
+}
+
+// UpdateBlurhash sets the "blurhash" field to the value that was provided on create.
+func (u *ListingMediaUpsert) UpdateBlurhash() *ListingMediaUpsert {
+	u.SetExcluded(listingmedia.FieldBlurhash)
+	return u
+}
+
+// ClearBlurhash clears the value of the "blurhash" field.
+func (u *ListingMediaUpsert) ClearBlurhash() *ListingMediaUpsert {
+	u.SetNull(listingmedia.FieldBlurhash)
+	return u
+}
+
+// SetPhash sets the "phash" field.
+func (u *ListingMediaUpsert) SetPhash(v int64) *ListingMediaUpsert {
+	u.Set(listingmedia.FieldPhash, v)
+	return u
+}
+
+// UpdatePhash sets the "phash" field to the value that was provided on create.
+func (u *ListingMediaUpsert) UpdatePhash() *ListingMediaUpsert {
+	u.SetExcluded(listingmedia.FieldPhash)
+	return u
+}
+
+// AddPhash adds v to the "phash" field.
+func (u *ListingMediaUpsert) AddPhash(v int64) *ListingMediaUpsert {
+	u.Add(listingmedia.FieldPhash, v)
+	return u
+}
+
 // UpdateNewValues updates the mutable fields using the new values that were set on create except the ID field.
 // Using this option is equivalent to using:
 //
@@ -597,12 +633,6 @@ func (u *ListingMediaUpsertOne) UpdateNewValues() *ListingMediaUpsertOne {
 		}
 		if _, exists := u.create.mutation.DurationMs(); exists {
 			s.SetIgnore(listingmedia.FieldDurationMs)
-		}
-		if _, exists := u.create.mutation.Blurhash(); exists {
-			s.SetIgnore(listingmedia.FieldBlurhash)
-		}
-		if _, exists := u.create.mutation.Phash(); exists {
-			s.SetIgnore(listingmedia.FieldPhash)
 		}
 	}))
 	return u
@@ -744,6 +774,48 @@ func (u *ListingMediaUpsertOne) AddBytes(v int) *ListingMediaUpsertOne {
 func (u *ListingMediaUpsertOne) UpdateBytes() *ListingMediaUpsertOne {
 	return u.Update(func(s *ListingMediaUpsert) {
 		s.UpdateBytes()
+	})
+}
+
+// SetBlurhash sets the "blurhash" field.
+func (u *ListingMediaUpsertOne) SetBlurhash(v string) *ListingMediaUpsertOne {
+	return u.Update(func(s *ListingMediaUpsert) {
+		s.SetBlurhash(v)
+	})
+}
+
+// UpdateBlurhash sets the "blurhash" field to the value that was provided on create.
+func (u *ListingMediaUpsertOne) UpdateBlurhash() *ListingMediaUpsertOne {
+	return u.Update(func(s *ListingMediaUpsert) {
+		s.UpdateBlurhash()
+	})
+}
+
+// ClearBlurhash clears the value of the "blurhash" field.
+func (u *ListingMediaUpsertOne) ClearBlurhash() *ListingMediaUpsertOne {
+	return u.Update(func(s *ListingMediaUpsert) {
+		s.ClearBlurhash()
+	})
+}
+
+// SetPhash sets the "phash" field.
+func (u *ListingMediaUpsertOne) SetPhash(v int64) *ListingMediaUpsertOne {
+	return u.Update(func(s *ListingMediaUpsert) {
+		s.SetPhash(v)
+	})
+}
+
+// AddPhash adds v to the "phash" field.
+func (u *ListingMediaUpsertOne) AddPhash(v int64) *ListingMediaUpsertOne {
+	return u.Update(func(s *ListingMediaUpsert) {
+		s.AddPhash(v)
+	})
+}
+
+// UpdatePhash sets the "phash" field to the value that was provided on create.
+func (u *ListingMediaUpsertOne) UpdatePhash() *ListingMediaUpsertOne {
+	return u.Update(func(s *ListingMediaUpsert) {
+		s.UpdatePhash()
 	})
 }
 
@@ -945,12 +1017,6 @@ func (u *ListingMediaUpsertBulk) UpdateNewValues() *ListingMediaUpsertBulk {
 			if _, exists := b.mutation.DurationMs(); exists {
 				s.SetIgnore(listingmedia.FieldDurationMs)
 			}
-			if _, exists := b.mutation.Blurhash(); exists {
-				s.SetIgnore(listingmedia.FieldBlurhash)
-			}
-			if _, exists := b.mutation.Phash(); exists {
-				s.SetIgnore(listingmedia.FieldPhash)
-			}
 		}
 	}))
 	return u
@@ -1092,6 +1158,48 @@ func (u *ListingMediaUpsertBulk) AddBytes(v int) *ListingMediaUpsertBulk {
 func (u *ListingMediaUpsertBulk) UpdateBytes() *ListingMediaUpsertBulk {
 	return u.Update(func(s *ListingMediaUpsert) {
 		s.UpdateBytes()
+	})
+}
+
+// SetBlurhash sets the "blurhash" field.
+func (u *ListingMediaUpsertBulk) SetBlurhash(v string) *ListingMediaUpsertBulk {
+	return u.Update(func(s *ListingMediaUpsert) {
+		s.SetBlurhash(v)
+	})
+}
+
+// UpdateBlurhash sets the "blurhash" field to the value that was provided on create.
+func (u *ListingMediaUpsertBulk) UpdateBlurhash() *ListingMediaUpsertBulk {
+	return u.Update(func(s *ListingMediaUpsert) {
+		s.UpdateBlurhash()
+	})
+}
+
+// ClearBlurhash clears the value of the "blurhash" field.
+func (u *ListingMediaUpsertBulk) ClearBlurhash() *ListingMediaUpsertBulk {
+	return u.Update(func(s *ListingMediaUpsert) {
+		s.ClearBlurhash()
+	})
+}
+
+// SetPhash sets the "phash" field.
+func (u *ListingMediaUpsertBulk) SetPhash(v int64) *ListingMediaUpsertBulk {
+	return u.Update(func(s *ListingMediaUpsert) {
+		s.SetPhash(v)
+	})
+}
+
+// AddPhash adds v to the "phash" field.
+func (u *ListingMediaUpsertBulk) AddPhash(v int64) *ListingMediaUpsertBulk {
+	return u.Update(func(s *ListingMediaUpsert) {
+		s.AddPhash(v)
+	})
+}
+
+// UpdatePhash sets the "phash" field to the value that was provided on create.
+func (u *ListingMediaUpsertBulk) UpdatePhash() *ListingMediaUpsertBulk {
+	return u.Update(func(s *ListingMediaUpsert) {
+		s.UpdatePhash()
 	})
 }
 

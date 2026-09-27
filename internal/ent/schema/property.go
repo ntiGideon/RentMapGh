@@ -184,8 +184,8 @@ func (ListingMedia) Fields() []ent.Field {
 		field.Int("height").Positive(),
 		field.Int("bytes").NonNegative().Comment("all renditions together"),
 		field.Int("duration_ms").Positive().Optional().Nillable().Immutable().Comment("videos only"),
-		field.String("blurhash").MaxLen(40).Optional().Immutable(),
-		field.Int64("phash").Immutable().Comment("64-bit perceptual hash (imaging.PHash; a video's poster frame), for duplicate detection"),
+		field.String("blurhash").MaxLen(40).Optional().Comment("set when a video's poster is ready"),
+		field.Int64("phash").Comment("64-bit perceptual hash (imaging.PHash; a video's poster frame), for duplicate detection"),
 	}
 }
 

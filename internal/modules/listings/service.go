@@ -18,6 +18,7 @@ import (
 	"rentmapgh/internal/platform/geo"
 	"rentmapgh/internal/platform/money"
 	"rentmapgh/internal/platform/storage"
+	"rentmapgh/internal/platform/video"
 )
 
 // Wizard steps, in order.
@@ -80,12 +81,15 @@ type Service struct {
 	locSecret []byte
 	media     storage.Store // public listing photos
 	imaging   chan struct{} // bounds concurrent photo decoding (memory)
+	video     *video.Tool   // nil: walk-through videos are off
+	inbox     string        // local dir where video uploads are assembled
+	wake      chan struct{} // nudges the video worker
 	now       func() time.Time
 }
 
 func NewService(db *ent.Client, log *audit.Log, locationSecret string, media storage.Store) *Service {
 	return &Service{db: db, audit: log, locSecret: []byte(locationSecret), media: media,
-		imaging: make(chan struct{}, 2), now: func() time.Time { return time.Now().UTC() }}
+		imaging: make(chan struct{}, 2), wake: make(chan struct{}, 1), now: func() time.Time { return time.Now().UTC() }}
 }
 
 // Item is a listing with its unit, property, terms and media (in order).
@@ -311,6 +315,7 @@ func QualityOf(d *Item) QualityInput {
 		HasAvailableFrom: d.L.AvailableFrom != nil,
 		FeesComplete:     ComputeMoveIn(d.Terms()).Complete,
 		Photos:           len(d.Photos()),
+		HasVideo:         d.HasReadyVideo(),
 	}
 	if d.P != nil {
 		q.HasLocation = d.P.Lat != nil

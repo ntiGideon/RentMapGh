@@ -143,8 +143,8 @@ func (s *Service) AddPhoto(ctx context.Context, a Actor, id uuid.UUID, data []by
 	}
 
 	pos := 0
-	if n := len(d.M); n > 0 {
-		pos = d.M[n-1].Position + 1
+	if ps := d.Photos(); len(ps) > 0 {
+		pos = ps[len(ps)-1].Position + 1
 	}
 	m, err := s.db.ListingMedia.Create().SetID(mid).SetListingID(id).SetUploadedBy(a.UserID).
 		SetPosition(pos).SetWidth(largest.Width).SetHeight(largest.Height).SetBytes(total).
@@ -176,11 +176,12 @@ func (s *Service) DeletePhoto(ctx context.Context, a Actor, id, mediaID uuid.UUI
 	if !Editable(Status(d.L.Status)) {
 		return ValidationError{"photos": "This listing can't be edited."}
 	}
-	i := slices.IndexFunc(d.M, func(m *ent.ListingMedia) bool { return m.ID == mediaID })
+	photos := d.Photos()
+	i := slices.IndexFunc(photos, func(m *ent.ListingMedia) bool { return m.ID == mediaID })
 	if i < 0 {
 		return ErrNotFound
 	}
-	rest := slices.Delete(slices.Clone(d.M), i, i+1)
+	rest := slices.Delete(photos, i, i+1)
 	tx, err := s.db.Tx(ctx)
 	if err != nil {
 		return fmt.Errorf("delete photo: begin: %w", err)
@@ -204,7 +205,8 @@ func (s *Service) DeletePhoto(ctx context.Context, a Actor, id, mediaID uuid.UUI
 	return s.refresh(ctx, d)
 }
 
-// ReorderPhotos applies a new order. IDs the client doesn't know about (a
+// ReorderPhotos applies a new order to the photos (the video has no place
+// in the gallery order). IDs the client doesn't know about (a
 // photo added in another tab) keep their relative order at the end;
 // unknown IDs are ignored.
 func (s *Service) ReorderPhotos(ctx context.Context, a Actor, id uuid.UUID, order []uuid.UUID) error {
@@ -215,8 +217,9 @@ func (s *Service) ReorderPhotos(ctx context.Context, a Actor, id uuid.UUID, orde
 	if !Editable(Status(d.L.Status)) {
 		return ValidationError{"photos": "This listing can't be edited."}
 	}
+	photos := d.Photos()
 	byID := map[uuid.UUID]*ent.ListingMedia{}
-	for _, m := range d.M {
+	for _, m := range photos {
 		byID[m.ID] = m
 	}
 	var next []*ent.ListingMedia
@@ -227,7 +230,7 @@ func (s *Service) ReorderPhotos(ctx context.Context, a Actor, id uuid.UUID, orde
 			seen[mid] = true
 		}
 	}
-	for _, m := range d.M {
+	for _, m := range photos {
 		if !seen[m.ID] {
 			next = append(next, m)
 		}
@@ -253,8 +256,9 @@ func (s *Service) MovePhoto(ctx context.Context, a Actor, id, mediaID uuid.UUID,
 	if err != nil {
 		return err
 	}
-	ids := make([]uuid.UUID, len(d.M))
-	for i, m := range d.M {
+	photos := d.Photos()
+	ids := make([]uuid.UUID, len(photos))
+	for i, m := range photos {
 		ids[i] = m.ID
 	}
 	i := slices.Index(ids, mediaID)

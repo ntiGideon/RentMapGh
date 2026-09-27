@@ -41,7 +41,7 @@ type ListingMedia struct {
 	Bytes int `json:"bytes,omitempty"`
 	// videos only
 	DurationMs *int `json:"duration_ms,omitempty"`
-	// Blurhash holds the value of the "blurhash" field.
+	// set when a video's poster is ready
 	Blurhash string `json:"blurhash,omitempty"`
 	// 64-bit perceptual hash (imaging.PHash; a video's poster frame), for duplicate detection
 	Phash int64 `json:"phash,omitempty"`
