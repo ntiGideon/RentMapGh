@@ -43,7 +43,8 @@ templ Site(m Meta) {
 						if v.HasAny("landlord", "agent") {
 							<a href="/listings" class="hidden h-8 items-center rounded-lg px-2.5 text-sm font-medium text-fg-muted transition-colors hover:bg-surface hover:text-fg sm:inline-flex">Your listings</a>
 						}
-						<a href="/viewings" class="hidden h-8 items-center rounded-lg px-2.5 text-sm font-medium text-fg-muted transition-colors hover:bg-surface hover:text-fg sm:inline-flex">Viewings</a>
+						@navLinkBadge("/messages", "Messages", reqctx.CurrentNavCounts(ctx).Messages, "unread")
+						@navLinkBadge("/viewings", "Viewings", reqctx.CurrentNavCounts(ctx).Viewings, "viewings")
 						if v.HasAny("moderator", "admin") {
 							<a href="/admin" class="hidden h-8 items-center rounded-lg px-2.5 text-sm font-medium text-fg-muted transition-colors hover:bg-surface hover:text-fg sm:inline-flex">Admin</a>
 						}
@@ -63,8 +64,20 @@ templ Site(m Meta) {
 		<main id="main">
 			{ children... }
 		</main>
+		if reqctx.CurrentViewer(ctx) != nil {
+			<script type="module" src={ reqctx.Asset(ctx, "js/events.js") }></script>
+		}
 		@footer()
 	}
+}
+
+// navLinkBadge is a header link with a count; events.js keeps
+// data-badge="unread" current while the page is open.
+templ navLinkBadge(href, label string, n int, key string) {
+	<a href={ templ.SafeURL(href) } class="relative hidden h-8 items-center gap-1.5 rounded-lg px-2.5 text-sm font-medium text-fg-muted transition-colors hover:bg-surface hover:text-fg sm:inline-flex">
+		{ label }
+		<span data-badge={ key } class={ "min-w-5 place-items-center rounded-full bg-graphite-900 px-1.5 text-2xs font-semibold tabular-nums text-white dark:bg-mint-200 dark:text-graphite-900", templ.KV("grid", n > 0), templ.KV("hidden", n == 0) }>{ strconv.Itoa(n) }</span>
+	</a>
 }
 
 templ ThemeToggle() {

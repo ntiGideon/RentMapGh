@@ -27,6 +27,7 @@ templ Admin(m Meta, nav AdminNav) {
 					<nav class="ml-4 flex items-center gap-1 lg:hidden" aria-label="Admin">
 						@adminLink("/admin/verifications", "Verifications", nav.Active == "verifications", reqctx.CurrentAdminCounts(ctx).Verifications)
 						@adminLink("/admin/listings", "Listings", nav.Active == "listings", reqctx.CurrentAdminCounts(ctx).Listings)
+						@adminLink("/admin/reports", "Reports", nav.Active == "reports", reqctx.CurrentAdminCounts(ctx).Reports)
 					</nav>
 					<div class="ml-auto flex items-center gap-1.5">
 						@ThemeToggle()
@@ -49,13 +50,9 @@ templ Admin(m Meta, nav AdminNav) {
 								<li>
 									@adminLink("/admin/listings", "Listings", nav.Active == "listings", reqctx.CurrentAdminCounts(ctx).Listings)
 								</li>
-							</ul>
-						</div>
-						<div>
-							<p class="px-2.5 text-xs font-medium text-fg-subtle">Coming next</p>
-							<ul class="mt-2 space-y-0.5 text-sm text-fg-subtle">
-								<li class="px-2.5 py-1.5">Reports</li>
-								<li class="px-2.5 py-1.5">Users &amp; roles</li>
+								<li>
+									@adminLink("/admin/reports", "Reports", nav.Active == "reports", reqctx.CurrentAdminCounts(ctx).Reports)
+								</li>
 							</ul>
 						</div>
 					</nav>

@@ -197,8 +197,14 @@ templ ListingPage(m layouts.Meta, v ListingPageView) {
 				</div>
 				<aside class="space-y-4 lg:sticky lg:top-20 lg:self-start">
 					@priceCard(v)
-					<div class="hidden lg:block">
+					<div class="hidden space-y-2 lg:block">
 						@bookButton(v, true)
+						if v.CanBook {
+							<a href={ templ.SafeURL("/l/" + v.ID + "/message") } class="inline-flex h-11 w-full items-center justify-center gap-1.5 rounded-lg border border-line bg-surface-raised px-4 text-base font-medium text-fg shadow-xs hover:bg-surface">
+								@c.Icon("message", "size-4")
+								Message the lister
+							</a>
+						}
 					</div>
 					@listerCard(v.Lister)
 					@shareRow(v)
@@ -426,6 +432,11 @@ templ bookButton(v ListingPageView, full bool) {
 templ shareRow(v ListingPageView) {
 	<div class="flex gap-2">
 		@partials.SaveButton(v.ID, v.Saved, v.Path, false)
+		if v.CanBook {
+			<a href={ templ.SafeURL("/l/" + v.ID + "/message") } aria-label="Message the lister" title="Message the lister" class="grid size-11 shrink-0 place-items-center rounded-lg border border-line bg-surface-raised text-fg shadow-xs hover:bg-surface lg:hidden">
+				@c.Icon("message", "size-[18px]")
+			</a>
+		}
 		<button type="button" data-compare={ v.ID } aria-pressed="false" title="Add to compare" aria-label="Add to compare" hidden class="size-11 shrink-0 place-items-center rounded-lg border border-line bg-surface-raised text-fg shadow-xs hover:bg-surface aria-pressed:border-graphite-900 aria-pressed:bg-graphite-900 aria-pressed:text-white dark:aria-pressed:border-mint-200 dark:aria-pressed:bg-mint-200 dark:aria-pressed:text-graphite-900 [&:not([hidden])]:grid">
 			@c.Icon("columns", "size-[18px]")
 		</button>

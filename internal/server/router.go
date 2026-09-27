@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -19,6 +20,7 @@ import (
 	"rentmapgh/internal/modules/auth"
 	"rentmapgh/internal/modules/listings"
 	"rentmapgh/internal/modules/mandates"
+	"rentmapgh/internal/modules/messages"
 	"rentmapgh/internal/modules/users"
 	"rentmapgh/internal/modules/verification"
 	"rentmapgh/internal/modules/viewings"
@@ -42,6 +44,9 @@ type Deps struct {
 	// Listings is shared by the router and the video worker; New builds
 	// one (without video) when it's nil.
 	Listings *listings.Service
+	// Hub carries realtime message events; main closes it on shutdown so
+	// open event streams end. New makes one when it's nil.
+	Hub *messages.Hub
 }
 
 // NewListings builds the listings service, with walk-through videos when
@@ -122,6 +127,11 @@ func New(d Deps) http.Handler {
 	}
 	mandatesSvc := mandates.NewService(d.DB.Ent, auditLog, d.SMS, d.Cfg.AuthSecret, d.Cfg.BaseURL)
 	viewingsSvc := viewings.NewService(d.DB.Ent, auditLog, d.SMS, d.Cfg.BaseURL)
+	hub := d.Hub
+	if hub == nil {
+		hub = messages.NewHub()
+	}
+	messagesSvc := messages.NewService(d.DB.Ent, auditLog, d.SMS, hub, d.Cfg.BaseURL)
 	listingsH := listings.NewHandler(listingsSvc, mandatesSvc, listings.HandlerConfig{
 		BaseURL: d.Cfg.BaseURL, Secret: d.Cfg.AuthSecret, Secure: d.Cfg.IsHTTPS(),
 		OpenViewing: func(ctx context.Context, renter, listingID uuid.UUID) (string, string) {
@@ -131,11 +141,13 @@ func New(d Deps) http.Handler {
 			}
 			return "/viewings/" + v.ID.String(), viewings.When(v.StartsAt)
 		}})
-	viewingsH := viewings.NewHandler(viewingsSvc, func(id uuid.UUID) string {
+	cover := func(id uuid.UUID) string {
 		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 		defer cancel()
 		return listingsSvc.CoverURL(ctx, id)
-	})
+	}
+	viewingsH := viewings.NewHandler(viewingsSvc, cover)
+	messagesH := messages.NewHandler(messagesSvc, cover, hub.Done())
 	mandatesH := mandates.NewHandler(mandatesSvc)
 	usersH := users.NewHandler(users.NewService(d.DB.Ent, auditLog, d.Files, verifySvc.PurgeUser), authH, verifySvc, auditLog)
 
@@ -150,6 +162,7 @@ func New(d Deps) http.Handler {
 	r.Use(crossOrigin)
 	r.Use(mw.DataSaver)
 	r.Use(authH.LoadViewer)
+	r.Use(navCounts(messagesSvc, viewingsSvc))
 	r.Use(func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			next.ServeHTTP(w, r.WithContext(reqctx.WithAssets(r.Context(), d.Assets)))
@@ -274,6 +287,15 @@ func New(d Deps) http.Handler {
 		r.Get("/viewings/{id}", viewingsH.Show)
 		r.Get("/viewings/{id}/calendar.ics", viewingsH.Calendar)
 		r.With(rateLimit(60, time.Minute)).Post("/viewings/{id}/{action}", viewingsH.Act)
+
+		r.Get("/l/{id}/message", messagesH.NewPage)
+		r.With(rateLimit(30, time.Hour)).Post("/l/{id}/message", messagesH.Start)
+		r.Get("/messages", messagesH.Inbox)
+		r.Get("/messages/{id}", messagesH.Thread)
+		r.With(rateLimit(60, time.Minute)).Post("/messages/{id}", messagesH.Send)
+		r.Get("/messages/{id}/since", messagesH.Since)
+		r.With(rateLimit(20, time.Hour)).Post("/messages/{id}/report/{msgID}", messagesH.Report)
+		r.Get("/events", messagesH.Events)
 	})
 
 	// Back office: moderators and admins only.
@@ -281,7 +303,7 @@ func New(d Deps) http.Handler {
 		r.Use(auth.RequireAuth)
 		r.Use(auth.RequireRole("moderator", "admin"))
 		r.Use(noStore)
-		r.Use(adminCounts(verifySvc, listingsSvc))
+		r.Use(adminCounts(verifySvc, listingsSvc, messagesSvc))
 		r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 			http.Redirect(w, r, "/admin/verifications", http.StatusSeeOther)
 		})
@@ -292,20 +314,45 @@ func New(d Deps) http.Handler {
 		r.Get("/listings", listingsH.AdminQueue)
 		r.Get("/listings/{id}", listingsH.AdminReview)
 		r.Post("/listings/{id}/decision", listingsH.AdminDecide)
+		r.Get("/reports", messagesH.AdminReports)
+		r.Get("/reports/{id}", messagesH.AdminReport)
+		r.Post("/reports/{id}/decision", messagesH.AdminDecide)
 	})
 
 	return r
 }
 
 // adminCounts puts the queue badges in the context for the admin nav.
-func adminCounts(v *verification.Service, l *listings.Service) func(http.Handler) http.Handler {
+func adminCounts(v *verification.Service, l *listings.Service, m *messages.Service) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			c := reqctx.AdminCounts{Listings: l.PendingCount(r.Context())}
+			if rs, err := m.OpenReports(r.Context()); err == nil {
+				c.Reports = len(rs)
+			}
 			if counts, err := v.Counts(r.Context()); err == nil {
 				c.Verifications = counts["pending"]
 			}
 			next.ServeHTTP(w, r.WithContext(reqctx.WithAdminCounts(r.Context(), c)))
+		})
+	}
+}
+
+// navCounts puts the signed-in user's header badges (unread messages,
+// viewings waiting for them) on the request. Anonymous requests skip it.
+func navCounts(m *messages.Service, v *viewings.Service) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			vw := reqctx.CurrentViewer(r.Context())
+			if vw == nil || r.Header.Get("HX-Request") == "true" || strings.HasPrefix(r.URL.Path, "/static/") ||
+				strings.HasPrefix(r.URL.Path, "/media/") || r.URL.Path == "/events" {
+				next.ServeHTTP(w, r)
+				return
+			}
+			var c reqctx.NavCounts
+			c.Messages, _ = m.Unread(r.Context(), vw.UserID)
+			c.Viewings, _ = v.Pending(r.Context(), vw.UserID)
+			next.ServeHTTP(w, r.WithContext(reqctx.WithNavCounts(r.Context(), c)))
 		})
 	}
 }

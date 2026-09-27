@@ -13,6 +13,7 @@ import (
 
 	"rentmapgh/internal/config"
 	"rentmapgh/internal/db"
+	"rentmapgh/internal/modules/messages"
 	"rentmapgh/internal/platform/sms"
 	"rentmapgh/internal/platform/storage"
 	"rentmapgh/internal/server"
@@ -61,6 +62,7 @@ func run() error {
 	if deps.Listings, err = server.NewListings(deps); err != nil {
 		return err
 	}
+	deps.Hub = messages.NewHub()
 	server.StartJobs(ctx, deps)
 
 	srv := &http.Server{
@@ -72,6 +74,7 @@ func run() error {
 		IdleTimeout:       cfg.IdleTimeout,
 		MaxHeaderBytes:    64 << 10,
 	}
+	srv.RegisterOnShutdown(deps.Hub.Close) // end open event streams so shutdown doesn't wait on them
 
 	errCh := make(chan error, 1)
 	go func() {

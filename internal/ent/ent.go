@@ -10,12 +10,15 @@ import (
 	"rentmapgh/internal/ent/agentmandate"
 	"rentmapgh/internal/ent/agentprofile"
 	"rentmapgh/internal/ent/auditevent"
+	"rentmapgh/internal/ent/conversation"
 	"rentmapgh/internal/ent/landlordprofile"
 	"rentmapgh/internal/ent/listing"
 	"rentmapgh/internal/ent/listingmedia"
 	"rentmapgh/internal/ent/listingterms"
+	"rentmapgh/internal/ent/message"
 	"rentmapgh/internal/ent/otpcode"
 	"rentmapgh/internal/ent/property"
+	"rentmapgh/internal/ent/report"
 	"rentmapgh/internal/ent/roleassignment"
 	"rentmapgh/internal/ent/savedlisting"
 	"rentmapgh/internal/ent/session"
@@ -93,12 +96,15 @@ func checkColumn(t, c string) error {
 			agentmandate.Table:     agentmandate.ValidColumn,
 			agentprofile.Table:     agentprofile.ValidColumn,
 			auditevent.Table:       auditevent.ValidColumn,
+			conversation.Table:     conversation.ValidColumn,
 			landlordprofile.Table:  landlordprofile.ValidColumn,
 			listing.Table:          listing.ValidColumn,
 			listingmedia.Table:     listingmedia.ValidColumn,
 			listingterms.Table:     listingterms.ValidColumn,
+			message.Table:          message.ValidColumn,
 			otpcode.Table:          otpcode.ValidColumn,
 			property.Table:         property.ValidColumn,
+			report.Table:           report.ValidColumn,
 			roleassignment.Table:   roleassignment.ValidColumn,
 			savedlisting.Table:     savedlisting.ValidColumn,
 			session.Table:          session.ValidColumn,

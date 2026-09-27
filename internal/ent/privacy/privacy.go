@@ -183,6 +183,30 @@ func (f AuditEventMutationRuleFunc) EvalMutation(ctx context.Context, m ent.Muta
 	return Denyf("ent/privacy: unexpected mutation type %T, expect *ent.AuditEventMutation", m)
 }
 
+// The ConversationQueryRuleFunc type is an adapter to allow the use of ordinary
+// functions as a query rule.
+type ConversationQueryRuleFunc func(context.Context, *ent.ConversationQuery) error
+
+// EvalQuery return f(ctx, q).
+func (f ConversationQueryRuleFunc) EvalQuery(ctx context.Context, q ent.Query) error {
+	if q, ok := q.(*ent.ConversationQuery); ok {
+		return f(ctx, q)
+	}
+	return Denyf("ent/privacy: unexpected query type %T, expect *ent.ConversationQuery", q)
+}
+
+// The ConversationMutationRuleFunc type is an adapter to allow the use of ordinary
+// functions as a mutation rule.
+type ConversationMutationRuleFunc func(context.Context, *ent.ConversationMutation) error
+
+// EvalMutation calls f(ctx, m).
+func (f ConversationMutationRuleFunc) EvalMutation(ctx context.Context, m ent.Mutation) error {
+	if m, ok := m.(*ent.ConversationMutation); ok {
+		return f(ctx, m)
+	}
+	return Denyf("ent/privacy: unexpected mutation type %T, expect *ent.ConversationMutation", m)
+}
+
 // The LandlordProfileQueryRuleFunc type is an adapter to allow the use of ordinary
 // functions as a query rule.
 type LandlordProfileQueryRuleFunc func(context.Context, *ent.LandlordProfileQuery) error
@@ -279,6 +303,30 @@ func (f ListingTermsMutationRuleFunc) EvalMutation(ctx context.Context, m ent.Mu
 	return Denyf("ent/privacy: unexpected mutation type %T, expect *ent.ListingTermsMutation", m)
 }
 
+// The MessageQueryRuleFunc type is an adapter to allow the use of ordinary
+// functions as a query rule.
+type MessageQueryRuleFunc func(context.Context, *ent.MessageQuery) error
+
+// EvalQuery return f(ctx, q).
+func (f MessageQueryRuleFunc) EvalQuery(ctx context.Context, q ent.Query) error {
+	if q, ok := q.(*ent.MessageQuery); ok {
+		return f(ctx, q)
+	}
+	return Denyf("ent/privacy: unexpected query type %T, expect *ent.MessageQuery", q)
+}
+
+// The MessageMutationRuleFunc type is an adapter to allow the use of ordinary
+// functions as a mutation rule.
+type MessageMutationRuleFunc func(context.Context, *ent.MessageMutation) error
+
+// EvalMutation calls f(ctx, m).
+func (f MessageMutationRuleFunc) EvalMutation(ctx context.Context, m ent.Mutation) error {
+	if m, ok := m.(*ent.MessageMutation); ok {
+		return f(ctx, m)
+	}
+	return Denyf("ent/privacy: unexpected mutation type %T, expect *ent.MessageMutation", m)
+}
+
 // The OTPCodeQueryRuleFunc type is an adapter to allow the use of ordinary
 // functions as a query rule.
 type OTPCodeQueryRuleFunc func(context.Context, *ent.OTPCodeQuery) error
@@ -325,6 +373,30 @@ func (f PropertyMutationRuleFunc) EvalMutation(ctx context.Context, m ent.Mutati
 		return f(ctx, m)
 	}
 	return Denyf("ent/privacy: unexpected mutation type %T, expect *ent.PropertyMutation", m)
+}
+
+// The ReportQueryRuleFunc type is an adapter to allow the use of ordinary
+// functions as a query rule.
+type ReportQueryRuleFunc func(context.Context, *ent.ReportQuery) error
+
+// EvalQuery return f(ctx, q).
+func (f ReportQueryRuleFunc) EvalQuery(ctx context.Context, q ent.Query) error {
+	if q, ok := q.(*ent.ReportQuery); ok {
+		return f(ctx, q)
+	}
+	return Denyf("ent/privacy: unexpected query type %T, expect *ent.ReportQuery", q)
+}
+
+// The ReportMutationRuleFunc type is an adapter to allow the use of ordinary
+// functions as a mutation rule.
+type ReportMutationRuleFunc func(context.Context, *ent.ReportMutation) error
+
+// EvalMutation calls f(ctx, m).
+func (f ReportMutationRuleFunc) EvalMutation(ctx context.Context, m ent.Mutation) error {
+	if m, ok := m.(*ent.ReportMutation); ok {
+		return f(ctx, m)
+	}
+	return Denyf("ent/privacy: unexpected mutation type %T, expect *ent.ReportMutation", m)
 }
 
 // The RoleAssignmentQueryRuleFunc type is an adapter to allow the use of ordinary
@@ -584,6 +656,8 @@ func queryFilter(q ent.Query) (Filter, error) {
 		return q.Filter(), nil
 	case *ent.AuditEventQuery:
 		return q.Filter(), nil
+	case *ent.ConversationQuery:
+		return q.Filter(), nil
 	case *ent.LandlordProfileQuery:
 		return q.Filter(), nil
 	case *ent.ListingQuery:
@@ -592,9 +666,13 @@ func queryFilter(q ent.Query) (Filter, error) {
 		return q.Filter(), nil
 	case *ent.ListingTermsQuery:
 		return q.Filter(), nil
+	case *ent.MessageQuery:
+		return q.Filter(), nil
 	case *ent.OTPCodeQuery:
 		return q.Filter(), nil
 	case *ent.PropertyQuery:
+		return q.Filter(), nil
+	case *ent.ReportQuery:
 		return q.Filter(), nil
 	case *ent.RoleAssignmentQuery:
 		return q.Filter(), nil
@@ -627,6 +705,8 @@ func mutationFilter(m ent.Mutation) (Filter, error) {
 		return m.Filter(), nil
 	case *ent.AuditEventMutation:
 		return m.Filter(), nil
+	case *ent.ConversationMutation:
+		return m.Filter(), nil
 	case *ent.LandlordProfileMutation:
 		return m.Filter(), nil
 	case *ent.ListingMutation:
@@ -635,9 +715,13 @@ func mutationFilter(m ent.Mutation) (Filter, error) {
 		return m.Filter(), nil
 	case *ent.ListingTermsMutation:
 		return m.Filter(), nil
+	case *ent.MessageMutation:
+		return m.Filter(), nil
 	case *ent.OTPCodeMutation:
 		return m.Filter(), nil
 	case *ent.PropertyMutation:
+		return m.Filter(), nil
+	case *ent.ReportMutation:
 		return m.Filter(), nil
 	case *ent.RoleAssignmentMutation:
 		return m.Filter(), nil

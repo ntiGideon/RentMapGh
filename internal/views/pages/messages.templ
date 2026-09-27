@@ -1,0 +1,311 @@
+package pages
+
+import (
+	c "rentmapgh/internal/views/components"
+	"rentmapgh/internal/views/layouts"
+)
+
+// ── First message ────────────────────────────────────────────────────────
+
+type NewMessageView struct {
+	ListingID, Headline, Cover, To, Body string
+	Suggestions                          []string
+	Errors                               map[string]string
+}
+
+templ NewMessage(m layouts.Meta, v NewMessageView) {
+	@layouts.Site(m) {
+		<div class="mx-auto max-w-2xl px-4 pb-24 pt-8 sm:px-6">
+			<a href={ templ.SafeURL("/l/" + v.ListingID) } class="inline-flex items-center gap-1 text-sm text-fg-muted hover:text-fg">
+				@c.Icon("chevron-left", "size-4")
+				Back to the listing
+			</a>
+			<h1 class="mt-3 text-2xl font-semibold tracking-tight text-fg">Message { v.To }</h1>
+			@listingChip(v.Cover, v.Headline, "")
+			<form method="post" action={ templ.SafeURL("/l/" + v.ListingID + "/message") } class="mt-6 space-y-4" data-first-message>
+				if msg := v.Errors["form"]; msg != "" {
+					@alert(msg)
+				}
+				<div class="flex flex-wrap gap-2">
+					for _, s := range v.Suggestions {
+						<button type="button" data-suggest={ s } class="rounded-full border border-line px-3 py-1.5 text-sm text-fg hover:bg-surface">{ s }</button>
+					}
+				</div>
+				@c.Textarea(c.TextareaProps{ID: "body", Name: "body", Label: "Your message", Value: v.Body, Rows: 5, MaxLen: 2000, Required: true, Error: v.Errors["body"],
+					Hint: "Phone numbers are shared once a viewing is confirmed. Never pay anything before you've seen the place."})
+				<div class="flex justify-end">
+					@c.Button(c.ButtonProps{Type: "submit"}) {
+						Send message
+					}
+				</div>
+			</form>
+		</div>
+	}
+}
+
+// ── A thread ─────────────────────────────────────────────────────────────
+
+type Bubble struct {
+	ID, Body, Time string
+	Mine, Seen     bool
+	Warnings       []string
+	CanReport      bool
+	PhoneHidden    bool
+}
+
+type ThreadView struct {
+	ID, Them, ThemRole, Role     string
+	Headline, ListingURL, Cover string
+	ViewingURL                  string
+	Bubbles                     []Bubble
+	LastID                      string
+	Draft                       string
+	Unlocked                    bool
+	Reasons                     []Opt
+	Errors                      map[string]string
+}
+
+templ Thread(m layouts.Meta, v ThreadView) {
+	@layouts.Site(m) {
+		<div class="mx-auto flex max-w-2xl flex-col px-4 pb-6 pt-6 sm:px-6">
+			<div class="flex items-center justify-between gap-3">
+				<a href="/messages" class="inline-flex items-center gap-1 text-sm text-fg-muted hover:text-fg">
+					@c.Icon("chevron-left", "size-4")
+					Messages
+				</a>
+				if v.ViewingURL != "" {
+					<a href={ templ.SafeURL(v.ViewingURL) } class="inline-flex h-8 items-center gap-1.5 rounded-lg border border-line bg-surface-raised px-2.5 text-sm font-medium text-fg shadow-xs hover:bg-surface">
+						@c.Icon("calendar-check", "size-3.5")
+						Book a viewing
+					</a>
+				}
+			</div>
+			<div class="mt-3 flex items-center gap-3">
+				<span class="grid size-10 shrink-0 place-items-center rounded-full bg-mint-200 text-sm font-semibold text-graphite-900">{ initial(v.Them) }</span>
+				<div class="min-w-0">
+					<h1 class="truncate text-lg font-semibold text-fg">{ v.Them }</h1>
+					<a href={ templ.SafeURL(v.ListingURL) } class="block truncate text-sm text-fg-muted hover:text-fg hover:underline">{ v.ThemRole } · { v.Headline }</a>
+				</div>
+			</div>
+			if !v.Unlocked {
+				<p class="mt-4 flex items-start gap-2 rounded-lg bg-surface px-3 py-2.5 text-xs text-fg-muted">
+					@c.Icon("shield-check", "mt-px size-3.5 shrink-0")
+					Phone numbers stay hidden until a viewing is confirmed. Never pay rent, deposits or "booking fees" before you've seen the place.
+				</p>
+			}
+			<ol id="thread" data-thread={ v.ID } data-last-id={ v.LastID } class="mt-5 flex flex-col gap-3" aria-live="polite">
+				@Bubbles(v.Bubbles, v.Reasons, v.ID)
+			</ol>
+			if len(v.Bubbles) == 0 {
+				<p data-empty-thread class="py-10 text-center text-sm text-fg-muted">No messages yet.</p>
+			}
+			<form method="post" action={ templ.SafeURL("/messages/" + v.ID) } data-composer class="sticky bottom-0 mt-6 border-t border-line bg-bg pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-3">
+				<input type="hidden" name="after" value={ v.LastID } data-after/>
+				if msg := v.Errors["body"]; msg != "" {
+					<p class="mb-2 text-sm text-danger" role="alert">{ msg }</p>
+				}
+				<p data-composer-error hidden class="mb-2 text-sm text-danger" role="alert"></p>
+				<div class="flex items-end gap-2">
+					<label for="body" class="sr-only">Message</label>
+					<textarea id="body" name="body" rows="1" maxlength="2000" required placeholder="Write a message" class="max-h-40 min-h-11 flex-1 resize-none rounded-lg border border-line bg-surface-raised px-3 py-2.5 text-base text-fg placeholder:text-fg-subtle">{ v.Draft }</textarea>
+					<button type="submit" aria-label="Send" class="grid size-11 shrink-0 place-items-center rounded-lg bg-primary text-on-primary shadow-btn hover:bg-primary-hover">
+						@c.Icon("arrow-right", "size-5")
+					</button>
+				</div>
+			</form>
+		</div>
+	}
+}
+
+func initial(name string) string {
+	for _, r := range name {
+		return string(r)
+	}
+	return "?"
+}
+
+// Bubbles renders messages (the thread, and each update fetched later).
+templ Bubbles(bs []Bubble, reasons []Opt, convID string) {
+	for _, b := range bs {
+		<li data-id={ b.ID } class={ "flex flex-col", templ.KV("items-end", b.Mine), templ.KV("items-start", !b.Mine) }>
+			<div class={ "max-w-[85%] whitespace-pre-line break-words rounded-2xl px-3.5 py-2 text-[0.9375rem] leading-relaxed",
+				templ.KV("rounded-br-md bg-graphite-900 text-white dark:bg-mint-200 dark:text-graphite-900", b.Mine),
+				templ.KV("rounded-bl-md bg-surface text-fg ring-1 ring-line", !b.Mine) }>{ b.Body }</div>
+			<p class="mt-1 px-1 text-2xs tabular-nums text-fg-subtle">
+				{ b.Time }
+				if b.Seen {
+					<span data-seen>· Seen</span>
+				}
+			</p>
+			for _, w := range b.Warnings {
+				<p class="mt-1 flex max-w-[85%] items-start gap-1.5 rounded-lg border border-amber-500/30 bg-amber-50 px-2.5 py-2 text-xs text-amber-900 dark:bg-amber-400/10 dark:text-amber-100" role="note">
+					@c.Icon("alert", "mt-px size-3.5 shrink-0")
+					{ w }
+				</p>
+			}
+			if b.CanReport {
+				<details class="mt-0.5 px-1 text-2xs text-fg-subtle">
+					<summary class="cursor-pointer list-none hover:text-fg">Report</summary>
+					<form method="post" action={ templ.SafeURL("/messages/" + convID + "/report/" + b.ID) } hx-post={ "/messages/" + convID + "/report/" + b.ID } hx-swap="outerHTML" class="mt-1.5 w-64 space-y-2 rounded-lg border border-line bg-surface-raised p-2.5 text-xs">
+						<select name="reason" class="h-8 w-full rounded-md border border-line bg-surface-raised px-2 text-xs text-fg">
+							for _, r := range reasons {
+								<option value={ r.Value }>{ r.Label }</option>
+							}
+						</select>
+						<input type="text" name="note" maxlength="500" placeholder="Anything else? (optional)" class="h-8 w-full rounded-md border border-line bg-surface-raised px-2 text-xs text-fg"/>
+						<button type="submit" class="h-8 w-full rounded-md bg-red-600 text-xs font-medium text-white">Report message</button>
+					</form>
+				</details>
+			}
+		</li>
+	}
+}
+
+// ── Inbox ────────────────────────────────────────────────────────────────
+
+type InboxRow struct {
+	URL, Name, Headline, Snippet, When, Cover string
+	Unread                                    bool
+}
+
+type InboxView struct{ Rows []InboxRow }
+
+templ Inbox(m layouts.Meta, v InboxView) {
+	@layouts.Site(m) {
+		<div class="mx-auto max-w-2xl px-4 pb-24 pt-8 sm:px-6">
+			<h1 class="text-2xl font-semibold tracking-tight text-fg">Messages</h1>
+			if len(v.Rows) == 0 {
+				<div class="mt-10">
+					@c.EmptyState("message", "No messages yet", "Message a lister from any listing page to ask about the place.") {
+						@c.LinkButton("/search", c.Primary, c.MD) {
+							Browse places
+						}
+					}
+				</div>
+			} else {
+				<ul class="mt-6 divide-y divide-line rounded-card border border-line bg-surface-raised">
+					for _, r := range v.Rows {
+						<li>
+							<a href={ templ.SafeURL(r.URL) } class="flex items-center gap-3 px-3 py-3 hover:bg-surface">
+								if r.Cover != "" {
+									<img src={ r.Cover } alt="" class="size-12 shrink-0 rounded-md object-cover"/>
+								} else {
+									<span class="grid size-12 shrink-0 place-items-center rounded-md bg-surface text-fg-subtle">
+										@c.Icon("home", "size-4")
+									</span>
+								}
+								<div class="min-w-0 flex-1">
+									<div class="flex items-baseline justify-between gap-2">
+										<p class={ "truncate text-sm text-fg", templ.KV("font-semibold", r.Unread), templ.KV("font-medium", !r.Unread) }>{ r.Name }</p>
+										<span class="shrink-0 text-xs tabular-nums text-fg-subtle">{ r.When }</span>
+									</div>
+									<p class="truncate text-xs text-fg-muted">{ r.Headline }</p>
+									<p class={ "truncate text-sm", templ.KV("font-medium text-fg", r.Unread), templ.KV("text-fg-muted", !r.Unread) }>{ r.Snippet }</p>
+								</div>
+								if r.Unread {
+									<span class="size-2.5 shrink-0 rounded-full bg-graphite-900 dark:bg-mint-200" aria-label="Unread"></span>
+								}
+							</a>
+						</li>
+					}
+				</ul>
+			}
+		</div>
+	}
+}
+
+// ── Admin: reports ───────────────────────────────────────────────────────
+
+type AdminReportRow struct{ URL, Reason, Kind, Subject, When string }
+
+type AdminReportsView struct {
+	Rows   []AdminReportRow
+	Notice string
+}
+
+templ AdminReports(v AdminReportsView) {
+	@layouts.Admin(layouts.Meta{Title: "Reports"}, layouts.AdminNav{Active: "reports"}) {
+		<div class="px-4 py-6 sm:px-6">
+			<h1 class="text-xl font-semibold text-fg">Reports</h1>
+			if v.Notice != "" {
+				<p class="mt-3 rounded-lg border border-line bg-surface px-3 py-2 text-sm text-fg" role="status">{ v.Notice }</p>
+			}
+			if len(v.Rows) == 0 {
+				<p class="mt-6 text-sm text-fg-muted">No open reports.</p>
+			} else {
+				<ul class="mt-4 divide-y divide-line rounded-card border border-line bg-surface-raised">
+					for _, r := range v.Rows {
+						<li>
+							<a href={ templ.SafeURL(r.URL) } class="flex items-center justify-between gap-3 px-4 py-3 text-sm hover:bg-surface">
+								<span class="min-w-0">
+									<span class="block truncate font-medium text-fg">{ r.Reason }</span>
+									<span class="block truncate text-fg-muted">{ r.Kind } from { r.Subject }</span>
+								</span>
+								<span class="shrink-0 text-xs text-fg-subtle">{ r.When }</span>
+							</a>
+						</li>
+					}
+				</ul>
+			}
+		</div>
+	}
+}
+
+type AdminMessage struct {
+	Who, Body, Time, Flags string
+	Reported               bool
+}
+
+type AdminReportView struct {
+	ID, Reason, Note, Status   string
+	Reporter, Subject          string
+	Listing, ListingURL        string
+	Thread                     []AdminMessage
+}
+
+templ AdminReport(v AdminReportView) {
+	@layouts.Admin(layouts.Meta{Title: "Report"}, layouts.AdminNav{Active: "reports"}) {
+		<div class="grid gap-6 px-4 py-6 sm:px-6 xl:grid-cols-[1fr_20rem]">
+			<div>
+				<a href="/admin/reports" class="text-sm text-fg-muted hover:text-fg">← Reports</a>
+				<h1 class="mt-2 text-xl font-semibold text-fg">{ v.Reason }</h1>
+				<p class="mt-1 text-sm text-fg-muted">Reported by { v.Reporter } about { v.Subject }</p>
+				if v.Note != "" {
+					<p class="mt-3 rounded-lg bg-surface px-3 py-2 text-sm text-fg">“{ v.Note }”</p>
+				}
+				<ol class="mt-6 space-y-3">
+					for _, m := range v.Thread {
+						<li class={ "rounded-lg border px-3 py-2 text-sm", templ.KV("border-red-600/40 bg-red-50 dark:bg-red-400/10", m.Reported), templ.KV("border-line", !m.Reported) }>
+							<p class="text-xs text-fg-muted">{ m.Who } · { m.Time }
+								if m.Flags != "" {
+									<span class="text-warning">· flags: { m.Flags }</span>
+								}
+							</p>
+							<p class="mt-1 whitespace-pre-line text-fg">{ m.Body }</p>
+						</li>
+					}
+				</ol>
+			</div>
+			<aside class="space-y-3">
+				if v.ListingURL != "" {
+					<a href={ templ.SafeURL(v.ListingURL) } class="block rounded-card border border-line bg-surface-raised p-4 text-sm hover:bg-surface">
+						<span class="text-fg-muted">Listing</span>
+						<span class="mt-0.5 block font-medium text-fg">{ v.Listing }</span>
+					</a>
+				}
+				if v.Status == "open" {
+					<form method="post" action={ templ.SafeURL("/admin/reports/" + v.ID + "/decision") } class="grid gap-2">
+						@c.Button(c.ButtonProps{Type: "submit", Variant: c.DangerSoft, Full: true, Attrs: templ.Attributes{"name": "decision", "value": "actioned"}}) {
+							Action taken
+						}
+						@c.Button(c.ButtonProps{Type: "submit", Variant: c.Ghost, Full: true, Attrs: templ.Attributes{"name": "decision", "value": "dismissed"}}) {
+							Dismiss
+						}
+					</form>
+				} else {
+					<p class="text-sm text-fg-muted">Closed: { v.Status }</p>
+				}
+			</aside>
+		</div>
+	}
+}

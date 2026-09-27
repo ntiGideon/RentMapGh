@@ -1,4 +1,4 @@
-h1:d7SCryRVf3GUUXfuGUqxhioVqVPxLv93ZWAeEABWMOg=
+h1:t+ELenehwJW/nkgxBvLqiZijt8wm9QR5izQzkguw/cU=
 20260925000000_extensions.up.sql h1:NDZzLVZ6nPPxceo1IS4KOUUR9iVnPVjTUM8Hlr/GVEU=
 20260925194014_waitlist.up.sql h1:VGa5c+12crcjeVGbsqD5hrM9BV4Ag4KMiXUumsoWfH8=
 20260925212329_auth.up.sql h1:1RHDKxh2oYBHqBC5DfzUTVIfPvmK5tgM4Ep0zm88fIg=
@@ -9,3 +9,4 @@ h1:d7SCryRVf3GUUXfuGUqxhioVqVPxLv93ZWAeEABWMOg=
 20260927172728_listing_video.up.sql h1:+N5WND/8eknXQe18F1CE2WIxTFBu+/iV2SZJ1h/m4XM=
 20260927180803_agent_mandates.up.sql h1:VFDmru8MheZKpyhghTBOexSsiuIP2SokK8t+PihDBgU=
 20260927200935_viewings.up.sql h1:xjsMMdIx25/GXrkFHKSyONt7GcBF2FDeewzKUhd1jFw=
+20260927203954_messaging.up.sql h1:9HkHE8gA4ucvntEju52nFBRhip+fKY9JgF4jHLCk5F8=

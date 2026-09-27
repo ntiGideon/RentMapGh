@@ -105,6 +105,44 @@ var (
 			},
 		},
 	}
+	// ConversationsColumns holds the columns for the "conversations" table.
+	ConversationsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "listing_id", Type: field.TypeUUID},
+		{Name: "renter_id", Type: field.TypeUUID},
+		{Name: "lister_id", Type: field.TypeUUID},
+		{Name: "last_message_at", Type: field.TypeTime, Nullable: true},
+		{Name: "last_sender_id", Type: field.TypeUUID, Nullable: true},
+		{Name: "renter_read_at", Type: field.TypeTime, Nullable: true},
+		{Name: "lister_read_at", Type: field.TypeTime, Nullable: true},
+		{Name: "renter_notified_at", Type: field.TypeTime, Nullable: true},
+		{Name: "lister_notified_at", Type: field.TypeTime, Nullable: true},
+	}
+	// ConversationsTable holds the schema information for the "conversations" table.
+	ConversationsTable = &schema.Table{
+		Name:       "conversations",
+		Columns:    ConversationsColumns,
+		PrimaryKey: []*schema.Column{ConversationsColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "conversation_listing_id_renter_id",
+				Unique:  true,
+				Columns: []*schema.Column{ConversationsColumns[3], ConversationsColumns[4]},
+			},
+			{
+				Name:    "conversation_renter_id_last_message_at",
+				Unique:  false,
+				Columns: []*schema.Column{ConversationsColumns[4], ConversationsColumns[6]},
+			},
+			{
+				Name:    "conversation_lister_id_last_message_at",
+				Unique:  false,
+				Columns: []*schema.Column{ConversationsColumns[5], ConversationsColumns[6]},
+			},
+		},
+	}
 	// LandlordProfilesColumns holds the columns for the "landlord_profiles" table.
 	LandlordProfilesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
@@ -258,6 +296,29 @@ var (
 			},
 		},
 	}
+	// MessagesColumns holds the columns for the "messages" table.
+	MessagesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "conversation_id", Type: field.TypeUUID},
+		{Name: "sender_id", Type: field.TypeUUID},
+		{Name: "body", Type: field.TypeString, Size: 2000},
+		{Name: "flags", Type: field.TypeJSON, Nullable: true},
+	}
+	// MessagesTable holds the schema information for the "messages" table.
+	MessagesTable = &schema.Table{
+		Name:       "messages",
+		Columns:    MessagesColumns,
+		PrimaryKey: []*schema.Column{MessagesColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "message_conversation_id_created_at",
+				Unique:  false,
+				Columns: []*schema.Column{MessagesColumns[3], MessagesColumns[1]},
+			},
+		},
+	}
 	// OtpCodesColumns holds the columns for the "otp_codes" table.
 	OtpCodesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
@@ -324,6 +385,44 @@ var (
 				Name:    "property_owner_id",
 				Unique:  false,
 				Columns: []*schema.Column{PropertiesColumns[4]},
+			},
+		},
+	}
+	// ReportsColumns holds the columns for the "reports" table.
+	ReportsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "reporter_id", Type: field.TypeUUID},
+		{Name: "target_type", Type: field.TypeEnum, Enums: []string{"message", "listing", "user"}},
+		{Name: "target_id", Type: field.TypeUUID},
+		{Name: "subject_id", Type: field.TypeUUID, Nullable: true},
+		{Name: "reason", Type: field.TypeString, Size: 30},
+		{Name: "note", Type: field.TypeString, Nullable: true, Size: 500},
+		{Name: "status", Type: field.TypeEnum, Enums: []string{"open", "actioned", "dismissed"}, Default: "open"},
+		{Name: "handled_by", Type: field.TypeUUID, Nullable: true},
+		{Name: "handled_at", Type: field.TypeTime, Nullable: true},
+	}
+	// ReportsTable holds the schema information for the "reports" table.
+	ReportsTable = &schema.Table{
+		Name:       "reports",
+		Columns:    ReportsColumns,
+		PrimaryKey: []*schema.Column{ReportsColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "report_status_created_at",
+				Unique:  false,
+				Columns: []*schema.Column{ReportsColumns[9], ReportsColumns[1]},
+			},
+			{
+				Name:    "report_target_type_target_id",
+				Unique:  false,
+				Columns: []*schema.Column{ReportsColumns[4], ReportsColumns[5]},
+			},
+			{
+				Name:    "report_subject_id",
+				Unique:  false,
+				Columns: []*schema.Column{ReportsColumns[6]},
 			},
 		},
 	}
@@ -662,12 +761,15 @@ var (
 		AgentMandatesTable,
 		AgentProfilesTable,
 		AuditEventsTable,
+		ConversationsTable,
 		LandlordProfilesTable,
 		ListingsTable,
 		ListingMediaTable,
 		ListingTermsTable,
+		MessagesTable,
 		OtpCodesTable,
 		PropertiesTable,
+		ReportsTable,
 		RoleAssignmentsTable,
 		SavedListingsTable,
 		SessionsTable,

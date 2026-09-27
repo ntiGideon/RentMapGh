@@ -15,6 +15,9 @@ type AgentProfile func(*sql.Selector)
 // AuditEvent is the predicate function for auditevent builders.
 type AuditEvent func(*sql.Selector)
 
+// Conversation is the predicate function for conversation builders.
+type Conversation func(*sql.Selector)
+
 // LandlordProfile is the predicate function for landlordprofile builders.
 type LandlordProfile func(*sql.Selector)
 
@@ -27,11 +30,17 @@ type ListingMedia func(*sql.Selector)
 // ListingTerms is the predicate function for listingterms builders.
 type ListingTerms func(*sql.Selector)
 
+// Message is the predicate function for message builders.
+type Message func(*sql.Selector)
+
 // OTPCode is the predicate function for otpcode builders.
 type OTPCode func(*sql.Selector)
 
 // Property is the predicate function for property builders.
 type Property func(*sql.Selector)
+
+// Report is the predicate function for report builders.
+type Report func(*sql.Selector)
 
 // RoleAssignment is the predicate function for roleassignment builders.
 type RoleAssignment func(*sql.Selector)

@@ -7,12 +7,15 @@ import (
 	"rentmapgh/internal/ent/agentmandate"
 	"rentmapgh/internal/ent/agentprofile"
 	"rentmapgh/internal/ent/auditevent"
+	"rentmapgh/internal/ent/conversation"
 	"rentmapgh/internal/ent/landlordprofile"
 	"rentmapgh/internal/ent/listing"
 	"rentmapgh/internal/ent/listingmedia"
 	"rentmapgh/internal/ent/listingterms"
+	"rentmapgh/internal/ent/message"
 	"rentmapgh/internal/ent/otpcode"
 	"rentmapgh/internal/ent/property"
+	"rentmapgh/internal/ent/report"
 	"rentmapgh/internal/ent/roleassignment"
 	"rentmapgh/internal/ent/savedlisting"
 	"rentmapgh/internal/ent/schema"
@@ -170,6 +173,27 @@ func init() {
 	auditeventDescID := auditeventMixinFields0[0].Descriptor()
 	// auditevent.DefaultID holds the default value on creation for the id field.
 	auditevent.DefaultID = auditeventDescID.Default.(func() uuid.UUID)
+	conversationMixin := schema.Conversation{}.Mixin()
+	conversationMixinFields0 := conversationMixin[0].Fields()
+	_ = conversationMixinFields0
+	conversationMixinFields1 := conversationMixin[1].Fields()
+	_ = conversationMixinFields1
+	conversationFields := schema.Conversation{}.Fields()
+	_ = conversationFields
+	// conversationDescCreatedAt is the schema descriptor for created_at field.
+	conversationDescCreatedAt := conversationMixinFields1[0].Descriptor()
+	// conversation.DefaultCreatedAt holds the default value on creation for the created_at field.
+	conversation.DefaultCreatedAt = conversationDescCreatedAt.Default.(func() time.Time)
+	// conversationDescUpdatedAt is the schema descriptor for updated_at field.
+	conversationDescUpdatedAt := conversationMixinFields1[1].Descriptor()
+	// conversation.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	conversation.DefaultUpdatedAt = conversationDescUpdatedAt.Default.(func() time.Time)
+	// conversation.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	conversation.UpdateDefaultUpdatedAt = conversationDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// conversationDescID is the schema descriptor for id field.
+	conversationDescID := conversationMixinFields0[0].Descriptor()
+	// conversation.DefaultID holds the default value on creation for the id field.
+	conversation.DefaultID = conversationDescID.Default.(func() uuid.UUID)
 	landlordprofileMixin := schema.LandlordProfile{}.Mixin()
 	landlordprofileMixinFields0 := landlordprofileMixin[0].Fields()
 	_ = landlordprofileMixinFields0
@@ -426,6 +450,45 @@ func init() {
 	listingtermsDescID := listingtermsMixinFields0[0].Descriptor()
 	// listingterms.DefaultID holds the default value on creation for the id field.
 	listingterms.DefaultID = listingtermsDescID.Default.(func() uuid.UUID)
+	messageMixin := schema.Message{}.Mixin()
+	messageMixinFields0 := messageMixin[0].Fields()
+	_ = messageMixinFields0
+	messageMixinFields1 := messageMixin[1].Fields()
+	_ = messageMixinFields1
+	messageFields := schema.Message{}.Fields()
+	_ = messageFields
+	// messageDescCreatedAt is the schema descriptor for created_at field.
+	messageDescCreatedAt := messageMixinFields1[0].Descriptor()
+	// message.DefaultCreatedAt holds the default value on creation for the created_at field.
+	message.DefaultCreatedAt = messageDescCreatedAt.Default.(func() time.Time)
+	// messageDescUpdatedAt is the schema descriptor for updated_at field.
+	messageDescUpdatedAt := messageMixinFields1[1].Descriptor()
+	// message.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	message.DefaultUpdatedAt = messageDescUpdatedAt.Default.(func() time.Time)
+	// message.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	message.UpdateDefaultUpdatedAt = messageDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// messageDescBody is the schema descriptor for body field.
+	messageDescBody := messageFields[2].Descriptor()
+	// message.BodyValidator is a validator for the "body" field. It is called by the builders before save.
+	message.BodyValidator = func() func(string) error {
+		validators := messageDescBody.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(body string) error {
+			for _, fn := range fns {
+				if err := fn(body); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// messageDescID is the schema descriptor for id field.
+	messageDescID := messageMixinFields0[0].Descriptor()
+	// message.DefaultID holds the default value on creation for the id field.
+	message.DefaultID = messageDescID.Default.(func() uuid.UUID)
 	otpcodeMixin := schema.OTPCode{}.Mixin()
 	otpcodeMixinFields0 := otpcodeMixin[0].Fields()
 	_ = otpcodeMixinFields0
@@ -544,6 +607,35 @@ func init() {
 	propertyDescID := propertyMixinFields0[0].Descriptor()
 	// property.DefaultID holds the default value on creation for the id field.
 	property.DefaultID = propertyDescID.Default.(func() uuid.UUID)
+	reportMixin := schema.Report{}.Mixin()
+	reportMixinFields0 := reportMixin[0].Fields()
+	_ = reportMixinFields0
+	reportMixinFields1 := reportMixin[1].Fields()
+	_ = reportMixinFields1
+	reportFields := schema.Report{}.Fields()
+	_ = reportFields
+	// reportDescCreatedAt is the schema descriptor for created_at field.
+	reportDescCreatedAt := reportMixinFields1[0].Descriptor()
+	// report.DefaultCreatedAt holds the default value on creation for the created_at field.
+	report.DefaultCreatedAt = reportDescCreatedAt.Default.(func() time.Time)
+	// reportDescUpdatedAt is the schema descriptor for updated_at field.
+	reportDescUpdatedAt := reportMixinFields1[1].Descriptor()
+	// report.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	report.DefaultUpdatedAt = reportDescUpdatedAt.Default.(func() time.Time)
+	// report.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	report.UpdateDefaultUpdatedAt = reportDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// reportDescReason is the schema descriptor for reason field.
+	reportDescReason := reportFields[4].Descriptor()
+	// report.ReasonValidator is a validator for the "reason" field. It is called by the builders before save.
+	report.ReasonValidator = reportDescReason.Validators[0].(func(string) error)
+	// reportDescNote is the schema descriptor for note field.
+	reportDescNote := reportFields[5].Descriptor()
+	// report.NoteValidator is a validator for the "note" field. It is called by the builders before save.
+	report.NoteValidator = reportDescNote.Validators[0].(func(string) error)
+	// reportDescID is the schema descriptor for id field.
+	reportDescID := reportMixinFields0[0].Descriptor()
+	// report.DefaultID holds the default value on creation for the id field.
+	report.DefaultID = reportDescID.Default.(func() uuid.UUID)
 	roleassignmentMixin := schema.RoleAssignment{}.Mixin()
 	roleassignmentMixinFields0 := roleassignmentMixin[0].Fields()
 	_ = roleassignmentMixinFields0

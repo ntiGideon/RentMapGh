@@ -20,6 +20,8 @@ type Tx struct {
 	AgentProfile *AgentProfileClient
 	// AuditEvent is the client for interacting with the AuditEvent builders.
 	AuditEvent *AuditEventClient
+	// Conversation is the client for interacting with the Conversation builders.
+	Conversation *ConversationClient
 	// LandlordProfile is the client for interacting with the LandlordProfile builders.
 	LandlordProfile *LandlordProfileClient
 	// Listing is the client for interacting with the Listing builders.
@@ -28,10 +30,14 @@ type Tx struct {
 	ListingMedia *ListingMediaClient
 	// ListingTerms is the client for interacting with the ListingTerms builders.
 	ListingTerms *ListingTermsClient
+	// Message is the client for interacting with the Message builders.
+	Message *MessageClient
 	// OTPCode is the client for interacting with the OTPCode builders.
 	OTPCode *OTPCodeClient
 	// Property is the client for interacting with the Property builders.
 	Property *PropertyClient
+	// Report is the client for interacting with the Report builders.
+	Report *ReportClient
 	// RoleAssignment is the client for interacting with the RoleAssignment builders.
 	RoleAssignment *RoleAssignmentClient
 	// SavedListing is the client for interacting with the SavedListing builders.
@@ -184,12 +190,15 @@ func (tx *Tx) init() {
 	tx.AgentMandate = NewAgentMandateClient(tx.config)
 	tx.AgentProfile = NewAgentProfileClient(tx.config)
 	tx.AuditEvent = NewAuditEventClient(tx.config)
+	tx.Conversation = NewConversationClient(tx.config)
 	tx.LandlordProfile = NewLandlordProfileClient(tx.config)
 	tx.Listing = NewListingClient(tx.config)
 	tx.ListingMedia = NewListingMediaClient(tx.config)
 	tx.ListingTerms = NewListingTermsClient(tx.config)
+	tx.Message = NewMessageClient(tx.config)
 	tx.OTPCode = NewOTPCodeClient(tx.config)
 	tx.Property = NewPropertyClient(tx.config)
+	tx.Report = NewReportClient(tx.config)
 	tx.RoleAssignment = NewRoleAssignmentClient(tx.config)
 	tx.SavedListing = NewSavedListingClient(tx.config)
 	tx.Session = NewSessionClient(tx.config)

@@ -93,7 +93,7 @@ func WithViewer(ctx context.Context, v *Viewer) context.Context {
 func CurrentViewer(ctx context.Context) *Viewer { v, _ := ctx.Value(viewerKey).(*Viewer); return v }
 
 // AdminCounts are the queue badges in the back-office nav.
-type AdminCounts struct{ Verifications, Listings int }
+type AdminCounts struct{ Verifications, Listings, Reports int }
 
 func WithAdminCounts(ctx context.Context, c AdminCounts) context.Context {
 	return context.WithValue(ctx, adminCountsKey, c)
@@ -101,5 +101,19 @@ func WithAdminCounts(ctx context.Context, c AdminCounts) context.Context {
 
 func CurrentAdminCounts(ctx context.Context) AdminCounts {
 	c, _ := ctx.Value(adminCountsKey).(AdminCounts)
+	return c
+}
+
+// NavCounts are the badges in the site header for a signed-in user.
+type NavCounts struct{ Messages, Viewings int }
+
+type navCountsKey struct{}
+
+func WithNavCounts(ctx context.Context, c NavCounts) context.Context {
+	return context.WithValue(ctx, navCountsKey{}, c)
+}
+
+func CurrentNavCounts(ctx context.Context) NavCounts {
+	c, _ := ctx.Value(navCountsKey{}).(NavCounts)
 	return c
 }

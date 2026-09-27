@@ -550,14 +550,14 @@ Engineering:
 ### Phase 4 — Contact, viewings, availability & trust basics (3–4 weeks)
 
 - [x] Account gate at first contact; anonymous favourites merge. *Slice 4a; see §16.16.*
-- [ ] Messaging (SSE realtime, read receipts, unread badges, attachment support).
-- [ ] Scam-shield rules + inline warnings (§6.9).
+- [ ] Messaging (SSE realtime, read receipts, unread badges, attachment support). *4b built everything except attachments; see §16.17.*
+- [x] Scam-shield rules + inline warnings (§6.9).
 - [ ] Viewing slots, requests, accept/propose/decline, `.ics`, reminders (§6.8). *4a built everything except the 24 h / 2 h reminders (4d).*
 - [x] Exact location unlock on confirmation + "Navigate" deep links.
 - [ ] Post-viewing feedback prompts.
 - [ ] Availability freshness engine + one-tap WhatsApp/SMS confirmations (§6.7).
 - [ ] "Mark as rented" flow (with optional "Rented through RentMap?" question — your key success metric).
-- [ ] Report listing / user / message flows.
+- [ ] Report listing / user / message flows. *Messages in 4b (with the moderator queue); listings and users in 4d.*
 - [ ] Notification centre (in-app) + SMS/WhatsApp/email channels + preferences.
 - [ ] Trust score v1 and badges.
 
@@ -1133,5 +1133,19 @@ Sky Mint is step 200 of its scale; Graphite is step 900. Darker mint steps exist
 | Unlock | exact location on confirmation, logged | While confirmed and until 24 h after the start: street, landmark, area and digital address, Google Maps/Waze links, both phone numbers (tel + WhatsApp), and an `.ics` with a 2 h alarm. The renter's first look is audited (`viewing.location_unlocked`) | §6.1 rule 5, §6.9 (numbers hidden until confirmed) |
 | Messages | WhatsApp/SMS | An SMS to the other side at every step (request, accept, propose, decline with reason, cancel), each with a link to the viewing | Reminders and the notification centre are 4d |
 | Limits | — | 5 open requests per renter, 10 requests a day, 20 per hour per IP | |
+
+### 16.17 Decisions taken while building Phase 4 (slice 4b — messaging)
+
+| Area | Plan said | Built | Why |
+| --- | --- | --- | --- |
+| Shape | conversations tied to a listing | One conversation per renter and listing (`conversations`, `messages`); only renters start one, from the listing page's "Message the lister" (`/l/{id}/message`: a first-message page, so the sign-in gate lands somewhere sensible). Listers can't message their own place | Keeps every thread about a real place |
+| Realtime | SSE | `/events`: one EventSource per signed-in page (`events.js`) carrying tiny events ("message" with the unread count, "read"); the thread page then fetches new bubbles over plain HTTP (`/messages/{id}/since?after=`), so a dropped event or reconnect loses nothing. Streams ping every 25 s, end after 10 min (the browser reconnects) and close on shutdown (`RegisterOnShutdown`). The hub is in-process: **one web instance** until it moves to Postgres LISTEN/NOTIFY | No websocket library; works through Cloudflare and Caddy |
+| Receipts | read receipts, unread badges | Each side's `*_read_at`; "Seen" under your latest message once they've read (or replied); an unread badge on "Messages" in the header (plus a pending-viewings badge on "Viewings"), updated live | |
+| Offline | — | One SMS per side per 6 hours about unread messages, with a link | People reply to SMS faster than they open apps |
+| Scam shield | rules + inline warning | Regex rules: MoMo / sending money, pay first / to secure, booking or commitment fees, moving to WhatsApp/Telegram, pressure. A match never blocks — the recipient sees the matching warning under the message; flags are stored and audited (`message.flagged`) | False positives cost only a sentence of caution |
+| Phones | hidden until a viewing is confirmed | Ghanaian numbers in messages are shown to the recipient as "[number hidden until a viewing is confirmed]" until a confirmed (or completed) viewing exists between them; the sender always sees their own text | §6.9 |
+| Reports | report button on every message; moderators see context | Report under any message from the other side (reason + note), one per reporter per message; `reports` table (typed for messages now, listings and users next); `/admin/reports` queue with the whole thread, the reported message highlighted, flags shown; action taken / dismiss | |
+| Attachments | attachment support | **Deferred**: text only for now | Photo attachments bring moderation and storage questions; the listing already carries photos |
+| Limits | — | 20 new conversations a day, 20 messages a minute per user, 2,000 characters | |
 
 Phase 0 engineering status: repo skeleton, Compose dev stack (PostGIS + pgvector image, Mailpit, Valhalla behind a profile), config, slog, request IDs, graceful shutdown, `/healthz` + `/readyz`, Ent + migrations, design tokens + first components, landing page with waitlist, tests, CI and the production Dockerfile/Compose/Caddy are done. Still open: staging VPS + Cloudflare, i18n scaffolding, product/legal tasks.
