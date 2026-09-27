@@ -696,7 +696,7 @@ func (s *Service) Submit(ctx context.Context, a Actor, id uuid.UUID) (Status, er
 // Act applies a lister action (pause, resume, mark_rented, relist, withdraw).
 func (s *Service) Act(ctx context.Context, a Actor, id uuid.UUID, ev Event) (Status, error) {
 	switch ev {
-	case EvPause, EvResume, EvMarkRented, EvRelist, EvWithdraw:
+	case EvPause, EvResume, EvMarkRented, EvRelist, EvWithdraw, EvConfirm:
 	default:
 		return "", ErrTransition
 	}
@@ -704,13 +704,23 @@ func (s *Service) Act(ctx context.Context, a Actor, id uuid.UUID, ev Event) (Sta
 	if err != nil {
 		return "", err
 	}
+	if ev == EvConfirm {
+		if Status(d.L.Status) != Active {
+			return "", ErrTransition
+		}
+		if err := s.db.Listing.UpdateOneID(id).SetLastConfirmedAt(s.now()).ClearStaleReportedAt().Exec(ctx); err != nil {
+			return "", fmt.Errorf("act: confirm: %w", err)
+		}
+		s.audit.Record(ctx, audit.Event{Actor: &a.UserID, Action: "listing.confirmed", TargetType: "listing", TargetID: id.String(), IP: a.IP, UserAgent: a.UserAgent})
+		return Active, nil
+	}
 	to, err := Next(Status(d.L.Status), ev)
 	if err != nil {
 		return "", err
 	}
 	up := s.db.Listing.UpdateOneID(id).SetStatus(listing.Status(to))
 	if to == Active { // resuming or relisting counts as confirming availability
-		up.SetLastConfirmedAt(s.now())
+		up.SetLastConfirmedAt(s.now()).ClearStaleReportedAt()
 	}
 	if err := up.Exec(ctx); err != nil {
 		return "", fmt.Errorf("act: %w", err)

@@ -94,6 +94,8 @@ func (h *Handler) Mine(w http.ResponseWriter, r *http.Request) {
 		v.Notice = "Listing paused. It's hidden from search until you resume it."
 	case "rented":
 		v.Notice = "Marked as rented. Congratulations!"
+	case "confirmed":
+		v.Notice = "Thanks — marked available. It's back at the top of search."
 	}
 	render.Page(w, r, http.StatusOK, pages.MyListings(v), partials.MyListings(v))
 }
@@ -227,11 +229,19 @@ func (h *Handler) Action(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	st, err := h.svc.Act(r.Context(), actor(r), id, Event(chi.URLParam(r, "event")))
+	if Event(chi.URLParam(r, "event")) == EvMarkRented {
+		// Ask "did you find your tenant through RentMap?" first (availability).
+		redirect(w, r, "/listings/"+id.String()+"/rented")
+		return
+	}
+	ev := Event(chi.URLParam(r, "event"))
+	st, err := h.svc.Act(r.Context(), actor(r), id, ev)
 	switch {
 	case errors.Is(err, ErrTransition):
 		http.Redirect(w, r, "/listings", http.StatusSeeOther)
 	case h.notFound(w, r, err):
+	case ev == EvConfirm:
+		redirect(w, r, "/listings?done=confirmed")
 	default:
 		redirect(w, r, doneURL(st))
 	}

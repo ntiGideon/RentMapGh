@@ -325,6 +325,10 @@ func cardView(d *Item, now time.Time) partials.ListingCardView {
 	switch st {
 	case Active:
 		cv.Actions = []partials.ListingAction{{Event: string(EvPause), Label: "Pause"}, {Event: string(EvMarkRented), Label: "Mark rented"}}
+		if !Fresh(d.L, now) {
+			cv.Actions = append([]partials.ListingAction{{Event: string(EvConfirm), Label: "Still available"}}, cv.Actions...)
+			cv.Stale = true
+		}
 	case Paused:
 		cv.Actions = []partials.ListingAction{{Event: string(EvResume), Label: "Resume"}, {Event: string(EvMarkRented), Label: "Mark rented"}}
 	case Rented:

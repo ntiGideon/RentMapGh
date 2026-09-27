@@ -1,0 +1,74 @@
+package pages
+
+import (
+	c "rentmapgh/internal/views/components"
+	"rentmapgh/internal/views/layouts"
+)
+
+// ConfirmView is the lister's "still available?" page (from the SMS link or
+// from Your listings). Step: "ask" (three answers), "via" (rented: how did
+// you find the tenant?), "done".
+type ConfirmView struct {
+	Action, Headline, Status, Confirmed string
+	Step                                string
+	Done, Error                         string
+	ListingsURL                         string // shown when signed in
+}
+
+templ Confirm(m layouts.Meta, v ConfirmView) {
+	@layouts.Focused(m, "max-w-md") {
+		@c.Card("p-6") {
+			switch v.Step {
+				case "done":
+					<div class="text-center">
+						<span class="mx-auto grid size-11 place-items-center rounded-full bg-surface text-fg ring-1 ring-line">
+							@c.Icon("check", "size-5")
+						</span>
+						<h1 class="mt-4 text-xl font-semibold text-fg">Thank you</h1>
+						<p class="mt-2 text-base text-fg-muted">{ v.Done }</p>
+						if v.ListingsURL != "" {
+							<a href={ templ.SafeURL(v.ListingsURL) } class="mt-5 inline-flex h-10 items-center rounded-lg border border-line bg-surface-raised px-3.5 text-sm font-medium text-fg">Your listings</a>
+						}
+					</div>
+				case "via":
+					<p class="text-xs font-medium uppercase tracking-wider text-fg-subtle">One quick question</p>
+					<h1 class="mt-1.5 text-xl font-semibold text-fg">Did you find your tenant through RentMap?</h1>
+					<p class="mt-2 text-sm text-fg-muted">{ v.Headline }</p>
+					if v.Error != "" {
+						@alert(v.Error)
+					}
+					<form method="post" action={ templ.SafeURL(v.Action) } class="mt-5 grid gap-2">
+						<input type="hidden" name="answer" value="rented"/>
+						@c.Button(c.ButtonProps{Type: "submit", Full: true, Attrs: templ.Attributes{"name": "via", "value": "rentmap"}}) {
+							Yes, through RentMap
+						}
+						@c.Button(c.ButtonProps{Type: "submit", Variant: c.Ghost, Full: true, Attrs: templ.Attributes{"name": "via", "value": "elsewhere"}}) {
+							No, somewhere else
+						}
+						<button type="submit" name="via" value="unknown" class="mt-1 h-10 text-sm font-medium text-fg-muted hover:text-fg">Rather not say</button>
+					</form>
+					<p class="mt-4 text-xs text-fg-subtle">Your answer helps us know if RentMap works for landlords. It isn't shown to anyone.</p>
+				default:
+					<p class="text-xs font-medium uppercase tracking-wider text-fg-subtle">Availability check</p>
+					<h1 class="mt-1.5 text-xl font-semibold text-fg">Is this place still available?</h1>
+					<p class="mt-2 text-base text-fg">{ v.Headline }</p>
+					<p class="mt-1 text-sm text-fg-muted">{ v.Status }. { v.Confirmed }</p>
+					if v.Error != "" {
+						<div class="mt-4">
+							@alert(v.Error)
+						</div>
+					}
+					<form method="post" action={ templ.SafeURL(v.Action) } class="mt-5 grid gap-2">
+						@c.Button(c.ButtonProps{Type: "submit", Full: true, Attrs: templ.Attributes{"name": "answer", "value": "available"}}) {
+							Yes, still available
+						}
+						@c.Button(c.ButtonProps{Type: "submit", Variant: c.Ghost, Full: true, Attrs: templ.Attributes{"name": "answer", "value": "rented"}}) {
+							It's rented
+						}
+						<button type="submit" name="answer" value="pause" class="mt-1 h-10 text-sm font-medium text-fg-muted hover:text-fg">Pause it for now</button>
+					</form>
+					<p class="mt-4 text-xs text-fg-subtle">Confirmed places rank higher. Unconfirmed ones leave search after 2 weeks.</p>
+			}
+		}
+	}
+}

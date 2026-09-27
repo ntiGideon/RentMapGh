@@ -52,6 +52,7 @@ func (h *Handler) ListingPage(w http.ResponseWriter, r *http.Request) {
 	v.Saved = slices.Contains(h.savedFor(w, r), d.L.ID)
 	v.ViewingURL = "/l/" + d.L.ID.String() + "/viewing"
 	v.CanBook = d.L.Status == listing.StatusActive && d.L.ListerID != viewer
+	v.SignedIn = viewer != uuid.Nil
 	if viewer != uuid.Nil && h.openViewing != nil {
 		v.MyViewingURL, v.MyViewingWhen = h.openViewing(r.Context(), viewer, d.L.ID)
 	}

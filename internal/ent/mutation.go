@@ -4525,6 +4525,10 @@ type ListingMutation struct {
 	published_at      *time.Time
 	reviewed_by       *uuid.UUID
 	review_note       *string
+	nudged_at         *time.Time
+	stale_reported_at *time.Time
+	rented_at         *time.Time
+	rented_via        *listing.RentedVia
 	clearedFields     map[string]struct{}
 	unit              *uuid.UUID
 	clearedunit       bool
@@ -5503,6 +5507,202 @@ func (m *ListingMutation) ResetReviewNote() {
 	delete(m.clearedFields, listing.FieldReviewNote)
 }
 
+// SetNudgedAt sets the "nudged_at" field.
+func (m *ListingMutation) SetNudgedAt(t time.Time) {
+	m.nudged_at = &t
+}
+
+// NudgedAt returns the value of the "nudged_at" field in the mutation.
+func (m *ListingMutation) NudgedAt() (r time.Time, exists bool) {
+	v := m.nudged_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldNudgedAt returns the old "nudged_at" field's value of the Listing entity.
+// If the Listing object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ListingMutation) OldNudgedAt(ctx context.Context) (v *time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldNudgedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldNudgedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldNudgedAt: %w", err)
+	}
+	return oldValue.NudgedAt, nil
+}
+
+// ClearNudgedAt clears the value of the "nudged_at" field.
+func (m *ListingMutation) ClearNudgedAt() {
+	m.nudged_at = nil
+	m.clearedFields[listing.FieldNudgedAt] = struct{}{}
+}
+
+// NudgedAtCleared returns if the "nudged_at" field was cleared in this mutation.
+func (m *ListingMutation) NudgedAtCleared() bool {
+	_, ok := m.clearedFields[listing.FieldNudgedAt]
+	return ok
+}
+
+// ResetNudgedAt resets all changes to the "nudged_at" field.
+func (m *ListingMutation) ResetNudgedAt() {
+	m.nudged_at = nil
+	delete(m.clearedFields, listing.FieldNudgedAt)
+}
+
+// SetStaleReportedAt sets the "stale_reported_at" field.
+func (m *ListingMutation) SetStaleReportedAt(t time.Time) {
+	m.stale_reported_at = &t
+}
+
+// StaleReportedAt returns the value of the "stale_reported_at" field in the mutation.
+func (m *ListingMutation) StaleReportedAt() (r time.Time, exists bool) {
+	v := m.stale_reported_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldStaleReportedAt returns the old "stale_reported_at" field's value of the Listing entity.
+// If the Listing object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ListingMutation) OldStaleReportedAt(ctx context.Context) (v *time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldStaleReportedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldStaleReportedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldStaleReportedAt: %w", err)
+	}
+	return oldValue.StaleReportedAt, nil
+}
+
+// ClearStaleReportedAt clears the value of the "stale_reported_at" field.
+func (m *ListingMutation) ClearStaleReportedAt() {
+	m.stale_reported_at = nil
+	m.clearedFields[listing.FieldStaleReportedAt] = struct{}{}
+}
+
+// StaleReportedAtCleared returns if the "stale_reported_at" field was cleared in this mutation.
+func (m *ListingMutation) StaleReportedAtCleared() bool {
+	_, ok := m.clearedFields[listing.FieldStaleReportedAt]
+	return ok
+}
+
+// ResetStaleReportedAt resets all changes to the "stale_reported_at" field.
+func (m *ListingMutation) ResetStaleReportedAt() {
+	m.stale_reported_at = nil
+	delete(m.clearedFields, listing.FieldStaleReportedAt)
+}
+
+// SetRentedAt sets the "rented_at" field.
+func (m *ListingMutation) SetRentedAt(t time.Time) {
+	m.rented_at = &t
+}
+
+// RentedAt returns the value of the "rented_at" field in the mutation.
+func (m *ListingMutation) RentedAt() (r time.Time, exists bool) {
+	v := m.rented_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldRentedAt returns the old "rented_at" field's value of the Listing entity.
+// If the Listing object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ListingMutation) OldRentedAt(ctx context.Context) (v *time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldRentedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldRentedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldRentedAt: %w", err)
+	}
+	return oldValue.RentedAt, nil
+}
+
+// ClearRentedAt clears the value of the "rented_at" field.
+func (m *ListingMutation) ClearRentedAt() {
+	m.rented_at = nil
+	m.clearedFields[listing.FieldRentedAt] = struct{}{}
+}
+
+// RentedAtCleared returns if the "rented_at" field was cleared in this mutation.
+func (m *ListingMutation) RentedAtCleared() bool {
+	_, ok := m.clearedFields[listing.FieldRentedAt]
+	return ok
+}
+
+// ResetRentedAt resets all changes to the "rented_at" field.
+func (m *ListingMutation) ResetRentedAt() {
+	m.rented_at = nil
+	delete(m.clearedFields, listing.FieldRentedAt)
+}
+
+// SetRentedVia sets the "rented_via" field.
+func (m *ListingMutation) SetRentedVia(lv listing.RentedVia) {
+	m.rented_via = &lv
+}
+
+// RentedVia returns the value of the "rented_via" field in the mutation.
+func (m *ListingMutation) RentedVia() (r listing.RentedVia, exists bool) {
+	v := m.rented_via
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldRentedVia returns the old "rented_via" field's value of the Listing entity.
+// If the Listing object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ListingMutation) OldRentedVia(ctx context.Context) (v *listing.RentedVia, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldRentedVia is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldRentedVia requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldRentedVia: %w", err)
+	}
+	return oldValue.RentedVia, nil
+}
+
+// ClearRentedVia clears the value of the "rented_via" field.
+func (m *ListingMutation) ClearRentedVia() {
+	m.rented_via = nil
+	m.clearedFields[listing.FieldRentedVia] = struct{}{}
+}
+
+// RentedViaCleared returns if the "rented_via" field was cleared in this mutation.
+func (m *ListingMutation) RentedViaCleared() bool {
+	_, ok := m.clearedFields[listing.FieldRentedVia]
+	return ok
+}
+
+// ResetRentedVia resets all changes to the "rented_via" field.
+func (m *ListingMutation) ResetRentedVia() {
+	m.rented_via = nil
+	delete(m.clearedFields, listing.FieldRentedVia)
+}
+
 // ClearUnit clears the "unit" edge to the Unit entity.
 func (m *ListingMutation) ClearUnit() {
 	m.clearedunit = true
@@ -5657,7 +5857,7 @@ func (m *ListingMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *ListingMutation) Fields() []string {
-	fields := make([]string, 0, 19)
+	fields := make([]string, 0, 23)
 	if m.created_at != nil {
 		fields = append(fields, listing.FieldCreatedAt)
 	}
@@ -5715,6 +5915,18 @@ func (m *ListingMutation) Fields() []string {
 	if m.review_note != nil {
 		fields = append(fields, listing.FieldReviewNote)
 	}
+	if m.nudged_at != nil {
+		fields = append(fields, listing.FieldNudgedAt)
+	}
+	if m.stale_reported_at != nil {
+		fields = append(fields, listing.FieldStaleReportedAt)
+	}
+	if m.rented_at != nil {
+		fields = append(fields, listing.FieldRentedAt)
+	}
+	if m.rented_via != nil {
+		fields = append(fields, listing.FieldRentedVia)
+	}
 	return fields
 }
 
@@ -5761,6 +5973,14 @@ func (m *ListingMutation) Field(name string) (ent.Value, bool) {
 		return m.ReviewedBy()
 	case listing.FieldReviewNote:
 		return m.ReviewNote()
+	case listing.FieldNudgedAt:
+		return m.NudgedAt()
+	case listing.FieldStaleReportedAt:
+		return m.StaleReportedAt()
+	case listing.FieldRentedAt:
+		return m.RentedAt()
+	case listing.FieldRentedVia:
+		return m.RentedVia()
 	}
 	return nil, false
 }
@@ -5808,6 +6028,14 @@ func (m *ListingMutation) OldField(ctx context.Context, name string) (ent.Value,
 		return m.OldReviewedBy(ctx)
 	case listing.FieldReviewNote:
 		return m.OldReviewNote(ctx)
+	case listing.FieldNudgedAt:
+		return m.OldNudgedAt(ctx)
+	case listing.FieldStaleReportedAt:
+		return m.OldStaleReportedAt(ctx)
+	case listing.FieldRentedAt:
+		return m.OldRentedAt(ctx)
+	case listing.FieldRentedVia:
+		return m.OldRentedVia(ctx)
 	}
 	return nil, fmt.Errorf("unknown Listing field %s", name)
 }
@@ -5950,6 +6178,34 @@ func (m *ListingMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetReviewNote(v)
 		return nil
+	case listing.FieldNudgedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetNudgedAt(v)
+		return nil
+	case listing.FieldStaleReportedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetStaleReportedAt(v)
+		return nil
+	case listing.FieldRentedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetRentedAt(v)
+		return nil
+	case listing.FieldRentedVia:
+		v, ok := value.(listing.RentedVia)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetRentedVia(v)
+		return nil
 	}
 	return fmt.Errorf("unknown Listing field %s", name)
 }
@@ -6046,6 +6302,18 @@ func (m *ListingMutation) ClearedFields() []string {
 	if m.FieldCleared(listing.FieldReviewNote) {
 		fields = append(fields, listing.FieldReviewNote)
 	}
+	if m.FieldCleared(listing.FieldNudgedAt) {
+		fields = append(fields, listing.FieldNudgedAt)
+	}
+	if m.FieldCleared(listing.FieldStaleReportedAt) {
+		fields = append(fields, listing.FieldStaleReportedAt)
+	}
+	if m.FieldCleared(listing.FieldRentedAt) {
+		fields = append(fields, listing.FieldRentedAt)
+	}
+	if m.FieldCleared(listing.FieldRentedVia) {
+		fields = append(fields, listing.FieldRentedVia)
+	}
 	return fields
 }
 
@@ -6086,6 +6354,18 @@ func (m *ListingMutation) ClearField(name string) error {
 		return nil
 	case listing.FieldReviewNote:
 		m.ClearReviewNote()
+		return nil
+	case listing.FieldNudgedAt:
+		m.ClearNudgedAt()
+		return nil
+	case listing.FieldStaleReportedAt:
+		m.ClearStaleReportedAt()
+		return nil
+	case listing.FieldRentedAt:
+		m.ClearRentedAt()
+		return nil
+	case listing.FieldRentedVia:
+		m.ClearRentedVia()
 		return nil
 	}
 	return fmt.Errorf("unknown Listing nullable field %s", name)
@@ -6151,6 +6431,18 @@ func (m *ListingMutation) ResetField(name string) error {
 		return nil
 	case listing.FieldReviewNote:
 		m.ResetReviewNote()
+		return nil
+	case listing.FieldNudgedAt:
+		m.ResetNudgedAt()
+		return nil
+	case listing.FieldStaleReportedAt:
+		m.ResetStaleReportedAt()
+		return nil
+	case listing.FieldRentedAt:
+		m.ResetRentedAt()
+		return nil
+	case listing.FieldRentedVia:
+		m.ResetRentedVia()
 		return nil
 	}
 	return fmt.Errorf("unknown Listing field %s", name)

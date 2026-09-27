@@ -94,8 +94,8 @@ func TestPublicListingPage(t *testing.T) {
 	assert.Contains(t, page, `data-lat="`+strconv.FormatFloat(*p.ApproxLat, 'f', 5, 64)+`"`, "the map gets the approximate point")
 
 	// Rented: the link keeps working, marked unavailable and not indexed.
-	rec = ll.do("POST", "/listings/"+id+"/actions/mark_rented", url.Values{}, false)
-	require.Equal(t, http.StatusSeeOther, rec.Code)
+	rec = ll.do("POST", "/listings/"+id+"/rented", url.Values{"answer": {"rented"}, "via": {"unknown"}}, false)
+	require.Equal(t, http.StatusOK, rec.Code)
 	rec = anon.do("GET", canonical, nil, false)
 	require.Equal(t, http.StatusOK, rec.Code)
 	assert.Contains(t, rec.Body.String(), "has been rented")

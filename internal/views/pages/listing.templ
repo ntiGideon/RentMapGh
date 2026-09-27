@@ -34,6 +34,7 @@ type ListingPageView struct {
 	Similar                                []partials.ResultCard
 	Saved                                  bool
 	CanBook                                bool   // live, and not the viewer's own
+	SignedIn                               bool
 	ViewingURL                             string // booking form
 	MyViewingURL, MyViewingWhen            string // the viewer's open viewing, if any
 }
@@ -358,6 +359,21 @@ templ priceCard(v ListingPageView) {
 		}
 		<p class="px-5 py-3 text-xs text-fg-muted">Every fee is listed. Pay nothing before you've seen the place in person.</p>
 	</div>
+	if v.CanBook {
+		<div class="px-1 text-center text-xs text-fg-subtle">
+			if v.SignedIn {
+				<form method="post" action={ templ.SafeURL("/l/" + v.ID + "/rented-report") } hx-post={ "/l/" + v.ID + "/rented-report" } hx-swap="outerHTML" hx-confirm="Tell the lister you heard this place is already rented?">
+					<button type="submit" class="underline-offset-4 hover:text-fg hover:underline">Already rented? Tell us</button>
+				</form>
+			} else {
+				<a href={ templ.SafeURL("/login?next=/l/" + v.ID) } class="underline-offset-4 hover:text-fg hover:underline">Already rented? Tell us</a>
+			}
+		</div>
+	}
+}
+
+templ ReportedRented() {
+	<p class="text-xs text-fg-muted">Thanks — we've asked the lister to confirm.</p>
 }
 
 templ listerCard(l ListerCard) {

@@ -187,6 +187,10 @@ var (
 		{Name: "published_at", Type: field.TypeTime, Nullable: true},
 		{Name: "reviewed_by", Type: field.TypeUUID, Nullable: true},
 		{Name: "review_note", Type: field.TypeString, Nullable: true, Size: 500},
+		{Name: "nudged_at", Type: field.TypeTime, Nullable: true},
+		{Name: "stale_reported_at", Type: field.TypeTime, Nullable: true},
+		{Name: "rented_at", Type: field.TypeTime, Nullable: true},
+		{Name: "rented_via", Type: field.TypeEnum, Nullable: true, Enums: []string{"rentmap", "elsewhere", "unknown"}},
 		{Name: "unit_id", Type: field.TypeUUID},
 	}
 	// ListingsTable holds the schema information for the "listings" table.
@@ -197,7 +201,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "listings_units_listings",
-				Columns:    []*schema.Column{ListingsColumns[19]},
+				Columns:    []*schema.Column{ListingsColumns[23]},
 				RefColumns: []*schema.Column{UnitsColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
@@ -216,7 +220,7 @@ var (
 			{
 				Name:    "listing_unit_id",
 				Unique:  false,
-				Columns: []*schema.Column{ListingsColumns[19]},
+				Columns: []*schema.Column{ListingsColumns[23]},
 			},
 		},
 	}

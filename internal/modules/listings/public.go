@@ -57,6 +57,9 @@ func (s *Service) PublicListing(ctx context.Context, id, viewer uuid.UUID) (*Ite
 	if d.U == nil || d.P == nil || d.T == nil {
 		return nil, nil, ErrNotFound
 	}
+	if l.ListerID != viewer && Archived(l, s.now()) {
+		return nil, nil, ErrNotFound
+	}
 	u, err := s.db.User.Query().Where(user.ID(l.ListerID)).WithAgentProfile().WithLandlordProfile().Only(ctx)
 	if err != nil {
 		return nil, nil, fmt.Errorf("public listing: lister: %w", err)
@@ -119,27 +122,58 @@ func showsName(d *Item) bool {
 	return d.P.Name != "" && (d.P.Category == "hostel" || d.P.Category == "commercial")
 }
 
-// freshness words the last confirmation for renters.
-func freshness(d *Item, now time.Time) (string, bool) {
-	t := d.L.LastConfirmedAt
-	if t == nil {
-		t = d.L.PublishedAt
+// Availability timeline (ProjectRequirement §6.7; the availability
+// package runs it).
+const (
+	FreshFor     = 3 * 24 * time.Hour  // "Available · confirmed …"
+	ExpireAfter  = 14 * 24 * time.Hour // then hidden from search
+	ArchiveAfter = 30 * 24 * time.Hour // after expiring: public page closes
+)
+
+// Fresh reports whether a listing was confirmed within FreshFor and nobody
+// has since reported it rented.
+func Fresh(l *ent.Listing, now time.Time) bool {
+	if l.LastConfirmedAt == nil || now.Sub(*l.LastConfirmedAt) > FreshFor {
+		return false
 	}
+	return l.StaleReportedAt == nil || l.StaleReportedAt.Before(*l.LastConfirmedAt)
+}
+
+// Archived reports whether an expired listing has been left long enough
+// that its public page closes.
+func Archived(l *ent.Listing, now time.Time) bool {
+	if l.Status != listing.StatusExpired {
+		return false
+	}
+	t := l.LastConfirmedAt
 	if t == nil {
+		t = l.PublishedAt
+	}
+	return t != nil && now.Sub(*t) > ExpireAfter+ArchiveAfter
+}
+
+// freshness words availability for renters: fresh (green) or not.
+func freshness(d *Item, now time.Time) (string, bool) {
+	l := d.L
+	if l.Status != listing.StatusActive || l.LastConfirmedAt == nil {
 		return "", false
 	}
-	days := int(now.Sub(*t).Hours() / 24)
-	switch {
-	case days <= 0:
-		return "Confirmed available today", true
-	case days == 1:
-		return "Confirmed available yesterday", true
-	case days <= 7:
-		return "Confirmed available " + strconv.Itoa(days) + " days ago", true
-	case days <= 30:
-		return "Last confirmed " + strconv.Itoa(days) + " days ago", false
+	if Fresh(l, now) {
+		ago := now.Sub(*l.LastConfirmedAt)
+		switch {
+		case ago < time.Hour:
+			return "Available · confirmed just now", true
+		case ago < 24*time.Hour:
+			return "Available · confirmed " + strconv.Itoa(int(ago.Hours())) + " h ago", true
+		case ago < 48*time.Hour:
+			return "Available · confirmed yesterday", true
+		}
+		return "Available · confirmed " + strconv.Itoa(int(ago.Hours()/24)) + " days ago", true
 	}
-	return "Last confirmed " + t.Format("2 Jan 2006"), false
+	if l.StaleReportedAt != nil && l.StaleReportedAt.After(*l.LastConfirmedAt) {
+		return "A renter says it may be rented · waiting for the lister", false
+	}
+	return "Not recently confirmed", false
 }
 
 // publicView builds the page. It reads approx_* only; see the note above.

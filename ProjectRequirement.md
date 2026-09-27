@@ -555,8 +555,8 @@ Engineering:
 - [ ] Viewing slots, requests, accept/propose/decline, `.ics`, reminders (§6.8). *4a built everything except the 24 h / 2 h reminders (4d).*
 - [x] Exact location unlock on confirmation + "Navigate" deep links.
 - [ ] Post-viewing feedback prompts.
-- [ ] Availability freshness engine + one-tap WhatsApp/SMS confirmations (§6.7).
-- [ ] "Mark as rented" flow (with optional "Rented through RentMap?" question — your key success metric).
+- [x] Availability freshness engine + one-tap WhatsApp/SMS confirmations (§6.7). *SMS only; see §16.18.*
+- [x] "Mark as rented" flow (with optional "Rented through RentMap?" question — your key success metric).
 - [ ] Report listing / user / message flows. *Messages in 4b (with the moderator queue); listings and users in 4d.*
 - [ ] Notification centre (in-app) + SMS/WhatsApp/email channels + preferences.
 - [ ] Trust score v1 and badges.
@@ -1147,5 +1147,16 @@ Sky Mint is step 200 of its scale; Graphite is step 900. Darker mint steps exist
 | Reports | report button on every message; moderators see context | Report under any message from the other side (reason + note), one per reporter per message; `reports` table (typed for messages now, listings and users next); `/admin/reports` queue with the whole thread, the reported message highlighted, flags shown; action taken / dismiss | |
 | Attachments | attachment support | **Deferred**: text only for now | Photo attachments bring moderation and storage questions; the listing already carries photos |
 | Limits | — | 20 new conversations a day, 20 messages a minute per user, 2,000 characters | |
+
+### 16.18 Decisions taken while building Phase 4 (slice 4c — availability)
+
+| Area | Plan said | Built | Why |
+| --- | --- | --- | --- |
+| States | Fresh ≤3 d · Ageing 3–14 d · Paused >14 d (hidden, lister told) · Expired >30 d paused (archived) | Fresh ≤3 d (green "Available · confirmed 2 h ago", ranked first in Recommended) · not recently confirmed after that (amber) · at 14 d the `expired` status (hidden from search, SMS) · 30 d later "archived": the public page 404s for everyone but the lister. `paused` stays the lister's own choice | Reuses the existing state machine; "archived" is computed, no extra status |
+| Nudges | River job, WhatsApp/SMS one-tap | An hourly in-process job (`availability.Sweep`): first "still available?" SMS when a listing starts ageing, again every 7 days, only 7:00–20:00 (Ghana is GMT). WhatsApp later, with the Business API | River isn't in the stack; SMS reaches every phone |
+| Links | signed short links, no login | `/c/{token}`: listing ID + expiry (10 days), HMAC-signed with AUTH_SECRET (domain-separated), ~40 characters. Opening it changes nothing; the page offers **Yes, still available / It's rented / Pause it**, applied by POST. `Referrer-Policy: no-referrer` on the page | SMS apps and link previewers fetch links on their own |
+| Renter reports | "already rented" → Ageing, ask the lister | Signed-in renters (not the lister) tap "Already rented? Tell us" under the price: the listing loses its green badge at once ("A renter says it may be rented · waiting for the lister"), the report is stored, and the lister is texted (at most every 12 h, daytime). One report per renter per listing a month | Sign-in stops drive-by sabotage |
+| Rented | "Rented through RentMap?" | Every way of marking rented (the SMS page, "Mark rented" in Your listings) asks first — Yes, through RentMap / No, somewhere else / Rather not say — then changes the status. `rented_at` + `rented_via` stored; open viewings are declined and those renters texted | The key success metric, asked at the one moment the lister knows |
+| Your listings | — | Live listings that aren't fresh show an amber hint and a "Still available" button (`confirm`); resuming or relisting also counts as confirming and clears renter reports | |
 
 Phase 0 engineering status: repo skeleton, Compose dev stack (PostGIS + pgvector image, Mailpit, Valhalla behind a profile), config, slog, request IDs, graceful shutdown, `/healthz` + `/readyz`, Ent + migrations, design tokens + first components, landing page with waitlist, tests, CI and the production Dockerfile/Compose/Caddy are done. Still open: staging VPS + Cloudflare, i18n scaffolding, product/legal tasks.

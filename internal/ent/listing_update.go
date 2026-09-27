@@ -308,6 +308,86 @@ func (_u *ListingUpdate) ClearReviewNote() *ListingUpdate {
 	return _u
 }
 
+// SetNudgedAt sets the "nudged_at" field.
+func (_u *ListingUpdate) SetNudgedAt(v time.Time) *ListingUpdate {
+	_u.mutation.SetNudgedAt(v)
+	return _u
+}
+
+// SetNillableNudgedAt sets the "nudged_at" field if the given value is not nil.
+func (_u *ListingUpdate) SetNillableNudgedAt(v *time.Time) *ListingUpdate {
+	if v != nil {
+		_u.SetNudgedAt(*v)
+	}
+	return _u
+}
+
+// ClearNudgedAt clears the value of the "nudged_at" field.
+func (_u *ListingUpdate) ClearNudgedAt() *ListingUpdate {
+	_u.mutation.ClearNudgedAt()
+	return _u
+}
+
+// SetStaleReportedAt sets the "stale_reported_at" field.
+func (_u *ListingUpdate) SetStaleReportedAt(v time.Time) *ListingUpdate {
+	_u.mutation.SetStaleReportedAt(v)
+	return _u
+}
+
+// SetNillableStaleReportedAt sets the "stale_reported_at" field if the given value is not nil.
+func (_u *ListingUpdate) SetNillableStaleReportedAt(v *time.Time) *ListingUpdate {
+	if v != nil {
+		_u.SetStaleReportedAt(*v)
+	}
+	return _u
+}
+
+// ClearStaleReportedAt clears the value of the "stale_reported_at" field.
+func (_u *ListingUpdate) ClearStaleReportedAt() *ListingUpdate {
+	_u.mutation.ClearStaleReportedAt()
+	return _u
+}
+
+// SetRentedAt sets the "rented_at" field.
+func (_u *ListingUpdate) SetRentedAt(v time.Time) *ListingUpdate {
+	_u.mutation.SetRentedAt(v)
+	return _u
+}
+
+// SetNillableRentedAt sets the "rented_at" field if the given value is not nil.
+func (_u *ListingUpdate) SetNillableRentedAt(v *time.Time) *ListingUpdate {
+	if v != nil {
+		_u.SetRentedAt(*v)
+	}
+	return _u
+}
+
+// ClearRentedAt clears the value of the "rented_at" field.
+func (_u *ListingUpdate) ClearRentedAt() *ListingUpdate {
+	_u.mutation.ClearRentedAt()
+	return _u
+}
+
+// SetRentedVia sets the "rented_via" field.
+func (_u *ListingUpdate) SetRentedVia(v listing.RentedVia) *ListingUpdate {
+	_u.mutation.SetRentedVia(v)
+	return _u
+}
+
+// SetNillableRentedVia sets the "rented_via" field if the given value is not nil.
+func (_u *ListingUpdate) SetNillableRentedVia(v *listing.RentedVia) *ListingUpdate {
+	if v != nil {
+		_u.SetRentedVia(*v)
+	}
+	return _u
+}
+
+// ClearRentedVia clears the value of the "rented_via" field.
+func (_u *ListingUpdate) ClearRentedVia() *ListingUpdate {
+	_u.mutation.ClearRentedVia()
+	return _u
+}
+
 // SetTermsID sets the "terms" edge to the ListingTerms entity by ID.
 func (_u *ListingUpdate) SetTermsID(id uuid.UUID) *ListingUpdate {
 	_u.mutation.SetTermsID(id)
@@ -452,6 +532,11 @@ func (_u *ListingUpdate) check() error {
 			return &ValidationError{Name: "review_note", err: fmt.Errorf(`ent: validator failed for field "Listing.review_note": %w`, err)}
 		}
 	}
+	if v, ok := _u.mutation.RentedVia(); ok {
+		if err := listing.RentedViaValidator(v); err != nil {
+			return &ValidationError{Name: "rented_via", err: fmt.Errorf(`ent: validator failed for field "Listing.rented_via": %w`, err)}
+		}
+	}
 	if _u.mutation.UnitCleared() && len(_u.mutation.UnitIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "Listing.unit"`)
 	}
@@ -550,6 +635,30 @@ func (_u *ListingUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	}
 	if _u.mutation.ReviewNoteCleared() {
 		_spec.ClearField(listing.FieldReviewNote, field.TypeString)
+	}
+	if value, ok := _u.mutation.NudgedAt(); ok {
+		_spec.SetField(listing.FieldNudgedAt, field.TypeTime, value)
+	}
+	if _u.mutation.NudgedAtCleared() {
+		_spec.ClearField(listing.FieldNudgedAt, field.TypeTime)
+	}
+	if value, ok := _u.mutation.StaleReportedAt(); ok {
+		_spec.SetField(listing.FieldStaleReportedAt, field.TypeTime, value)
+	}
+	if _u.mutation.StaleReportedAtCleared() {
+		_spec.ClearField(listing.FieldStaleReportedAt, field.TypeTime)
+	}
+	if value, ok := _u.mutation.RentedAt(); ok {
+		_spec.SetField(listing.FieldRentedAt, field.TypeTime, value)
+	}
+	if _u.mutation.RentedAtCleared() {
+		_spec.ClearField(listing.FieldRentedAt, field.TypeTime)
+	}
+	if value, ok := _u.mutation.RentedVia(); ok {
+		_spec.SetField(listing.FieldRentedVia, field.TypeEnum, value)
+	}
+	if _u.mutation.RentedViaCleared() {
+		_spec.ClearField(listing.FieldRentedVia, field.TypeEnum)
 	}
 	if _u.mutation.TermsCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -922,6 +1031,86 @@ func (_u *ListingUpdateOne) ClearReviewNote() *ListingUpdateOne {
 	return _u
 }
 
+// SetNudgedAt sets the "nudged_at" field.
+func (_u *ListingUpdateOne) SetNudgedAt(v time.Time) *ListingUpdateOne {
+	_u.mutation.SetNudgedAt(v)
+	return _u
+}
+
+// SetNillableNudgedAt sets the "nudged_at" field if the given value is not nil.
+func (_u *ListingUpdateOne) SetNillableNudgedAt(v *time.Time) *ListingUpdateOne {
+	if v != nil {
+		_u.SetNudgedAt(*v)
+	}
+	return _u
+}
+
+// ClearNudgedAt clears the value of the "nudged_at" field.
+func (_u *ListingUpdateOne) ClearNudgedAt() *ListingUpdateOne {
+	_u.mutation.ClearNudgedAt()
+	return _u
+}
+
+// SetStaleReportedAt sets the "stale_reported_at" field.
+func (_u *ListingUpdateOne) SetStaleReportedAt(v time.Time) *ListingUpdateOne {
+	_u.mutation.SetStaleReportedAt(v)
+	return _u
+}
+
+// SetNillableStaleReportedAt sets the "stale_reported_at" field if the given value is not nil.
+func (_u *ListingUpdateOne) SetNillableStaleReportedAt(v *time.Time) *ListingUpdateOne {
+	if v != nil {
+		_u.SetStaleReportedAt(*v)
+	}
+	return _u
+}
+
+// ClearStaleReportedAt clears the value of the "stale_reported_at" field.
+func (_u *ListingUpdateOne) ClearStaleReportedAt() *ListingUpdateOne {
+	_u.mutation.ClearStaleReportedAt()
+	return _u
+}
+
+// SetRentedAt sets the "rented_at" field.
+func (_u *ListingUpdateOne) SetRentedAt(v time.Time) *ListingUpdateOne {
+	_u.mutation.SetRentedAt(v)
+	return _u
+}
+
+// SetNillableRentedAt sets the "rented_at" field if the given value is not nil.
+func (_u *ListingUpdateOne) SetNillableRentedAt(v *time.Time) *ListingUpdateOne {
+	if v != nil {
+		_u.SetRentedAt(*v)
+	}
+	return _u
+}
+
+// ClearRentedAt clears the value of the "rented_at" field.
+func (_u *ListingUpdateOne) ClearRentedAt() *ListingUpdateOne {
+	_u.mutation.ClearRentedAt()
+	return _u
+}
+
+// SetRentedVia sets the "rented_via" field.
+func (_u *ListingUpdateOne) SetRentedVia(v listing.RentedVia) *ListingUpdateOne {
+	_u.mutation.SetRentedVia(v)
+	return _u
+}
+
+// SetNillableRentedVia sets the "rented_via" field if the given value is not nil.
+func (_u *ListingUpdateOne) SetNillableRentedVia(v *listing.RentedVia) *ListingUpdateOne {
+	if v != nil {
+		_u.SetRentedVia(*v)
+	}
+	return _u
+}
+
+// ClearRentedVia clears the value of the "rented_via" field.
+func (_u *ListingUpdateOne) ClearRentedVia() *ListingUpdateOne {
+	_u.mutation.ClearRentedVia()
+	return _u
+}
+
 // SetTermsID sets the "terms" edge to the ListingTerms entity by ID.
 func (_u *ListingUpdateOne) SetTermsID(id uuid.UUID) *ListingUpdateOne {
 	_u.mutation.SetTermsID(id)
@@ -1079,6 +1268,11 @@ func (_u *ListingUpdateOne) check() error {
 			return &ValidationError{Name: "review_note", err: fmt.Errorf(`ent: validator failed for field "Listing.review_note": %w`, err)}
 		}
 	}
+	if v, ok := _u.mutation.RentedVia(); ok {
+		if err := listing.RentedViaValidator(v); err != nil {
+			return &ValidationError{Name: "rented_via", err: fmt.Errorf(`ent: validator failed for field "Listing.rented_via": %w`, err)}
+		}
+	}
 	if _u.mutation.UnitCleared() && len(_u.mutation.UnitIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "Listing.unit"`)
 	}
@@ -1194,6 +1388,30 @@ func (_u *ListingUpdateOne) sqlSave(ctx context.Context) (_node *Listing, err er
 	}
 	if _u.mutation.ReviewNoteCleared() {
 		_spec.ClearField(listing.FieldReviewNote, field.TypeString)
+	}
+	if value, ok := _u.mutation.NudgedAt(); ok {
+		_spec.SetField(listing.FieldNudgedAt, field.TypeTime, value)
+	}
+	if _u.mutation.NudgedAtCleared() {
+		_spec.ClearField(listing.FieldNudgedAt, field.TypeTime)
+	}
+	if value, ok := _u.mutation.StaleReportedAt(); ok {
+		_spec.SetField(listing.FieldStaleReportedAt, field.TypeTime, value)
+	}
+	if _u.mutation.StaleReportedAtCleared() {
+		_spec.ClearField(listing.FieldStaleReportedAt, field.TypeTime)
+	}
+	if value, ok := _u.mutation.RentedAt(); ok {
+		_spec.SetField(listing.FieldRentedAt, field.TypeTime, value)
+	}
+	if _u.mutation.RentedAtCleared() {
+		_spec.ClearField(listing.FieldRentedAt, field.TypeTime)
+	}
+	if value, ok := _u.mutation.RentedVia(); ok {
+		_spec.SetField(listing.FieldRentedVia, field.TypeEnum, value)
+	}
+	if _u.mutation.RentedViaCleared() {
+		_spec.ClearField(listing.FieldRentedVia, field.TypeEnum)
 	}
 	if _u.mutation.TermsCleared() {
 		edge := &sqlgraph.EdgeSpec{

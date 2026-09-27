@@ -54,6 +54,14 @@ const (
 	FieldReviewedBy = "reviewed_by"
 	// FieldReviewNote holds the string denoting the review_note field in the database.
 	FieldReviewNote = "review_note"
+	// FieldNudgedAt holds the string denoting the nudged_at field in the database.
+	FieldNudgedAt = "nudged_at"
+	// FieldStaleReportedAt holds the string denoting the stale_reported_at field in the database.
+	FieldStaleReportedAt = "stale_reported_at"
+	// FieldRentedAt holds the string denoting the rented_at field in the database.
+	FieldRentedAt = "rented_at"
+	// FieldRentedVia holds the string denoting the rented_via field in the database.
+	FieldRentedVia = "rented_via"
 	// EdgeUnit holds the string denoting the unit edge name in mutations.
 	EdgeUnit = "unit"
 	// EdgeTerms holds the string denoting the terms edge name in mutations.
@@ -107,6 +115,10 @@ var Columns = []string{
 	FieldPublishedAt,
 	FieldReviewedBy,
 	FieldReviewNote,
+	FieldNudgedAt,
+	FieldStaleReportedAt,
+	FieldRentedAt,
+	FieldRentedVia,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -203,6 +215,30 @@ func StatusValidator(s Status) error {
 		return nil
 	default:
 		return fmt.Errorf("listing: invalid enum value for status field: %q", s)
+	}
+}
+
+// RentedVia defines the type for the "rented_via" enum field.
+type RentedVia string
+
+// RentedVia values.
+const (
+	RentedViaRentmap   RentedVia = "rentmap"
+	RentedViaElsewhere RentedVia = "elsewhere"
+	RentedViaUnknown   RentedVia = "unknown"
+)
+
+func (rv RentedVia) String() string {
+	return string(rv)
+}
+
+// RentedViaValidator is a validator for the "rented_via" field enum values. It is called by the builders before save.
+func RentedViaValidator(rv RentedVia) error {
+	switch rv {
+	case RentedViaRentmap, RentedViaElsewhere, RentedViaUnknown:
+		return nil
+	default:
+		return fmt.Errorf("listing: invalid enum value for rented_via field: %q", rv)
 	}
 }
 
@@ -307,6 +343,26 @@ func ByReviewedBy(opts ...sql.OrderTermOption) OrderOption {
 // ByReviewNote orders the results by the review_note field.
 func ByReviewNote(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldReviewNote, opts...).ToFunc()
+}
+
+// ByNudgedAt orders the results by the nudged_at field.
+func ByNudgedAt(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldNudgedAt, opts...).ToFunc()
+}
+
+// ByStaleReportedAt orders the results by the stale_reported_at field.
+func ByStaleReportedAt(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldStaleReportedAt, opts...).ToFunc()
+}
+
+// ByRentedAt orders the results by the rented_at field.
+func ByRentedAt(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldRentedAt, opts...).ToFunc()
+}
+
+// ByRentedVia orders the results by the rented_via field.
+func ByRentedVia(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldRentedVia, opts...).ToFunc()
 }
 
 // ByUnitField orders the results by unit field.

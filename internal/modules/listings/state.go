@@ -33,6 +33,9 @@ const (
 	EvRelist           Event = "relist"
 	EvExpire           Event = "expire" // system: not confirmed for 30+ days
 	EvRemove           Event = "remove" // moderator takedown
+	// EvConfirm isn't a transition: the lister says a live listing is still
+	// available (availability freshness).
+	EvConfirm Event = "confirm"
 )
 
 var ErrTransition = errors.New("listings: transition not allowed")

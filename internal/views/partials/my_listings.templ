@@ -21,6 +21,7 @@ type ListingCardView struct {
 	CoverURL                    string
 	Photos                      int
 	IsAgent                     bool
+	Stale                       bool // live but not confirmed recently
 	Authority                   string // mandates.State, agent listings only
 }
 
@@ -155,6 +156,9 @@ templ listingCard(it ListingCardView) {
 						</div>
 					}
 				</div>
+				if it.Stale {
+					<p class="mt-2 rounded-md bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:bg-amber-400/10 dark:text-amber-200">Not confirmed recently. Tap “Still available” to stay at the top of search — unconfirmed places leave search after 2 weeks.</p>
+				}
 				if it.ReviewNote != "" {
 					<p class="mt-2 rounded-md bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:bg-amber-400/10 dark:text-amber-200">{ it.ReviewNote }</p>
 				}

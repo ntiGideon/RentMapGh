@@ -175,6 +175,10 @@ var schemaGraph = func() *sqlgraph.Schema {
 			listing.FieldPublishedAt:     {Type: field.TypeTime, Column: listing.FieldPublishedAt},
 			listing.FieldReviewedBy:      {Type: field.TypeUUID, Column: listing.FieldReviewedBy},
 			listing.FieldReviewNote:      {Type: field.TypeString, Column: listing.FieldReviewNote},
+			listing.FieldNudgedAt:        {Type: field.TypeTime, Column: listing.FieldNudgedAt},
+			listing.FieldStaleReportedAt: {Type: field.TypeTime, Column: listing.FieldStaleReportedAt},
+			listing.FieldRentedAt:        {Type: field.TypeTime, Column: listing.FieldRentedAt},
+			listing.FieldRentedVia:       {Type: field.TypeEnum, Column: listing.FieldRentedVia},
 		},
 	}
 	graph.Nodes[6] = &sqlgraph.Node{
@@ -1371,6 +1375,26 @@ func (f *ListingFilter) WhereReviewedBy(p entql.ValueP) {
 // WhereReviewNote applies the entql string predicate on the review_note field.
 func (f *ListingFilter) WhereReviewNote(p entql.StringP) {
 	f.Where(p.Field(listing.FieldReviewNote))
+}
+
+// WhereNudgedAt applies the entql time.Time predicate on the nudged_at field.
+func (f *ListingFilter) WhereNudgedAt(p entql.TimeP) {
+	f.Where(p.Field(listing.FieldNudgedAt))
+}
+
+// WhereStaleReportedAt applies the entql time.Time predicate on the stale_reported_at field.
+func (f *ListingFilter) WhereStaleReportedAt(p entql.TimeP) {
+	f.Where(p.Field(listing.FieldStaleReportedAt))
+}
+
+// WhereRentedAt applies the entql time.Time predicate on the rented_at field.
+func (f *ListingFilter) WhereRentedAt(p entql.TimeP) {
+	f.Where(p.Field(listing.FieldRentedAt))
+}
+
+// WhereRentedVia applies the entql string predicate on the rented_via field.
+func (f *ListingFilter) WhereRentedVia(p entql.StringP) {
+	f.Where(p.Field(listing.FieldRentedVia))
 }
 
 // WhereHasUnit applies a predicate to check if query has an edge unit.

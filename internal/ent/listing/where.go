@@ -141,6 +141,21 @@ func ReviewNote(v string) predicate.Listing {
 	return predicate.Listing(sql.FieldEQ(FieldReviewNote, v))
 }
 
+// NudgedAt applies equality check predicate on the "nudged_at" field. It's identical to NudgedAtEQ.
+func NudgedAt(v time.Time) predicate.Listing {
+	return predicate.Listing(sql.FieldEQ(FieldNudgedAt, v))
+}
+
+// StaleReportedAt applies equality check predicate on the "stale_reported_at" field. It's identical to StaleReportedAtEQ.
+func StaleReportedAt(v time.Time) predicate.Listing {
+	return predicate.Listing(sql.FieldEQ(FieldStaleReportedAt, v))
+}
+
+// RentedAt applies equality check predicate on the "rented_at" field. It's identical to RentedAtEQ.
+func RentedAt(v time.Time) predicate.Listing {
+	return predicate.Listing(sql.FieldEQ(FieldRentedAt, v))
+}
+
 // CreatedAtEQ applies the EQ predicate on the "created_at" field.
 func CreatedAtEQ(v time.Time) predicate.Listing {
 	return predicate.Listing(sql.FieldEQ(FieldCreatedAt, v))
@@ -1029,6 +1044,186 @@ func ReviewNoteEqualFold(v string) predicate.Listing {
 // ReviewNoteContainsFold applies the ContainsFold predicate on the "review_note" field.
 func ReviewNoteContainsFold(v string) predicate.Listing {
 	return predicate.Listing(sql.FieldContainsFold(FieldReviewNote, v))
+}
+
+// NudgedAtEQ applies the EQ predicate on the "nudged_at" field.
+func NudgedAtEQ(v time.Time) predicate.Listing {
+	return predicate.Listing(sql.FieldEQ(FieldNudgedAt, v))
+}
+
+// NudgedAtNEQ applies the NEQ predicate on the "nudged_at" field.
+func NudgedAtNEQ(v time.Time) predicate.Listing {
+	return predicate.Listing(sql.FieldNEQ(FieldNudgedAt, v))
+}
+
+// NudgedAtIn applies the In predicate on the "nudged_at" field.
+func NudgedAtIn(vs ...time.Time) predicate.Listing {
+	return predicate.Listing(sql.FieldIn(FieldNudgedAt, vs...))
+}
+
+// NudgedAtNotIn applies the NotIn predicate on the "nudged_at" field.
+func NudgedAtNotIn(vs ...time.Time) predicate.Listing {
+	return predicate.Listing(sql.FieldNotIn(FieldNudgedAt, vs...))
+}
+
+// NudgedAtGT applies the GT predicate on the "nudged_at" field.
+func NudgedAtGT(v time.Time) predicate.Listing {
+	return predicate.Listing(sql.FieldGT(FieldNudgedAt, v))
+}
+
+// NudgedAtGTE applies the GTE predicate on the "nudged_at" field.
+func NudgedAtGTE(v time.Time) predicate.Listing {
+	return predicate.Listing(sql.FieldGTE(FieldNudgedAt, v))
+}
+
+// NudgedAtLT applies the LT predicate on the "nudged_at" field.
+func NudgedAtLT(v time.Time) predicate.Listing {
+	return predicate.Listing(sql.FieldLT(FieldNudgedAt, v))
+}
+
+// NudgedAtLTE applies the LTE predicate on the "nudged_at" field.
+func NudgedAtLTE(v time.Time) predicate.Listing {
+	return predicate.Listing(sql.FieldLTE(FieldNudgedAt, v))
+}
+
+// NudgedAtIsNil applies the IsNil predicate on the "nudged_at" field.
+func NudgedAtIsNil() predicate.Listing {
+	return predicate.Listing(sql.FieldIsNull(FieldNudgedAt))
+}
+
+// NudgedAtNotNil applies the NotNil predicate on the "nudged_at" field.
+func NudgedAtNotNil() predicate.Listing {
+	return predicate.Listing(sql.FieldNotNull(FieldNudgedAt))
+}
+
+// StaleReportedAtEQ applies the EQ predicate on the "stale_reported_at" field.
+func StaleReportedAtEQ(v time.Time) predicate.Listing {
+	return predicate.Listing(sql.FieldEQ(FieldStaleReportedAt, v))
+}
+
+// StaleReportedAtNEQ applies the NEQ predicate on the "stale_reported_at" field.
+func StaleReportedAtNEQ(v time.Time) predicate.Listing {
+	return predicate.Listing(sql.FieldNEQ(FieldStaleReportedAt, v))
+}
+
+// StaleReportedAtIn applies the In predicate on the "stale_reported_at" field.
+func StaleReportedAtIn(vs ...time.Time) predicate.Listing {
+	return predicate.Listing(sql.FieldIn(FieldStaleReportedAt, vs...))
+}
+
+// StaleReportedAtNotIn applies the NotIn predicate on the "stale_reported_at" field.
+func StaleReportedAtNotIn(vs ...time.Time) predicate.Listing {
+	return predicate.Listing(sql.FieldNotIn(FieldStaleReportedAt, vs...))
+}
+
+// StaleReportedAtGT applies the GT predicate on the "stale_reported_at" field.
+func StaleReportedAtGT(v time.Time) predicate.Listing {
+	return predicate.Listing(sql.FieldGT(FieldStaleReportedAt, v))
+}
+
+// StaleReportedAtGTE applies the GTE predicate on the "stale_reported_at" field.
+func StaleReportedAtGTE(v time.Time) predicate.Listing {
+	return predicate.Listing(sql.FieldGTE(FieldStaleReportedAt, v))
+}
+
+// StaleReportedAtLT applies the LT predicate on the "stale_reported_at" field.
+func StaleReportedAtLT(v time.Time) predicate.Listing {
+	return predicate.Listing(sql.FieldLT(FieldStaleReportedAt, v))
+}
+
+// StaleReportedAtLTE applies the LTE predicate on the "stale_reported_at" field.
+func StaleReportedAtLTE(v time.Time) predicate.Listing {
+	return predicate.Listing(sql.FieldLTE(FieldStaleReportedAt, v))
+}
+
+// StaleReportedAtIsNil applies the IsNil predicate on the "stale_reported_at" field.
+func StaleReportedAtIsNil() predicate.Listing {
+	return predicate.Listing(sql.FieldIsNull(FieldStaleReportedAt))
+}
+
+// StaleReportedAtNotNil applies the NotNil predicate on the "stale_reported_at" field.
+func StaleReportedAtNotNil() predicate.Listing {
+	return predicate.Listing(sql.FieldNotNull(FieldStaleReportedAt))
+}
+
+// RentedAtEQ applies the EQ predicate on the "rented_at" field.
+func RentedAtEQ(v time.Time) predicate.Listing {
+	return predicate.Listing(sql.FieldEQ(FieldRentedAt, v))
+}
+
+// RentedAtNEQ applies the NEQ predicate on the "rented_at" field.
+func RentedAtNEQ(v time.Time) predicate.Listing {
+	return predicate.Listing(sql.FieldNEQ(FieldRentedAt, v))
+}
+
+// RentedAtIn applies the In predicate on the "rented_at" field.
+func RentedAtIn(vs ...time.Time) predicate.Listing {
+	return predicate.Listing(sql.FieldIn(FieldRentedAt, vs...))
+}
+
+// RentedAtNotIn applies the NotIn predicate on the "rented_at" field.
+func RentedAtNotIn(vs ...time.Time) predicate.Listing {
+	return predicate.Listing(sql.FieldNotIn(FieldRentedAt, vs...))
+}
+
+// RentedAtGT applies the GT predicate on the "rented_at" field.
+func RentedAtGT(v time.Time) predicate.Listing {
+	return predicate.Listing(sql.FieldGT(FieldRentedAt, v))
+}
+
+// RentedAtGTE applies the GTE predicate on the "rented_at" field.
+func RentedAtGTE(v time.Time) predicate.Listing {
+	return predicate.Listing(sql.FieldGTE(FieldRentedAt, v))
+}
+
+// RentedAtLT applies the LT predicate on the "rented_at" field.
+func RentedAtLT(v time.Time) predicate.Listing {
+	return predicate.Listing(sql.FieldLT(FieldRentedAt, v))
+}
+
+// RentedAtLTE applies the LTE predicate on the "rented_at" field.
+func RentedAtLTE(v time.Time) predicate.Listing {
+	return predicate.Listing(sql.FieldLTE(FieldRentedAt, v))
+}
+
+// RentedAtIsNil applies the IsNil predicate on the "rented_at" field.
+func RentedAtIsNil() predicate.Listing {
+	return predicate.Listing(sql.FieldIsNull(FieldRentedAt))
+}
+
+// RentedAtNotNil applies the NotNil predicate on the "rented_at" field.
+func RentedAtNotNil() predicate.Listing {
+	return predicate.Listing(sql.FieldNotNull(FieldRentedAt))
+}
+
+// RentedViaEQ applies the EQ predicate on the "rented_via" field.
+func RentedViaEQ(v RentedVia) predicate.Listing {
+	return predicate.Listing(sql.FieldEQ(FieldRentedVia, v))
+}
+
+// RentedViaNEQ applies the NEQ predicate on the "rented_via" field.
+func RentedViaNEQ(v RentedVia) predicate.Listing {
+	return predicate.Listing(sql.FieldNEQ(FieldRentedVia, v))
+}
+
+// RentedViaIn applies the In predicate on the "rented_via" field.
+func RentedViaIn(vs ...RentedVia) predicate.Listing {
+	return predicate.Listing(sql.FieldIn(FieldRentedVia, vs...))
+}
+
+// RentedViaNotIn applies the NotIn predicate on the "rented_via" field.
+func RentedViaNotIn(vs ...RentedVia) predicate.Listing {
+	return predicate.Listing(sql.FieldNotIn(FieldRentedVia, vs...))
+}
+
+// RentedViaIsNil applies the IsNil predicate on the "rented_via" field.
+func RentedViaIsNil() predicate.Listing {
+	return predicate.Listing(sql.FieldIsNull(FieldRentedVia))
+}
+
+// RentedViaNotNil applies the NotNil predicate on the "rented_via" field.
+func RentedViaNotNil() predicate.Listing {
+	return predicate.Listing(sql.FieldNotNull(FieldRentedVia))
 }
 
 // HasUnit applies the HasEdge predicate on the "unit" edge.

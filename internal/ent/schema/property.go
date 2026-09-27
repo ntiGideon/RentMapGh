@@ -105,6 +105,11 @@ func (Listing) Fields() []ent.Field {
 		field.Time("published_at").Optional().Nillable(),
 		field.UUID("reviewed_by", uuid.UUID{}).Optional().Nillable(),
 		field.String("review_note").MaxLen(500).Optional().Comment("moderator's note when sending back"),
+		// Availability (ProjectRequirement §6.7).
+		field.Time("nudged_at").Optional().Nillable().Comment("last \"still available?\" SMS"),
+		field.Time("stale_reported_at").Optional().Nillable().Comment("a renter said it's already rented"),
+		field.Time("rented_at").Optional().Nillable(),
+		field.Enum("rented_via").Values("rentmap", "elsewhere", "unknown").Optional().Nillable().Comment("\"Did you find your tenant through RentMap?\" — the key success metric"),
 	}
 }
 

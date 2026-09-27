@@ -269,6 +269,62 @@ func (_c *ListingCreate) SetNillableReviewNote(v *string) *ListingCreate {
 	return _c
 }
 
+// SetNudgedAt sets the "nudged_at" field.
+func (_c *ListingCreate) SetNudgedAt(v time.Time) *ListingCreate {
+	_c.mutation.SetNudgedAt(v)
+	return _c
+}
+
+// SetNillableNudgedAt sets the "nudged_at" field if the given value is not nil.
+func (_c *ListingCreate) SetNillableNudgedAt(v *time.Time) *ListingCreate {
+	if v != nil {
+		_c.SetNudgedAt(*v)
+	}
+	return _c
+}
+
+// SetStaleReportedAt sets the "stale_reported_at" field.
+func (_c *ListingCreate) SetStaleReportedAt(v time.Time) *ListingCreate {
+	_c.mutation.SetStaleReportedAt(v)
+	return _c
+}
+
+// SetNillableStaleReportedAt sets the "stale_reported_at" field if the given value is not nil.
+func (_c *ListingCreate) SetNillableStaleReportedAt(v *time.Time) *ListingCreate {
+	if v != nil {
+		_c.SetStaleReportedAt(*v)
+	}
+	return _c
+}
+
+// SetRentedAt sets the "rented_at" field.
+func (_c *ListingCreate) SetRentedAt(v time.Time) *ListingCreate {
+	_c.mutation.SetRentedAt(v)
+	return _c
+}
+
+// SetNillableRentedAt sets the "rented_at" field if the given value is not nil.
+func (_c *ListingCreate) SetNillableRentedAt(v *time.Time) *ListingCreate {
+	if v != nil {
+		_c.SetRentedAt(*v)
+	}
+	return _c
+}
+
+// SetRentedVia sets the "rented_via" field.
+func (_c *ListingCreate) SetRentedVia(v listing.RentedVia) *ListingCreate {
+	_c.mutation.SetRentedVia(v)
+	return _c
+}
+
+// SetNillableRentedVia sets the "rented_via" field if the given value is not nil.
+func (_c *ListingCreate) SetNillableRentedVia(v *listing.RentedVia) *ListingCreate {
+	if v != nil {
+		_c.SetRentedVia(*v)
+	}
+	return _c
+}
+
 // SetID sets the "id" field.
 func (_c *ListingCreate) SetID(v uuid.UUID) *ListingCreate {
 	_c.mutation.SetID(v)
@@ -468,6 +524,11 @@ func (_c *ListingCreate) check() error {
 			return &ValidationError{Name: "review_note", err: fmt.Errorf(`ent: validator failed for field "Listing.review_note": %w`, err)}
 		}
 	}
+	if v, ok := _c.mutation.RentedVia(); ok {
+		if err := listing.RentedViaValidator(v); err != nil {
+			return &ValidationError{Name: "rented_via", err: fmt.Errorf(`ent: validator failed for field "Listing.rented_via": %w`, err)}
+		}
+	}
 	if len(_c.mutation.UnitIDs()) == 0 {
 		return &ValidationError{Name: "unit", err: errors.New(`ent: missing required edge "Listing.unit"`)}
 	}
@@ -578,6 +639,22 @@ func (_c *ListingCreate) createSpec() (*Listing, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.ReviewNote(); ok {
 		_spec.SetField(listing.FieldReviewNote, field.TypeString, value)
 		_node.ReviewNote = value
+	}
+	if value, ok := _c.mutation.NudgedAt(); ok {
+		_spec.SetField(listing.FieldNudgedAt, field.TypeTime, value)
+		_node.NudgedAt = &value
+	}
+	if value, ok := _c.mutation.StaleReportedAt(); ok {
+		_spec.SetField(listing.FieldStaleReportedAt, field.TypeTime, value)
+		_node.StaleReportedAt = &value
+	}
+	if value, ok := _c.mutation.RentedAt(); ok {
+		_spec.SetField(listing.FieldRentedAt, field.TypeTime, value)
+		_node.RentedAt = &value
+	}
+	if value, ok := _c.mutation.RentedVia(); ok {
+		_spec.SetField(listing.FieldRentedVia, field.TypeEnum, value)
+		_node.RentedVia = &value
 	}
 	if nodes := _c.mutation.UnitIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -932,6 +1009,78 @@ func (u *ListingUpsert) ClearReviewNote() *ListingUpsert {
 	return u
 }
 
+// SetNudgedAt sets the "nudged_at" field.
+func (u *ListingUpsert) SetNudgedAt(v time.Time) *ListingUpsert {
+	u.Set(listing.FieldNudgedAt, v)
+	return u
+}
+
+// UpdateNudgedAt sets the "nudged_at" field to the value that was provided on create.
+func (u *ListingUpsert) UpdateNudgedAt() *ListingUpsert {
+	u.SetExcluded(listing.FieldNudgedAt)
+	return u
+}
+
+// ClearNudgedAt clears the value of the "nudged_at" field.
+func (u *ListingUpsert) ClearNudgedAt() *ListingUpsert {
+	u.SetNull(listing.FieldNudgedAt)
+	return u
+}
+
+// SetStaleReportedAt sets the "stale_reported_at" field.
+func (u *ListingUpsert) SetStaleReportedAt(v time.Time) *ListingUpsert {
+	u.Set(listing.FieldStaleReportedAt, v)
+	return u
+}
+
+// UpdateStaleReportedAt sets the "stale_reported_at" field to the value that was provided on create.
+func (u *ListingUpsert) UpdateStaleReportedAt() *ListingUpsert {
+	u.SetExcluded(listing.FieldStaleReportedAt)
+	return u
+}
+
+// ClearStaleReportedAt clears the value of the "stale_reported_at" field.
+func (u *ListingUpsert) ClearStaleReportedAt() *ListingUpsert {
+	u.SetNull(listing.FieldStaleReportedAt)
+	return u
+}
+
+// SetRentedAt sets the "rented_at" field.
+func (u *ListingUpsert) SetRentedAt(v time.Time) *ListingUpsert {
+	u.Set(listing.FieldRentedAt, v)
+	return u
+}
+
+// UpdateRentedAt sets the "rented_at" field to the value that was provided on create.
+func (u *ListingUpsert) UpdateRentedAt() *ListingUpsert {
+	u.SetExcluded(listing.FieldRentedAt)
+	return u
+}
+
+// ClearRentedAt clears the value of the "rented_at" field.
+func (u *ListingUpsert) ClearRentedAt() *ListingUpsert {
+	u.SetNull(listing.FieldRentedAt)
+	return u
+}
+
+// SetRentedVia sets the "rented_via" field.
+func (u *ListingUpsert) SetRentedVia(v listing.RentedVia) *ListingUpsert {
+	u.Set(listing.FieldRentedVia, v)
+	return u
+}
+
+// UpdateRentedVia sets the "rented_via" field to the value that was provided on create.
+func (u *ListingUpsert) UpdateRentedVia() *ListingUpsert {
+	u.SetExcluded(listing.FieldRentedVia)
+	return u
+}
+
+// ClearRentedVia clears the value of the "rented_via" field.
+func (u *ListingUpsert) ClearRentedVia() *ListingUpsert {
+	u.SetNull(listing.FieldRentedVia)
+	return u
+}
+
 // UpdateNewValues updates the mutable fields using the new values that were set on create except the ID field.
 // Using this option is equivalent to using:
 //
@@ -1283,6 +1432,90 @@ func (u *ListingUpsertOne) UpdateReviewNote() *ListingUpsertOne {
 func (u *ListingUpsertOne) ClearReviewNote() *ListingUpsertOne {
 	return u.Update(func(s *ListingUpsert) {
 		s.ClearReviewNote()
+	})
+}
+
+// SetNudgedAt sets the "nudged_at" field.
+func (u *ListingUpsertOne) SetNudgedAt(v time.Time) *ListingUpsertOne {
+	return u.Update(func(s *ListingUpsert) {
+		s.SetNudgedAt(v)
+	})
+}
+
+// UpdateNudgedAt sets the "nudged_at" field to the value that was provided on create.
+func (u *ListingUpsertOne) UpdateNudgedAt() *ListingUpsertOne {
+	return u.Update(func(s *ListingUpsert) {
+		s.UpdateNudgedAt()
+	})
+}
+
+// ClearNudgedAt clears the value of the "nudged_at" field.
+func (u *ListingUpsertOne) ClearNudgedAt() *ListingUpsertOne {
+	return u.Update(func(s *ListingUpsert) {
+		s.ClearNudgedAt()
+	})
+}
+
+// SetStaleReportedAt sets the "stale_reported_at" field.
+func (u *ListingUpsertOne) SetStaleReportedAt(v time.Time) *ListingUpsertOne {
+	return u.Update(func(s *ListingUpsert) {
+		s.SetStaleReportedAt(v)
+	})
+}
+
+// UpdateStaleReportedAt sets the "stale_reported_at" field to the value that was provided on create.
+func (u *ListingUpsertOne) UpdateStaleReportedAt() *ListingUpsertOne {
+	return u.Update(func(s *ListingUpsert) {
+		s.UpdateStaleReportedAt()
+	})
+}
+
+// ClearStaleReportedAt clears the value of the "stale_reported_at" field.
+func (u *ListingUpsertOne) ClearStaleReportedAt() *ListingUpsertOne {
+	return u.Update(func(s *ListingUpsert) {
+		s.ClearStaleReportedAt()
+	})
+}
+
+// SetRentedAt sets the "rented_at" field.
+func (u *ListingUpsertOne) SetRentedAt(v time.Time) *ListingUpsertOne {
+	return u.Update(func(s *ListingUpsert) {
+		s.SetRentedAt(v)
+	})
+}
+
+// UpdateRentedAt sets the "rented_at" field to the value that was provided on create.
+func (u *ListingUpsertOne) UpdateRentedAt() *ListingUpsertOne {
+	return u.Update(func(s *ListingUpsert) {
+		s.UpdateRentedAt()
+	})
+}
+
+// ClearRentedAt clears the value of the "rented_at" field.
+func (u *ListingUpsertOne) ClearRentedAt() *ListingUpsertOne {
+	return u.Update(func(s *ListingUpsert) {
+		s.ClearRentedAt()
+	})
+}
+
+// SetRentedVia sets the "rented_via" field.
+func (u *ListingUpsertOne) SetRentedVia(v listing.RentedVia) *ListingUpsertOne {
+	return u.Update(func(s *ListingUpsert) {
+		s.SetRentedVia(v)
+	})
+}
+
+// UpdateRentedVia sets the "rented_via" field to the value that was provided on create.
+func (u *ListingUpsertOne) UpdateRentedVia() *ListingUpsertOne {
+	return u.Update(func(s *ListingUpsert) {
+		s.UpdateRentedVia()
+	})
+}
+
+// ClearRentedVia clears the value of the "rented_via" field.
+func (u *ListingUpsertOne) ClearRentedVia() *ListingUpsertOne {
+	return u.Update(func(s *ListingUpsert) {
+		s.ClearRentedVia()
 	})
 }
 
@@ -1804,6 +2037,90 @@ func (u *ListingUpsertBulk) UpdateReviewNote() *ListingUpsertBulk {
 func (u *ListingUpsertBulk) ClearReviewNote() *ListingUpsertBulk {
 	return u.Update(func(s *ListingUpsert) {
 		s.ClearReviewNote()
+	})
+}
+
+// SetNudgedAt sets the "nudged_at" field.
+func (u *ListingUpsertBulk) SetNudgedAt(v time.Time) *ListingUpsertBulk {
+	return u.Update(func(s *ListingUpsert) {
+		s.SetNudgedAt(v)
+	})
+}
+
+// UpdateNudgedAt sets the "nudged_at" field to the value that was provided on create.
+func (u *ListingUpsertBulk) UpdateNudgedAt() *ListingUpsertBulk {
+	return u.Update(func(s *ListingUpsert) {
+		s.UpdateNudgedAt()
+	})
+}
+
+// ClearNudgedAt clears the value of the "nudged_at" field.
+func (u *ListingUpsertBulk) ClearNudgedAt() *ListingUpsertBulk {
+	return u.Update(func(s *ListingUpsert) {
+		s.ClearNudgedAt()
+	})
+}
+
+// SetStaleReportedAt sets the "stale_reported_at" field.
+func (u *ListingUpsertBulk) SetStaleReportedAt(v time.Time) *ListingUpsertBulk {
+	return u.Update(func(s *ListingUpsert) {
+		s.SetStaleReportedAt(v)
+	})
+}
+
+// UpdateStaleReportedAt sets the "stale_reported_at" field to the value that was provided on create.
+func (u *ListingUpsertBulk) UpdateStaleReportedAt() *ListingUpsertBulk {
+	return u.Update(func(s *ListingUpsert) {
+		s.UpdateStaleReportedAt()
+	})
+}
+
+// ClearStaleReportedAt clears the value of the "stale_reported_at" field.
+func (u *ListingUpsertBulk) ClearStaleReportedAt() *ListingUpsertBulk {
+	return u.Update(func(s *ListingUpsert) {
+		s.ClearStaleReportedAt()
+	})
+}
+
+// SetRentedAt sets the "rented_at" field.
+func (u *ListingUpsertBulk) SetRentedAt(v time.Time) *ListingUpsertBulk {
+	return u.Update(func(s *ListingUpsert) {
+		s.SetRentedAt(v)
+	})
+}
+
+// UpdateRentedAt sets the "rented_at" field to the value that was provided on create.
+func (u *ListingUpsertBulk) UpdateRentedAt() *ListingUpsertBulk {
+	return u.Update(func(s *ListingUpsert) {
+		s.UpdateRentedAt()
+	})
+}
+
+// ClearRentedAt clears the value of the "rented_at" field.
+func (u *ListingUpsertBulk) ClearRentedAt() *ListingUpsertBulk {
+	return u.Update(func(s *ListingUpsert) {
+		s.ClearRentedAt()
+	})
+}
+
+// SetRentedVia sets the "rented_via" field.
+func (u *ListingUpsertBulk) SetRentedVia(v listing.RentedVia) *ListingUpsertBulk {
+	return u.Update(func(s *ListingUpsert) {
+		s.SetRentedVia(v)
+	})
+}
+
+// UpdateRentedVia sets the "rented_via" field to the value that was provided on create.
+func (u *ListingUpsertBulk) UpdateRentedVia() *ListingUpsertBulk {
+	return u.Update(func(s *ListingUpsert) {
+		s.UpdateRentedVia()
+	})
+}
+
+// ClearRentedVia clears the value of the "rented_via" field.
+func (u *ListingUpsertBulk) ClearRentedVia() *ListingUpsertBulk {
+	return u.Update(func(s *ListingUpsert) {
+		s.ClearRentedVia()
 	})
 }
 

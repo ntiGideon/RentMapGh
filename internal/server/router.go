@@ -18,6 +18,7 @@ import (
 	"rentmapgh/internal/db"
 	"rentmapgh/internal/modules/audit"
 	"rentmapgh/internal/modules/auth"
+	"rentmapgh/internal/modules/availability"
 	"rentmapgh/internal/modules/listings"
 	"rentmapgh/internal/modules/mandates"
 	"rentmapgh/internal/modules/messages"
@@ -81,6 +82,12 @@ func evidenceStore(d Deps) *storage.Sealed {
 	return sealed
 }
 
+// newAvailability builds the freshness engine. Its links are signed with
+// AUTH_SECRET (domain-separated).
+func newAvailability(d Deps, v *viewings.Service) *availability.Service {
+	return availability.NewService(d.DB.Ent, audit.New(d.DB.Ent), d.SMS, v, d.Cfg.AuthSecret, d.Cfg.BaseURL)
+}
+
 func newVerification(d Deps, log *audit.Log) *verification.Service {
 	return verification.NewService(d.DB.Ent, evidenceStore(d), log, d.SMS, d.Cfg.BaseURL, d.Cfg.EvidenceRetention)
 }
@@ -92,6 +99,26 @@ func StartJobs(ctx context.Context, d Deps) {
 	if d.Listings != nil {
 		go d.Listings.RunVideoWorker(ctx)
 	}
+	// Availability: expire unconfirmed listings and text "still available?"
+	// nudges, hourly (texts only in the daytime).
+	avail := newAvailability(d, viewings.NewService(d.DB.Ent, audit.New(d.DB.Ent), d.SMS, d.Cfg.BaseURL))
+	go func() {
+		t := time.NewTimer(2 * time.Minute)
+		defer t.Stop()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-t.C:
+				if exp, nudged, err := avail.Sweep(ctx); err != nil {
+					slog.ErrorContext(ctx, "jobs: availability", "err", err)
+				} else if exp+nudged > 0 {
+					slog.InfoContext(ctx, "jobs: availability", "expired", exp, "nudged", nudged)
+				}
+				t.Reset(time.Hour)
+			}
+		}
+	}()
 	go func() {
 		t := time.NewTimer(time.Minute)
 		defer t.Stop()
@@ -148,6 +175,7 @@ func New(d Deps) http.Handler {
 	}
 	viewingsH := viewings.NewHandler(viewingsSvc, cover)
 	messagesH := messages.NewHandler(messagesSvc, cover, hub.Done())
+	availH := availability.NewHandler(newAvailability(d, viewingsSvc))
 	mandatesH := mandates.NewHandler(mandatesSvc)
 	usersH := users.NewHandler(users.NewService(d.DB.Ent, auditLog, d.Files, verifySvc.PurgeUser), authH, verifySvc, auditLog)
 
@@ -208,6 +236,9 @@ func New(d Deps) http.Handler {
 	r.Get("/kumasi/{place}/{kind}", listingsH.AreaPage)
 	r.Get("/sitemap.xml", listingsH.Sitemap)
 	r.Get("/robots.txt", listingsH.Robots)
+	// The lister's "still available?" link from SMS (no login: the signed link is the proof).
+	r.With(rateLimit(30, time.Minute), noStore).Get("/c/{token}", availH.LinkPage)
+	r.With(rateLimit(10, time.Minute), noStore).Post("/c/{token}", availH.LinkAnswer)
 	r.Get("/l/{id}", listingsH.ListingPage)
 	r.Get("/l/{id}/{slug}", listingsH.ListingPage)
 	// A landlord's answer to an agent's request: the SMS link is the key.
@@ -264,6 +295,8 @@ func New(d Deps) http.Handler {
 			r.With(rateLimit(240, time.Hour)).Post("/photos", listingsH.UploadPhotos)
 			r.Post("/photos/order", listingsH.ReorderPhotos)
 			r.Post("/photos/{mediaID}/{action}", listingsH.PhotoAction)
+			r.Get("/rented", availH.RentedPage)
+			r.Post("/rented", availH.RentedAnswer)
 			r.Get("/video", listingsH.VideoPanel)
 			r.With(rateLimit(10, time.Hour)).Post("/video", listingsH.UploadVideo)
 			r.With(rateLimit(20, time.Hour)).Post("/video/uploads", listingsH.StartVideoUpload)
@@ -296,6 +329,7 @@ func New(d Deps) http.Handler {
 		r.Get("/messages/{id}/since", messagesH.Since)
 		r.With(rateLimit(20, time.Hour)).Post("/messages/{id}/report/{msgID}", messagesH.Report)
 		r.Get("/events", messagesH.Events)
+		r.With(rateLimit(10, time.Hour)).Post("/l/{id}/rented-report", availH.ReportRented)
 	})
 
 	// Back office: moderators and admins only.

@@ -58,6 +58,14 @@ type Listing struct {
 	ReviewedBy *uuid.UUID `json:"reviewed_by,omitempty"`
 	// moderator's note when sending back
 	ReviewNote string `json:"review_note,omitempty"`
+	// last "still available?" SMS
+	NudgedAt *time.Time `json:"nudged_at,omitempty"`
+	// a renter said it's already rented
+	StaleReportedAt *time.Time `json:"stale_reported_at,omitempty"`
+	// RentedAt holds the value of the "rented_at" field.
+	RentedAt *time.Time `json:"rented_at,omitempty"`
+	// "Did you find your tenant through RentMap?" — the key success metric
+	RentedVia *listing.RentedVia `json:"rented_via,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the ListingQuery when eager-loading is set.
 	Edges        ListingEdges `json:"edges"`
@@ -117,9 +125,9 @@ func (*Listing) scanValues(columns []string) ([]any, error) {
 			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
 		case listing.FieldQualityScore, listing.FieldTrustScore, listing.FieldViewsCount:
 			values[i] = new(sql.NullInt64)
-		case listing.FieldListerKind, listing.FieldStatus, listing.FieldWizardStep, listing.FieldHeadline, listing.FieldDescription, listing.FieldReviewNote:
+		case listing.FieldListerKind, listing.FieldStatus, listing.FieldWizardStep, listing.FieldHeadline, listing.FieldDescription, listing.FieldReviewNote, listing.FieldRentedVia:
 			values[i] = new(sql.NullString)
-		case listing.FieldCreatedAt, listing.FieldUpdatedAt, listing.FieldAvailableFrom, listing.FieldLastConfirmedAt, listing.FieldPromotedUntil, listing.FieldSubmittedAt, listing.FieldPublishedAt:
+		case listing.FieldCreatedAt, listing.FieldUpdatedAt, listing.FieldAvailableFrom, listing.FieldLastConfirmedAt, listing.FieldPromotedUntil, listing.FieldSubmittedAt, listing.FieldPublishedAt, listing.FieldNudgedAt, listing.FieldStaleReportedAt, listing.FieldRentedAt:
 			values[i] = new(sql.NullTime)
 		case listing.FieldID, listing.FieldUnitID, listing.FieldListerID:
 			values[i] = new(uuid.UUID)
@@ -264,6 +272,34 @@ func (_m *Listing) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				_m.ReviewNote = value.String
 			}
+		case listing.FieldNudgedAt:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field nudged_at", values[i])
+			} else if value.Valid {
+				_m.NudgedAt = new(time.Time)
+				*_m.NudgedAt = value.Time
+			}
+		case listing.FieldStaleReportedAt:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field stale_reported_at", values[i])
+			} else if value.Valid {
+				_m.StaleReportedAt = new(time.Time)
+				*_m.StaleReportedAt = value.Time
+			}
+		case listing.FieldRentedAt:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field rented_at", values[i])
+			} else if value.Valid {
+				_m.RentedAt = new(time.Time)
+				*_m.RentedAt = value.Time
+			}
+		case listing.FieldRentedVia:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field rented_via", values[i])
+			} else if value.Valid {
+				_m.RentedVia = new(listing.RentedVia)
+				*_m.RentedVia = listing.RentedVia(value.String)
+			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
 		}
@@ -383,6 +419,26 @@ func (_m *Listing) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("review_note=")
 	builder.WriteString(_m.ReviewNote)
+	builder.WriteString(", ")
+	if v := _m.NudgedAt; v != nil {
+		builder.WriteString("nudged_at=")
+		builder.WriteString(v.Format(time.ANSIC))
+	}
+	builder.WriteString(", ")
+	if v := _m.StaleReportedAt; v != nil {
+		builder.WriteString("stale_reported_at=")
+		builder.WriteString(v.Format(time.ANSIC))
+	}
+	builder.WriteString(", ")
+	if v := _m.RentedAt; v != nil {
+		builder.WriteString("rented_at=")
+		builder.WriteString(v.Format(time.ANSIC))
+	}
+	builder.WriteString(", ")
+	if v := _m.RentedVia; v != nil {
+		builder.WriteString("rented_via=")
+		builder.WriteString(fmt.Sprintf("%v", *v))
+	}
 	builder.WriteByte(')')
 	return builder.String()
 }

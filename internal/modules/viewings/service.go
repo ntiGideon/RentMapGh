@@ -583,3 +583,36 @@ func (s *Service) record(ctx context.Context, a Actor, action string, v *ent.Vie
 	s.audit.Record(ctx, audit.Event{Actor: &a.UserID, Action: action, TargetType: "viewing", TargetID: v.ID.String(),
 		IP: a.IP, UserAgent: a.UserAgent, Meta: meta})
 }
+
+// CloseForListing declines every open upcoming viewing of a listing (it was
+// rented or taken down) and texts each renter. It returns how many closed.
+func (s *Service) CloseForListing(ctx context.Context, listingID uuid.UUID, reason string) (int, error) {
+	now := s.now()
+	vs, err := s.db.Viewing.Query().Where(viewing.ListingID(listingID), viewing.StatusIn(openStates...), viewing.StartsAtGT(now)).All(ctx)
+	if err != nil {
+		return 0, fmt.Errorf("viewings: close for listing: %w", err)
+	}
+	if len(vs) == 0 {
+		return 0, nil
+	}
+	p, err := s.place(ctx, listingID)
+	if err != nil {
+		return 0, err
+	}
+	n := 0
+	for _, v := range vs {
+		k, err := s.db.Viewing.Update().Where(viewing.ID(v.ID), viewing.StatusEQ(v.Status)).
+			SetStatus(viewing.StatusDeclined).SetDeclineReason(reason).SetClosedBy(v.ListerID).Save(ctx)
+		if err != nil || k == 0 {
+			continue
+		}
+		n++
+		if renter, err := s.db.User.Get(ctx, v.RenterID); err == nil {
+			s.text(ctx, renter, fmt.Sprintf("RentMap: the viewing of %s on %s is off — %s. Find similar places: %s/search",
+				unitLabel(p), When(v.StartsAt), strings.ToLower(ReasonLabel(reason)), s.baseURL))
+		}
+		s.audit.Record(ctx, audit.Event{Action: "viewing.auto_declined", TargetType: "viewing", TargetID: v.ID.String(),
+			Meta: map[string]any{"listing": listingID.String(), "reason": reason}})
+	}
+	return n, nil
+}
