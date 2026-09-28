@@ -588,10 +588,10 @@ Admin back-office:
 
 Launch readiness:
 
-- [ ] Production environment, backups (daily `pg_dump` + WAL archiving with pgBackRest, tested restore), uptime monitoring, Sentry alerts.
-- [ ] Terms, privacy policy, community guidelines, "How we verify" page, safety tips page.
-- [ ] PWA manifest + installable icon.
-- [ ] Load test search endpoints (k6).
+- [ ] Production environment, backups (daily `pg_dump` + WAL archiving with pgBackRest, tested restore), uptime monitoring, Sentry alerts. — tooling done (§16.22); the server itself, WAL archiving and the monitors are still to set up.
+- [x] Terms, privacy policy, community guidelines, "How we verify" page, safety tips page.
+- [x] PWA manifest + installable icon.
+- [x] Load test search endpoints (k6).
 - [ ] Soft launch around KNUST: campus ambassadors, WhatsApp groups, flyers at junctions, founding-landlord onboarding days. Time it before the academic year/semester intake.
 
 **Exit (MVP live):** ≥ 150 active listings in the beachhead, ≥ 500 registered renters, first rentals attributed to the platform.
@@ -1197,5 +1197,17 @@ Sky Mint is step 200 of its scale; Graphite is step 900. Darker mint steps exist
 | Flagged media | moderation queue | Not a separate queue: photos are checked in listing review and duplicate photos surface in Duplicates | No automatic media classifier yet |
 | View as | impersonation with audit | Admins only, never staff accounts: a separate 30-minute session marked with the admin (`sessions.impersonator_id`), non-sliding, hidden from the user's device list. Read-only: every non-GET request is refused, opening threads doesn't mark them read, the bell isn't cleared and page views aren't counted. An amber banner says whose view it is; "Stop" (or signing out, or the 30 minutes running out) puts the admin's own session back from an HttpOnly cookie. Start and stop are audited against the admin | Support can see exactly what a user sees without being able to act as them |
 | Places editor | draw polygons | Deferred past launch. Neighbourhoods and POIs are reviewed data in `platform/geo` (changed through pull requests); an editor needs a places table and a drawing tool, and the list is short and slow-changing | Not needed to launch in Kumasi |
+
+### 16.22 Decisions taken while building Phase 5 (slice 5c — launch readiness)
+
+| Area | Plan said | Built | Why |
+| --- | --- | --- | --- |
+| Legal & help pages | terms, privacy, community guidelines, how we verify, safety tips | `/terms`, `/privacy`, `/guidelines`, `/how-we-verify`, `/safety`, linked from a new footer column ("Trust & help") and the bottom bar, in the sitemap, with canonical URLs. They describe what the product actually does (Ghana Card + selfie checked by hand, evidence deleted after 90 days, pins 150–400 m off, address and phone only after a confirmed viewing, 14-day freshness, read-only support view, 30-day backups). Terms, privacy and guidelines carry a "Draft for review" notice and placeholders for the legal entity and Data Protection Commission number; the privacy policy is written against the Data Protection Act, 2012 (Act 843). `SUPPORT_EMAIL` fills the contact (a visible placeholder until then) | A lawyer must review before launch; the drafts make that review fast |
+| PWA | manifest + installable icon | `/manifest.webmanifest` (standalone, start at search, shortcuts to search / saved / messages), 192/512 icons plus a maskable 512 and an Apple touch icon drawn from the favicon mark (`web/draw_icons.py`), and `/sw.js`: precaches an offline page and the app shell, serves versioned static files cache-first, falls back to the offline page when a page can't load. It never caches pages, htmx responses, events or photos, and the offline page shows nothing about the viewer | Installable on Android without shipping stale or personal pages on shared phones; data-saver users don't download photos twice |
+| Errors | Sentry alerts | Optional `SENTRY_DSN`: every ERROR log line (recovered panics included, with their stack) becomes a Sentry event, grouped by log message and tagged with the request ID. No request bodies, cookies or PII (`internal/platform/errreport`) | One hook covers every error path the code already logs |
+| Backups | daily `pg_dump` + WAL archiving with pgBackRest, tested restore | `deploy/backup/backup.sh` (daily from cron: custom-format `pg_dump`, the uploads and media volumes, checksums, 30-day retention, optional off-site copy with rclone), `restore.sh` (into the running stack, with a typed confirmation) and `restore-test.sh` (weekly: restores the newest backup into a throwaway Postgres with the production image and checks users, listings, pinned properties, schema version and archive integrity). All three were run against a copy of the dev database. **WAL archiving / point-in-time recovery is not set up yet**: until then up to 24 hours can be lost | pgBackRest needs its own repository and config in the database image; worth it once there's real volume |
+| Uptime | uptime monitoring | Documented, not automated: external checks on `/healthz`, `/readyz` (503 when the database is down), a search URL and TLS expiry, plus disk and backup-freshness alerts (`deploy/RUNBOOK.md`) | A third-party monitor watches from outside the VPS |
+| Load test | k6 on search | `deploy/loadtest/search.js`: search page and htmx fragment, markers, place suggestions, area and listing pages; ramps to 50 then 100 users; thresholds p95 < 300 ms (search, markers), < 150 ms (suggestions), < 500 ms (pages), < 1 % errors. `SPREAD_IPS=1` spreads virtual users over client addresses when hitting the web container directly (search is rate limited per IP). k6 wasn't available on the dev machine; a quick Python stand-in (20 clients, no think time, dev data) gave p95 167 ms search, 137 ms fragment, 37 ms markers, 24 ms suggestions, 0 errors | Run it on staging before launch and record the numbers |
+| Runbook | — | `deploy/RUNBOOK.md`: go-live checklist, deploy and rollback, backups and restores, monitors, Sentry, load testing, common support tasks | |
 
 Phase 0 engineering status: repo skeleton, Compose dev stack (PostGIS + pgvector image, Mailpit, Valhalla behind a profile), config, slog, request IDs, graceful shutdown, `/healthz` + `/readyz`, Ent + migrations, design tokens + first components, landing page with waitlist, tests, CI and the production Dockerfile/Compose/Caddy are done. Still open: staging VPS + Cloudflare, i18n scaffolding, product/legal tasks.

@@ -31,6 +31,9 @@ x-web-env: &web-env
   AT_USERNAME: ${AT_USERNAME:?set AT_USERNAME}
   AT_API_KEY: ${AT_API_KEY:?set AT_API_KEY}
   AT_SANDBOX: ${AT_SANDBOX:-false}
+  SUPPORT_EMAIL: ${SUPPORT_EMAIL:-} # shown on the help and legal pages
+  SENTRY_DSN: ${SENTRY_DSN:-} # optional: errors and panics to Sentry
+  RELEASE: ${RELEASE:-} # e.g. the git SHA; tags Sentry events
 
 services:
   db:

@@ -163,4 +163,9 @@
     if (pct >= 100) box.querySelector("[data-upload-label]").textContent = "Checking photos…";
   });
   document.body.addEventListener("htmx:afterSwap", (e) => initCountdowns(e.detail.elt.parentElement || document));
+
+  // ── Installable app: the offline page and a cached app shell ─────
+  if ("serviceWorker" in navigator && location.protocol !== "file:") {
+    window.addEventListener("load", () => navigator.serviceWorker.register("/sw.js").catch(() => {}));
+  }
 })();

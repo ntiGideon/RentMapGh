@@ -292,6 +292,10 @@ func New(d Deps) http.Handler {
 	r.Get("/compare", listingsH.Compare)
 	r.Get("/kumasi/{place}/{kind}", listingsH.AreaPage)
 	r.Get("/sitemap.xml", listingsH.Sitemap)
+	mountDocs(r, d)
+	r.Get("/manifest.webmanifest", manifest(d.Assets))
+	r.Get("/sw.js", serviceWorker(d.Assets))
+	r.Get("/offline", offlinePage)
 	r.Get("/robots.txt", listingsH.Robots)
 	// The lister's "still available?" link from SMS (no login: the signed link is the proof).
 	r.With(rateLimit(30, time.Minute), noStore).Get("/c/{token}", availH.LinkPage)

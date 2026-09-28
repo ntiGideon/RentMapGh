@@ -17,6 +17,18 @@ var siteNav = []navLink{
 	{"/#listers", "For landlords"},
 }
 
+// helpNav and legalNav are the trust and legal pages in the footer.
+var helpNav = []navLink{
+	{"/how-we-verify", "How we verify"},
+	{"/safety", "Safety tips"},
+	{"/guidelines", "Community guidelines"},
+}
+
+var legalNav = []navLink{
+	{"/terms", "Terms"},
+	{"/privacy", "Privacy"},
+}
+
 // Site is the public marketing shell: header, main, footer.
 templ Site(m Meta) {
 	@Base(m) {
@@ -104,7 +116,7 @@ templ ThemeToggle() {
 
 templ footer() {
 	<footer class="border-t border-line">
-		<div class="mx-auto grid max-w-6xl gap-10 px-4 py-12 sm:px-6 md:grid-cols-[1.5fr_1fr_1fr]">
+		<div class="mx-auto grid max-w-6xl gap-10 px-4 py-12 sm:px-6 sm:grid-cols-3 md:grid-cols-[1.5fr_1fr_1fr_1fr]">
 			<div class="space-y-3">
 				@c.Logo()
 				<p class="max-w-xs text-sm text-fg-muted">Honest rentals, on a map. Built in Kumasi for students and workers around KNUST.</p>
@@ -113,6 +125,14 @@ templ footer() {
 				<h2 class="text-xs font-medium text-fg-subtle">Product</h2>
 				<ul class="mt-3 space-y-2 text-sm">
 					for _, l := range siteNav {
+						<li><a href={ templ.SafeURL(l.href) } class="text-fg-muted transition-colors hover:text-fg">{ l.label }</a></li>
+					}
+				</ul>
+			</div>
+			<div>
+				<h2 class="text-xs font-medium text-fg-subtle">Trust &amp; help</h2>
+				<ul class="mt-3 space-y-2 text-sm">
+					for _, l := range helpNav {
 						<li><a href={ templ.SafeURL(l.href) } class="text-fg-muted transition-colors hover:text-fg">{ l.label }</a></li>
 					}
 				</ul>
@@ -143,7 +163,12 @@ templ footer() {
 		<div class="border-t border-line">
 			<div class="mx-auto flex max-w-6xl flex-col gap-2 px-4 py-5 text-xs text-fg-subtle sm:flex-row sm:items-center sm:justify-between sm:px-6">
 				<p>© { strconv.Itoa(time.Now().Year()) } RentMap Ghana. All rights reserved.</p>
-				<p>Made in Kumasi, Ghana</p>
+				<p class="flex gap-4">
+					for _, l := range legalNav {
+						<a href={ templ.SafeURL(l.href) } class="transition-colors hover:text-fg">{ l.label }</a>
+					}
+					<span>Made in Kumasi, Ghana</span>
+				</p>
 			</div>
 		</div>
 	</footer>

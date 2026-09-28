@@ -206,9 +206,16 @@ type sitemapURL struct {
 
 // Sitemap lists the home page, search, area pages that have listings, and
 // every live listing.
+// InfoPages are the static help and legal pages (served by the server
+// package), listed in the sitemap.
+var InfoPages = []string{"/how-we-verify", "/safety", "/guidelines", "/terms", "/privacy"}
+
 func (h *Handler) Sitemap(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	urls := []sitemapURL{{Loc: h.baseURL + "/"}, {Loc: h.baseURL + "/search"}}
+	for _, p := range InfoPages {
+		urls = append(urls, sitemapURL{Loc: h.baseURL + p})
+	}
 	for _, p := range geo.Places {
 		for _, k := range SEOKinds {
 			n, err := h.svc.Count(ctx, Filter{Near: p.Slug, Radius: AreaRadius, Groups: []string{k.Group}, BBox: DefaultBBox})

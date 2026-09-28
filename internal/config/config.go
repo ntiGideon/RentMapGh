@@ -72,6 +72,12 @@ type Config struct {
 	// EvidenceRetention: ID photos are deleted this long after a decision.
 	EvidenceRetention time.Duration `env:"EVIDENCE_RETENTION" envDefault:"2160h"`
 
+	// SupportEmail is shown on the legal and help pages ("" shows a
+	// placeholder until the support inbox exists).
+	SupportEmail string `env:"SUPPORT_EMAIL"`
+	// SentryDSN turns on error reporting (panics and ERROR logs); "" = off.
+	SentryDSN string `env:"SENTRY_DSN"`
+
 	ReadTimeout     time.Duration `env:"HTTP_READ_TIMEOUT" envDefault:"10s"`
 	WriteTimeout    time.Duration `env:"HTTP_WRITE_TIMEOUT" envDefault:"30s"`
 	IdleTimeout     time.Duration `env:"HTTP_IDLE_TIMEOUT" envDefault:"120s"`

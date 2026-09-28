@@ -14,6 +14,7 @@ import (
 	"rentmapgh/internal/config"
 	"rentmapgh/internal/db"
 	"rentmapgh/internal/modules/messages"
+	"rentmapgh/internal/platform/errreport"
 	"rentmapgh/internal/platform/sms"
 	"rentmapgh/internal/platform/storage"
 	"rentmapgh/internal/server"
@@ -32,7 +33,15 @@ func run() error {
 	if err != nil {
 		return err
 	}
+	flush, err := errreport.Init(cfg.SentryDSN, string(cfg.Env), os.Getenv("RELEASE"))
+	if err != nil {
+		return err
+	}
+	defer flush()
 	setupLogger(cfg)
+	if cfg.SentryDSN != "" {
+		slog.Info("error reporting", "provider", "sentry")
+	}
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
@@ -127,5 +136,5 @@ func setupLogger(cfg config.Config) {
 	if cfg.IsDev() {
 		h = slog.NewTextHandler(os.Stdout, opts)
 	}
-	slog.SetDefault(slog.New(h))
+	slog.SetDefault(slog.New(errreport.Handler(h)))
 }

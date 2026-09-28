@@ -131,6 +131,15 @@ tasks:
     requires: { vars: [PHONE, ROLE] }
     cmds: ["go run ./cmd/admin revoke {{.PHONE}} {{.ROLE}}"]
 
+  loadtest:
+    desc: "Load test the search paths with k6: task loadtest BASE_URL=https://staging.example SPREAD_IPS=1"
+    requires: { vars: [BASE_URL] }
+    cmds: ["k6 run -e BASE_URL={{.BASE_URL}} -e SPREAD_IPS={{.SPREAD_IPS | default 0}} deploy/loadtest/search.js"]
+
+  backup:restore-test:
+    desc: "Restore the newest backup into a throwaway Postgres and check it (on the server)"
+    cmds: ["bash deploy/backup/restore-test.sh"]
+
   tools:tailwind:
     desc: Download the Tailwind standalone CLI into bin/
     status: ["test -f {{.TAILWIND}}"]

@@ -139,3 +139,6 @@ production with the dev secret, without a document key or with a dev SMS provide
 the `uploads` volume and listing photos on the `media` volume: back both up together with the database.
 To keep photos in R2 instead, set `MEDIA_STORE=s3`, `S3_ENDPOINT=https://<account>.r2.cloudflarestorage.com`,
 `S3_BUCKET` and an R2 API token's `S3_ACCESS_KEY_ID` / `S3_SECRET_ACCESS_KEY`.
+
+Operations — backups and restore tests, uptime checks, Sentry, load testing, the go-live checklist
+and common support tasks — are in [deploy/RUNBOOK.md](deploy/RUNBOOK.md).

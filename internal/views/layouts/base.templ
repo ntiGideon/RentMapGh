@@ -74,6 +74,8 @@ templ Base(m Meta) {
 				<link rel="stylesheet" href={ reqctx.Asset(ctx, s) }/>
 			}
 			<link rel="icon" href={ reqctx.Asset(ctx, "img/favicon.svg") } type="image/svg+xml"/>
+			<link rel="apple-touch-icon" href={ reqctx.Asset(ctx, "img/apple-touch-icon.png") }/>
+			<link rel="manifest" href="/manifest.webmanifest"/>
 			<script src={ reqctx.Asset(ctx, "vendor/htmx-2.0.11.min.js") } defer></script>
 			<script src={ reqctx.Asset(ctx, "js/app.js") } defer></script>
 			for _, js := range m.Modules {
