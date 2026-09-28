@@ -22,6 +22,8 @@ type Tx struct {
 	AuditEvent *AuditEventClient
 	// Conversation is the client for interacting with the Conversation builders.
 	Conversation *ConversationClient
+	// DuplicateCandidate is the client for interacting with the DuplicateCandidate builders.
+	DuplicateCandidate *DuplicateCandidateClient
 	// LandlordProfile is the client for interacting with the LandlordProfile builders.
 	LandlordProfile *LandlordProfileClient
 	// Listing is the client for interacting with the Listing builders.
@@ -195,6 +197,7 @@ func (tx *Tx) init() {
 	tx.AgentProfile = NewAgentProfileClient(tx.config)
 	tx.AuditEvent = NewAuditEventClient(tx.config)
 	tx.Conversation = NewConversationClient(tx.config)
+	tx.DuplicateCandidate = NewDuplicateCandidateClient(tx.config)
 	tx.LandlordProfile = NewLandlordProfileClient(tx.config)
 	tx.Listing = NewListingClient(tx.config)
 	tx.ListingMedia = NewListingMediaClient(tx.config)

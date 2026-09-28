@@ -34,6 +34,10 @@ const (
 	FieldLastSeenAt = "last_seen_at"
 	// FieldDeletedAt holds the string denoting the deleted_at field in the database.
 	FieldDeletedAt = "deleted_at"
+	// FieldSuspendedAt holds the string denoting the suspended_at field in the database.
+	FieldSuspendedAt = "suspended_at"
+	// FieldSuspensionNote holds the string denoting the suspension_note field in the database.
+	FieldSuspensionNote = "suspension_note"
 	// FieldAvatarKey holds the string denoting the avatar_key field in the database.
 	FieldAvatarKey = "avatar_key"
 	// FieldDataSaver holds the string denoting the data_saver field in the database.
@@ -107,6 +111,8 @@ var Columns = []string{
 	FieldOnboardedAt,
 	FieldLastSeenAt,
 	FieldDeletedAt,
+	FieldSuspendedAt,
+	FieldSuspensionNote,
 	FieldAvatarKey,
 	FieldDataSaver,
 	FieldNotificationPrefs,
@@ -136,6 +142,8 @@ var (
 	PhoneValidator func(string) error
 	// NameValidator is a validator for the "name" field. It is called by the builders before save.
 	NameValidator func(string) error
+	// SuspensionNoteValidator is a validator for the "suspension_note" field. It is called by the builders before save.
+	SuspensionNoteValidator func(string) error
 	// AvatarKeyValidator is a validator for the "avatar_key" field. It is called by the builders before save.
 	AvatarKeyValidator func(string) error
 	// DefaultDataSaver holds the default value on creation for the "data_saver" field.
@@ -222,6 +230,16 @@ func ByLastSeenAt(opts ...sql.OrderTermOption) OrderOption {
 // ByDeletedAt orders the results by the deleted_at field.
 func ByDeletedAt(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldDeletedAt, opts...).ToFunc()
+}
+
+// BySuspendedAt orders the results by the suspended_at field.
+func BySuspendedAt(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldSuspendedAt, opts...).ToFunc()
+}
+
+// BySuspensionNote orders the results by the suspension_note field.
+func BySuspensionNote(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldSuspensionNote, opts...).ToFunc()
 }
 
 // ByAvatarKey orders the results by the avatar_key field.

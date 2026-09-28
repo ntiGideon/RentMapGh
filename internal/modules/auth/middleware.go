@@ -24,6 +24,11 @@ func (h *Handler) LoadViewer(next http.Handler) http.Handler {
 		switch {
 		case errors.Is(err, ErrNoSession):
 			h.cookies.clearSession(w)
+			if h.restoreOwn(w, r) { // a view-as session ran out: back to the admin's own
+				if v, err := h.sessions.Resolve(r.Context(), mustCookie(r, returnCookie)); err == nil {
+					r = r.WithContext(reqctx.WithViewer(r.Context(), v))
+				}
+			}
 		case err != nil:
 			slog.ErrorContext(r.Context(), "auth: resolve session", "err", err)
 		default:

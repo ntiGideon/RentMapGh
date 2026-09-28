@@ -578,13 +578,13 @@ Landlord/agent dashboard:
 
 Admin back-office:
 
-- [ ] Verification queue (ID, property, licence) with evidence viewer.
-- [ ] Moderation queue (new listings, flagged media, flagged messages, reports).
-- [ ] Duplicate candidates review (manual matching v1).
-- [ ] Users & roles management, suspensions, audit log viewer.
-- [ ] Neighbourhood & POI editor (draw polygons).
-- [ ] Platform metrics dashboard.
-- [ ] Impersonation ("view as user") with audit logging for support.
+- [x] Verification queue (ID, property, licence) with evidence viewer.
+- [x] Moderation queue (new listings, flagged media, flagged messages, reports).
+- [x] Duplicate candidates review (manual matching v1).
+- [x] Users & roles management, suspensions, audit log viewer.
+- [ ] Neighbourhood & POI editor (draw polygons). — deferred past launch, see §16.21.
+- [x] Platform metrics dashboard.
+- [x] Impersonation ("view as user") with audit logging for support.
 
 Launch readiness:
 
@@ -1182,5 +1182,20 @@ Sky Mint is step 200 of its scale; Graphite is step 900. Darker mint steps exist
 | Calendar | week view | `/viewings/calendar?week=YYYY-MM-DD`: Monday–Sunday, 6:00–20:00 (Accra time), with the lister's viewing hours shaded and requests (amber) / confirmed (solid) / completed blocks linking to each viewing. Blocks are placed by `calendar.js` from data attributes (no inline styles); phones and no-JS get a day-by-day list | The `.ics` feed per viewing stays for phone calendars |
 | Leads | leads pipeline | `/listings/leads`: one card per renter per listing in its furthest stage — messaged, viewing requested, viewing booked, viewed, didn't come, closed — newest first, each linking to the conversation or viewing | Derived from conversations and viewings; no separate CRM table to keep in sync |
 | Agents | mandates, clients | Agents also see their newest mandate per property (state, landlord, masked phone, valid-until) and clients: landlords with a confirmed mandate and how many properties | |
+
+### 16.21 Decisions taken while building Phase 5 (slice 5b — admin back-office)
+
+| Area | Plan said | Built | Why |
+| --- | --- | --- | --- |
+| Who can do what | moderators and admins | Moderators: every queue, users (search, history), suspend/reactivate, take listings down, metrics. Admins also: grant/revoke roles, "view as", the audit log. Nobody can act on their own account, suspend a staff account (remove the role first) or remove their own admin role. `cmd/admin grant` still bootstraps the first admin | Least privilege; there's always an admin who can undo a mistake |
+| Users | users & roles, suspensions | `/admin/users`: exact phone search or name contains, role and status filters, 50 a page. `/admin/users/{id}`: status and badges, devices, viewings and no-shows, listings, reports about them, recent audit trail, role toggles, suspend/reactivate. Suspending needs a staff-only note, ends every session, pauses live listings (they stay paused after reactivation until the lister resumes) and blocks sign-in (already enforced by sign-in and session checks) | Suspension has to stop harm at once but be reversible |
+| Takedown | moderation | Moderators can take down any listing that's not a draft from its review page ("Take down this listing", reason required): status `removed` (terminal), reason kept as the review note, the lister gets a notification and SMS with the reason. Reports now link to the reported person's account | "Action taken" on a report had nothing behind it |
+| Audit log | viewer | `/admin/audit`: filter by action prefix, actor (phone or ID) and target ID; newest first, 50 a page (cursor on time); links to the user, listing, report or verification. Every new staff action is recorded (`admin.user_suspended`, `admin.role_grant`, `admin.view_as_started`, `listing.removed`, `admin.duplicate_*`, …) | Entries are append-only in the schema |
+| Metrics | platform dashboard | `/admin/metrics`: the north star first — places marked rented with "found through RentMap" (30 days, share of all rentals, all time) — then people by role, supply (live, in review, published), demand (viewing requests, held, no-shows, conversations) and an 8-week table | Plain counts on demand; fine at this size, no warehouse |
+| Flagged messages | moderation queue | `/admin/flagged`: messages the scam shield flagged (mobile money, pay first, booking fee, off-platform, pressure) that nobody has reviewed, one message at a time with the sender and listing; "Looks fine" clears it (`messages.flags_reviewed_at`), or go to the sender's account. Full threads stay behind a user report | Keeps private conversations private unless someone complains |
+| Duplicates | candidate table, pHash, trigram, manual v1 | `duplicate_candidates`, refreshed hourly: listings in review, live or paused, exact pins ≤150 m apart (indexed pre-filter on the public points), by different listers or the same unit twice, with photos ≤10 pHash bits apart — or, with no photo match, the same unit type and rent within 30 m. Headline similarity (pg_trgm) only adds to the score. Moderators see both side by side and pick "Not the same place" or "Take down as the copy" (with the takedown notice). Pairs close themselves when either listing goes offline | "Multiple authorised agents on one listing" (merging) waits for real cases |
+| Flagged media | moderation queue | Not a separate queue: photos are checked in listing review and duplicate photos surface in Duplicates | No automatic media classifier yet |
+| View as | impersonation with audit | Admins only, never staff accounts: a separate 30-minute session marked with the admin (`sessions.impersonator_id`), non-sliding, hidden from the user's device list. Read-only: every non-GET request is refused, opening threads doesn't mark them read, the bell isn't cleared and page views aren't counted. An amber banner says whose view it is; "Stop" (or signing out, or the 30 minutes running out) puts the admin's own session back from an HttpOnly cookie. Start and stop are audited against the admin | Support can see exactly what a user sees without being able to act as them |
+| Places editor | draw polygons | Deferred past launch. Neighbourhoods and POIs are reviewed data in `platform/geo` (changed through pull requests); an editor needs a places table and a drawing tool, and the list is short and slow-changing | Not needed to launch in Kumasi |
 
 Phase 0 engineering status: repo skeleton, Compose dev stack (PostGIS + pgvector image, Mailpit, Valhalla behind a profile), config, slog, request IDs, graceful shutdown, `/healthz` + `/readyz`, Ent + migrations, design tokens + first components, landing page with waitlist, tests, CI and the production Dockerfile/Compose/Caddy are done. Still open: staging VPS + Cloudflare, i18n scaffolding, product/legal tasks.

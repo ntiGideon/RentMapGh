@@ -16,6 +16,7 @@ import (
 
 	"rentmapgh/internal/config"
 	"rentmapgh/internal/db"
+	"rentmapgh/internal/modules/admin"
 	"rentmapgh/internal/modules/audit"
 	"rentmapgh/internal/modules/auth"
 	"rentmapgh/internal/modules/availability"
@@ -107,8 +108,9 @@ func StartJobs(ctx context.Context, d Deps) {
 	avail := newAvailability(d, vs2)
 	avail.SetNotifier(notes)
 	trustSvc := trust.NewService(d.DB.Ent, vs2, mandates.NewService(d.DB.Ent, audit.New(d.DB.Ent), d.SMS, d.Cfg.AuthSecret, d.Cfg.BaseURL))
+	backoffice := admin.NewService(d.DB.Ent, audit.New(d.DB.Ent), nil, notes) // the scan needs neither listings nor notes
 	// Hourly: expire unconfirmed listings and text "still available?" nudges
-	// (daytime only), then refresh trust scores.
+	// (daytime only), refresh trust scores and look for duplicate listings.
 	every(ctx, 2*time.Minute, time.Hour, func() {
 		if exp, nudged, err := avail.Sweep(ctx); err != nil {
 			slog.ErrorContext(ctx, "jobs: availability", "err", err)
@@ -119,6 +121,11 @@ func StartJobs(ctx context.Context, d Deps) {
 			slog.ErrorContext(ctx, "jobs: trust", "err", err)
 		} else if n > 0 {
 			slog.InfoContext(ctx, "jobs: trust scores changed", "count", n)
+		}
+		if n, err := backoffice.ScanDuplicates(ctx); err != nil {
+			slog.ErrorContext(ctx, "jobs: duplicates", "err", err)
+		} else if n > 0 {
+			slog.InfoContext(ctx, "jobs: duplicate candidates", "count", n)
 		}
 	})
 	// Every 10 minutes: viewing reminders (24 h, 2 h) and feedback prompts.
@@ -223,6 +230,8 @@ func New(d Deps) http.Handler {
 	availH := availability.NewHandler(availSvc)
 	notifyH := notify.NewHandler(notifySvc)
 	mandatesH := mandates.NewHandler(mandatesSvc)
+	adminSvc := admin.NewService(d.DB.Ent, auditLog, listingsSvc, notifySvc)
+	adminH := admin.NewHandler(adminSvc)
 	usersH := users.NewHandler(users.NewService(d.DB.Ent, auditLog, d.Files, verifySvc.PurgeUser), authH, verifySvc, auditLog)
 
 	r.Use(chimw.RequestID)
@@ -236,6 +245,7 @@ func New(d Deps) http.Handler {
 	r.Use(crossOrigin)
 	r.Use(mw.DataSaver)
 	r.Use(authH.LoadViewer)
+	r.Use(auth.ReadOnlyViewAs)
 	r.Use(navCounts(messagesSvc, viewingsSvc, notifySvc))
 	r.Use(func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -269,6 +279,7 @@ func New(d Deps) http.Handler {
 	r.With(rateLimit(20, time.Minute)).Post("/login/verify", authH.Verify)
 	r.With(rateLimit(5, time.Minute)).Post("/login/resend", authH.Resend)
 	r.Post("/logout", authH.Logout)
+	r.Post("/view-as/stop", authH.StopViewAs)
 	r.Get("/u/{id}/avatar.jpg", usersH.Avatar)
 	r.Get("/media/{id}/{file}", listingsH.Media)
 	r.With(rateLimit(240, time.Minute)).Get("/search", listingsH.Search)
@@ -392,7 +403,7 @@ func New(d Deps) http.Handler {
 		r.Use(auth.RequireAuth)
 		r.Use(auth.RequireRole("moderator", "admin"))
 		r.Use(noStore)
-		r.Use(adminCounts(verifySvc, listingsSvc, messagesSvc))
+		r.Use(adminCounts(verifySvc, listingsSvc, messagesSvc, adminSvc))
 		r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 			http.Redirect(w, r, "/admin/verifications", http.StatusSeeOther)
 		})
@@ -406,16 +417,32 @@ func New(d Deps) http.Handler {
 		r.Get("/reports", messagesH.AdminReports)
 		r.Get("/reports/{id}", messagesH.AdminReport)
 		r.Post("/reports/{id}/decision", messagesH.AdminDecide)
+		r.Post("/listings/{id}/remove", adminH.RemoveListing)
+		r.Get("/users", adminH.Users)
+		r.Get("/users/{id}", adminH.User)
+		r.Post("/users/{id}/suspend", adminH.Suspend)
+		r.Post("/users/{id}/reactivate", adminH.Reactivate)
+		r.Get("/flagged", adminH.Flagged)
+		r.Post("/flagged/{id}/reviewed", adminH.ReviewFlag)
+		r.Get("/duplicates", adminH.Duplicates)
+		r.Post("/duplicates/{id}", adminH.DecideDuplicate)
+		r.Get("/metrics", adminH.Metrics)
+		r.Group(func(r chi.Router) { // admins only
+			r.Use(auth.RequireRole("admin"))
+			r.Post("/users/{id}/roles", adminH.SetRole)
+			r.Post("/users/{id}/view-as", authH.ViewAs)
+			r.Get("/audit", adminH.Audit)
+		})
 	})
 
 	return r
 }
 
 // adminCounts puts the queue badges in the context for the admin nav.
-func adminCounts(v *verification.Service, l *listings.Service, m *messages.Service) func(http.Handler) http.Handler {
+func adminCounts(v *verification.Service, l *listings.Service, m *messages.Service, a *admin.Service) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			c := reqctx.AdminCounts{Listings: l.PendingCount(r.Context())}
+			c := reqctx.AdminCounts{Listings: l.PendingCount(r.Context()), Flagged: a.FlaggedCount(r.Context()), Duplicates: a.DuplicateCount(r.Context())}
 			if rs, err := m.OpenReports(r.Context()); err == nil {
 				c.Reports = len(rs)
 			}

@@ -80,6 +80,11 @@ func Body(v string) predicate.Message {
 	return predicate.Message(sql.FieldEQ(FieldBody, v))
 }
 
+// FlagsReviewedAt applies equality check predicate on the "flags_reviewed_at" field. It's identical to FlagsReviewedAtEQ.
+func FlagsReviewedAt(v time.Time) predicate.Message {
+	return predicate.Message(sql.FieldEQ(FieldFlagsReviewedAt, v))
+}
+
 // CreatedAtEQ applies the EQ predicate on the "created_at" field.
 func CreatedAtEQ(v time.Time) predicate.Message {
 	return predicate.Message(sql.FieldEQ(FieldCreatedAt, v))
@@ -313,6 +318,56 @@ func FlagsIsNil() predicate.Message {
 // FlagsNotNil applies the NotNil predicate on the "flags" field.
 func FlagsNotNil() predicate.Message {
 	return predicate.Message(sql.FieldNotNull(FieldFlags))
+}
+
+// FlagsReviewedAtEQ applies the EQ predicate on the "flags_reviewed_at" field.
+func FlagsReviewedAtEQ(v time.Time) predicate.Message {
+	return predicate.Message(sql.FieldEQ(FieldFlagsReviewedAt, v))
+}
+
+// FlagsReviewedAtNEQ applies the NEQ predicate on the "flags_reviewed_at" field.
+func FlagsReviewedAtNEQ(v time.Time) predicate.Message {
+	return predicate.Message(sql.FieldNEQ(FieldFlagsReviewedAt, v))
+}
+
+// FlagsReviewedAtIn applies the In predicate on the "flags_reviewed_at" field.
+func FlagsReviewedAtIn(vs ...time.Time) predicate.Message {
+	return predicate.Message(sql.FieldIn(FieldFlagsReviewedAt, vs...))
+}
+
+// FlagsReviewedAtNotIn applies the NotIn predicate on the "flags_reviewed_at" field.
+func FlagsReviewedAtNotIn(vs ...time.Time) predicate.Message {
+	return predicate.Message(sql.FieldNotIn(FieldFlagsReviewedAt, vs...))
+}
+
+// FlagsReviewedAtGT applies the GT predicate on the "flags_reviewed_at" field.
+func FlagsReviewedAtGT(v time.Time) predicate.Message {
+	return predicate.Message(sql.FieldGT(FieldFlagsReviewedAt, v))
+}
+
+// FlagsReviewedAtGTE applies the GTE predicate on the "flags_reviewed_at" field.
+func FlagsReviewedAtGTE(v time.Time) predicate.Message {
+	return predicate.Message(sql.FieldGTE(FieldFlagsReviewedAt, v))
+}
+
+// FlagsReviewedAtLT applies the LT predicate on the "flags_reviewed_at" field.
+func FlagsReviewedAtLT(v time.Time) predicate.Message {
+	return predicate.Message(sql.FieldLT(FieldFlagsReviewedAt, v))
+}
+
+// FlagsReviewedAtLTE applies the LTE predicate on the "flags_reviewed_at" field.
+func FlagsReviewedAtLTE(v time.Time) predicate.Message {
+	return predicate.Message(sql.FieldLTE(FieldFlagsReviewedAt, v))
+}
+
+// FlagsReviewedAtIsNil applies the IsNil predicate on the "flags_reviewed_at" field.
+func FlagsReviewedAtIsNil() predicate.Message {
+	return predicate.Message(sql.FieldIsNull(FieldFlagsReviewedAt))
+}
+
+// FlagsReviewedAtNotNil applies the NotNil predicate on the "flags_reviewed_at" field.
+func FlagsReviewedAtNotNil() predicate.Message {
+	return predicate.Message(sql.FieldNotNull(FieldFlagsReviewedAt))
 }
 
 // And groups predicates with the AND operator between them.

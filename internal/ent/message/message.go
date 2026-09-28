@@ -26,6 +26,8 @@ const (
 	FieldBody = "body"
 	// FieldFlags holds the string denoting the flags field in the database.
 	FieldFlags = "flags"
+	// FieldFlagsReviewedAt holds the string denoting the flags_reviewed_at field in the database.
+	FieldFlagsReviewedAt = "flags_reviewed_at"
 	// Table holds the table name of the message in the database.
 	Table = "messages"
 )
@@ -39,6 +41,7 @@ var Columns = []string{
 	FieldSenderID,
 	FieldBody,
 	FieldFlags,
+	FieldFlagsReviewedAt,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -95,4 +98,9 @@ func BySenderID(opts ...sql.OrderTermOption) OrderOption {
 // ByBody orders the results by the body field.
 func ByBody(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldBody, opts...).ToFunc()
+}
+
+// ByFlagsReviewedAt orders the results by the flags_reviewed_at field.
+func ByFlagsReviewedAt(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldFlagsReviewedAt, opts...).ToFunc()
 }

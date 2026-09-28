@@ -8,6 +8,7 @@ import (
 	"rentmapgh/internal/ent/agentprofile"
 	"rentmapgh/internal/ent/auditevent"
 	"rentmapgh/internal/ent/conversation"
+	"rentmapgh/internal/ent/duplicatecandidate"
 	"rentmapgh/internal/ent/landlordprofile"
 	"rentmapgh/internal/ent/listing"
 	"rentmapgh/internal/ent/listingmedia"
@@ -196,6 +197,35 @@ func init() {
 	conversationDescID := conversationMixinFields0[0].Descriptor()
 	// conversation.DefaultID holds the default value on creation for the id field.
 	conversation.DefaultID = conversationDescID.Default.(func() uuid.UUID)
+	duplicatecandidateMixin := schema.DuplicateCandidate{}.Mixin()
+	duplicatecandidateMixinFields0 := duplicatecandidateMixin[0].Fields()
+	_ = duplicatecandidateMixinFields0
+	duplicatecandidateMixinFields1 := duplicatecandidateMixin[1].Fields()
+	_ = duplicatecandidateMixinFields1
+	duplicatecandidateFields := schema.DuplicateCandidate{}.Fields()
+	_ = duplicatecandidateFields
+	// duplicatecandidateDescCreatedAt is the schema descriptor for created_at field.
+	duplicatecandidateDescCreatedAt := duplicatecandidateMixinFields1[0].Descriptor()
+	// duplicatecandidate.DefaultCreatedAt holds the default value on creation for the created_at field.
+	duplicatecandidate.DefaultCreatedAt = duplicatecandidateDescCreatedAt.Default.(func() time.Time)
+	// duplicatecandidateDescUpdatedAt is the schema descriptor for updated_at field.
+	duplicatecandidateDescUpdatedAt := duplicatecandidateMixinFields1[1].Descriptor()
+	// duplicatecandidate.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	duplicatecandidate.DefaultUpdatedAt = duplicatecandidateDescUpdatedAt.Default.(func() time.Time)
+	// duplicatecandidate.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	duplicatecandidate.UpdateDefaultUpdatedAt = duplicatecandidateDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// duplicatecandidateDescDistanceM is the schema descriptor for distance_m field.
+	duplicatecandidateDescDistanceM := duplicatecandidateFields[2].Descriptor()
+	// duplicatecandidate.DistanceMValidator is a validator for the "distance_m" field. It is called by the builders before save.
+	duplicatecandidate.DistanceMValidator = duplicatecandidateDescDistanceM.Validators[0].(func(int) error)
+	// duplicatecandidateDescTextSimilarity is the schema descriptor for text_similarity field.
+	duplicatecandidateDescTextSimilarity := duplicatecandidateFields[4].Descriptor()
+	// duplicatecandidate.DefaultTextSimilarity holds the default value on creation for the text_similarity field.
+	duplicatecandidate.DefaultTextSimilarity = duplicatecandidateDescTextSimilarity.Default.(float64)
+	// duplicatecandidateDescID is the schema descriptor for id field.
+	duplicatecandidateDescID := duplicatecandidateMixinFields0[0].Descriptor()
+	// duplicatecandidate.DefaultID holds the default value on creation for the id field.
+	duplicatecandidate.DefaultID = duplicatecandidateDescID.Default.(func() uuid.UUID)
 	landlordprofileMixin := schema.LandlordProfile{}.Mixin()
 	landlordprofileMixinFields0 := landlordprofileMixin[0].Fields()
 	_ = landlordprofileMixinFields0
@@ -877,12 +907,16 @@ func init() {
 	userDescName := userFields[1].Descriptor()
 	// user.NameValidator is a validator for the "name" field. It is called by the builders before save.
 	user.NameValidator = userDescName.Validators[0].(func(string) error)
+	// userDescSuspensionNote is the schema descriptor for suspension_note field.
+	userDescSuspensionNote := userFields[8].Descriptor()
+	// user.SuspensionNoteValidator is a validator for the "suspension_note" field. It is called by the builders before save.
+	user.SuspensionNoteValidator = userDescSuspensionNote.Validators[0].(func(string) error)
 	// userDescAvatarKey is the schema descriptor for avatar_key field.
-	userDescAvatarKey := userFields[7].Descriptor()
+	userDescAvatarKey := userFields[9].Descriptor()
 	// user.AvatarKeyValidator is a validator for the "avatar_key" field. It is called by the builders before save.
 	user.AvatarKeyValidator = userDescAvatarKey.Validators[0].(func(string) error)
 	// userDescDataSaver is the schema descriptor for data_saver field.
-	userDescDataSaver := userFields[8].Descriptor()
+	userDescDataSaver := userFields[10].Descriptor()
 	// user.DefaultDataSaver holds the default value on creation for the data_saver field.
 	user.DefaultDataSaver = userDescDataSaver.Default.(bool)
 	// userDescID is the schema descriptor for id field.

@@ -20,6 +20,14 @@ var siteNav = []navLink{
 // Site is the public marketing shell: header, main, footer.
 templ Site(m Meta) {
 	@Base(m) {
+		if v := reqctx.CurrentViewer(ctx); v.IsViewAs() {
+			<div class="bg-amber-400 text-graphite-900" role="status">
+				<form method="post" action="/view-as/stop" class="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-2 px-4 py-2 text-sm sm:px-6">
+					<p><span class="font-semibold">Viewing as { v.Name }</span> · read-only support view, ends after 30 minutes</p>
+					<button type="submit" class="h-8 rounded-lg bg-graphite-900 px-3 font-medium text-white hover:bg-graphite-800">Stop viewing as</button>
+				</form>
+			</div>
+		}
 		<header class="sticky top-0 z-40 border-b border-line bg-bg/80 backdrop-blur-lg supports-[backdrop-filter]:bg-bg/70">
 			<div class="mx-auto flex h-14 max-w-6xl items-center gap-8 px-4 sm:px-6">
 				<a href="/" class="-m-1 rounded-md p-1 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus" aria-label="RentMap Ghana home">

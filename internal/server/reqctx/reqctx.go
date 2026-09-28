@@ -52,7 +52,13 @@ type Viewer struct {
 	// LicenseVerified: agent licence approved by a moderator.
 	LicenseVerified bool
 	AvatarURL       string // "" → show the initial
+	// ViewingAs is the admin behind a read-only "view as" session (support),
+	// uuid.Nil for the user's own sessions.
+	ViewingAs uuid.UUID
 }
+
+// IsViewAs reports a support session: an admin seeing the site as this user.
+func (v *Viewer) IsViewAs() bool { return v != nil && v.ViewingAs != uuid.Nil }
 
 func (v *Viewer) Has(role string) bool { return v != nil && slices.Contains(v.Roles, role) }
 
@@ -93,7 +99,7 @@ func WithViewer(ctx context.Context, v *Viewer) context.Context {
 func CurrentViewer(ctx context.Context) *Viewer { v, _ := ctx.Value(viewerKey).(*Viewer); return v }
 
 // AdminCounts are the queue badges in the back-office nav.
-type AdminCounts struct{ Verifications, Listings, Reports int }
+type AdminCounts struct{ Verifications, Listings, Reports, Flagged, Duplicates int }
 
 func WithAdminCounts(ctx context.Context, c AdminCounts) context.Context {
 	return context.WithValue(ctx, adminCountsKey, c)

@@ -71,7 +71,17 @@ func (h *Handler) renderReview(w http.ResponseWriter, r *http.Request, status in
 		ListerName: lister.Name, ListerVerified: lister.IdentityVerifiedAt != nil,
 		Headline: orDash(d.L.Headline), Description: d.L.Description, Landmark: d.P.Landmark,
 		Sections: summary(d), MoveIn: moveInView(d.Terms()), Own: lister.ID == actor(r).UserID,
-		Errors: errs, Note: r.PostFormValue("note"),
+		Errors: errs, Note: r.PostFormValue("note"), ListerURL: "/admin/users/" + lister.ID.String(),
+		CanRemove: d.L.Status != listing.StatusRemoved && d.L.Status != listing.StatusDraft,
+	}
+	if d.L.Status == listing.StatusRemoved {
+		v.RemovedNote = d.L.ReviewNote
+	}
+	switch r.URL.Query().Get("done") {
+	case "removed":
+		v.Notice = "Taken down. The lister has been told why."
+	case "remove_error":
+		v.Notice = r.URL.Query().Get("msg")
 	}
 	if lister.Phone != nil {
 		v.ListerPhone = phone.Pretty(*lister.Phone)

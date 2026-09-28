@@ -26,6 +26,8 @@ func (User) Fields() []ent.Field {
 		field.Time("onboarded_at").Optional().Nillable().Comment("role selection finished"),
 		field.Time("last_seen_at").Optional().Nillable(),
 		field.Time("deleted_at").Optional().Nillable(),
+		field.Time("suspended_at").Optional().Nillable(),
+		field.String("suspension_note").MaxLen(500).Optional().Comment("why (staff only)"),
 		field.String("avatar_key").MaxLen(200).Optional().Comment("storage key of the profile photo"),
 		field.Bool("data_saver").Default(false),
 		field.JSON("notification_prefs", map[string]bool{}).Optional().Comment("\"<topic>.<channel>\" → on/off"),

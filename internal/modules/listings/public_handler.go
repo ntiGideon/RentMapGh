@@ -35,7 +35,7 @@ func (h *Handler) ListingPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	path := PublicPath(d)
-	if r.URL.Path == path {
+	if r.URL.Path == path && !reqctx.CurrentViewer(r.Context()).IsViewAs() {
 		h.svc.CountView(r.Context(), d.L, viewer, auth.ClientIP(r), r.UserAgent())
 	}
 	if r.URL.Path != path {

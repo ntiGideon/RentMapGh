@@ -76,6 +76,20 @@ func (_c *MessageCreate) SetFlags(v []string) *MessageCreate {
 	return _c
 }
 
+// SetFlagsReviewedAt sets the "flags_reviewed_at" field.
+func (_c *MessageCreate) SetFlagsReviewedAt(v time.Time) *MessageCreate {
+	_c.mutation.SetFlagsReviewedAt(v)
+	return _c
+}
+
+// SetNillableFlagsReviewedAt sets the "flags_reviewed_at" field if the given value is not nil.
+func (_c *MessageCreate) SetNillableFlagsReviewedAt(v *time.Time) *MessageCreate {
+	if v != nil {
+		_c.SetFlagsReviewedAt(*v)
+	}
+	return _c
+}
+
 // SetID sets the "id" field.
 func (_c *MessageCreate) SetID(v uuid.UUID) *MessageCreate {
 	_c.mutation.SetID(v)
@@ -221,6 +235,10 @@ func (_c *MessageCreate) createSpec() (*Message, *sqlgraph.CreateSpec) {
 		_spec.SetField(message.FieldFlags, field.TypeJSON, value)
 		_node.Flags = value
 	}
+	if value, ok := _c.mutation.FlagsReviewedAt(); ok {
+		_spec.SetField(message.FieldFlagsReviewedAt, field.TypeTime, value)
+		_node.FlagsReviewedAt = &value
+	}
 	return _node, _spec
 }
 
@@ -300,6 +318,24 @@ func (u *MessageUpsert) UpdateFlags() *MessageUpsert {
 // ClearFlags clears the value of the "flags" field.
 func (u *MessageUpsert) ClearFlags() *MessageUpsert {
 	u.SetNull(message.FieldFlags)
+	return u
+}
+
+// SetFlagsReviewedAt sets the "flags_reviewed_at" field.
+func (u *MessageUpsert) SetFlagsReviewedAt(v time.Time) *MessageUpsert {
+	u.Set(message.FieldFlagsReviewedAt, v)
+	return u
+}
+
+// UpdateFlagsReviewedAt sets the "flags_reviewed_at" field to the value that was provided on create.
+func (u *MessageUpsert) UpdateFlagsReviewedAt() *MessageUpsert {
+	u.SetExcluded(message.FieldFlagsReviewedAt)
+	return u
+}
+
+// ClearFlagsReviewedAt clears the value of the "flags_reviewed_at" field.
+func (u *MessageUpsert) ClearFlagsReviewedAt() *MessageUpsert {
+	u.SetNull(message.FieldFlagsReviewedAt)
 	return u
 }
 
@@ -395,6 +431,27 @@ func (u *MessageUpsertOne) UpdateFlags() *MessageUpsertOne {
 func (u *MessageUpsertOne) ClearFlags() *MessageUpsertOne {
 	return u.Update(func(s *MessageUpsert) {
 		s.ClearFlags()
+	})
+}
+
+// SetFlagsReviewedAt sets the "flags_reviewed_at" field.
+func (u *MessageUpsertOne) SetFlagsReviewedAt(v time.Time) *MessageUpsertOne {
+	return u.Update(func(s *MessageUpsert) {
+		s.SetFlagsReviewedAt(v)
+	})
+}
+
+// UpdateFlagsReviewedAt sets the "flags_reviewed_at" field to the value that was provided on create.
+func (u *MessageUpsertOne) UpdateFlagsReviewedAt() *MessageUpsertOne {
+	return u.Update(func(s *MessageUpsert) {
+		s.UpdateFlagsReviewedAt()
+	})
+}
+
+// ClearFlagsReviewedAt clears the value of the "flags_reviewed_at" field.
+func (u *MessageUpsertOne) ClearFlagsReviewedAt() *MessageUpsertOne {
+	return u.Update(func(s *MessageUpsert) {
+		s.ClearFlagsReviewedAt()
 	})
 }
 
@@ -657,6 +714,27 @@ func (u *MessageUpsertBulk) UpdateFlags() *MessageUpsertBulk {
 func (u *MessageUpsertBulk) ClearFlags() *MessageUpsertBulk {
 	return u.Update(func(s *MessageUpsert) {
 		s.ClearFlags()
+	})
+}
+
+// SetFlagsReviewedAt sets the "flags_reviewed_at" field.
+func (u *MessageUpsertBulk) SetFlagsReviewedAt(v time.Time) *MessageUpsertBulk {
+	return u.Update(func(s *MessageUpsert) {
+		s.SetFlagsReviewedAt(v)
+	})
+}
+
+// UpdateFlagsReviewedAt sets the "flags_reviewed_at" field to the value that was provided on create.
+func (u *MessageUpsertBulk) UpdateFlagsReviewedAt() *MessageUpsertBulk {
+	return u.Update(func(s *MessageUpsert) {
+		s.UpdateFlagsReviewedAt()
+	})
+}
+
+// ClearFlagsReviewedAt clears the value of the "flags_reviewed_at" field.
+func (u *MessageUpsertBulk) ClearFlagsReviewedAt() *MessageUpsertBulk {
+	return u.Update(func(s *MessageUpsert) {
+		s.ClearFlagsReviewedAt()
 	})
 }
 

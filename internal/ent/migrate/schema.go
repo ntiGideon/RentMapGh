@@ -143,6 +143,39 @@ var (
 			},
 		},
 	}
+	// DuplicateCandidatesColumns holds the columns for the "duplicate_candidates" table.
+	DuplicateCandidatesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "listing_a", Type: field.TypeUUID},
+		{Name: "listing_b", Type: field.TypeUUID},
+		{Name: "distance_m", Type: field.TypeInt},
+		{Name: "photo_bits", Type: field.TypeInt, Nullable: true},
+		{Name: "text_similarity", Type: field.TypeFloat64, Default: 0},
+		{Name: "score", Type: field.TypeInt},
+		{Name: "status", Type: field.TypeEnum, Enums: []string{"open", "dismissed", "actioned"}, Default: "open"},
+		{Name: "handled_by", Type: field.TypeUUID, Nullable: true},
+		{Name: "handled_at", Type: field.TypeTime, Nullable: true},
+	}
+	// DuplicateCandidatesTable holds the schema information for the "duplicate_candidates" table.
+	DuplicateCandidatesTable = &schema.Table{
+		Name:       "duplicate_candidates",
+		Columns:    DuplicateCandidatesColumns,
+		PrimaryKey: []*schema.Column{DuplicateCandidatesColumns[0]},
+		Indexes: []*schema.Index{
+			{
+				Name:    "duplicatecandidate_listing_a_listing_b",
+				Unique:  true,
+				Columns: []*schema.Column{DuplicateCandidatesColumns[3], DuplicateCandidatesColumns[4]},
+			},
+			{
+				Name:    "duplicatecandidate_status_score",
+				Unique:  false,
+				Columns: []*schema.Column{DuplicateCandidatesColumns[9], DuplicateCandidatesColumns[8]},
+			},
+		},
+	}
 	// LandlordProfilesColumns holds the columns for the "landlord_profiles" table.
 	LandlordProfilesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
@@ -336,6 +369,7 @@ var (
 		{Name: "sender_id", Type: field.TypeUUID},
 		{Name: "body", Type: field.TypeString, Size: 2000},
 		{Name: "flags", Type: field.TypeJSON, Nullable: true},
+		{Name: "flags_reviewed_at", Type: field.TypeTime, Nullable: true},
 	}
 	// MessagesTable holds the schema information for the "messages" table.
 	MessagesTable = &schema.Table{
@@ -555,6 +589,7 @@ var (
 		{Name: "last_seen_at", Type: field.TypeTime},
 		{Name: "expires_at", Type: field.TypeTime},
 		{Name: "revoked_at", Type: field.TypeTime, Nullable: true},
+		{Name: "impersonator_id", Type: field.TypeUUID, Nullable: true},
 		{Name: "user_id", Type: field.TypeUUID},
 	}
 	// SessionsTable holds the schema information for the "sessions" table.
@@ -565,7 +600,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "sessions_users_sessions",
-				Columns:    []*schema.Column{SessionsColumns[9]},
+				Columns:    []*schema.Column{SessionsColumns[10]},
 				RefColumns: []*schema.Column{UsersColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
@@ -579,7 +614,7 @@ var (
 			{
 				Name:    "session_user_id_revoked_at",
 				Unique:  false,
-				Columns: []*schema.Column{SessionsColumns[9], SessionsColumns[8]},
+				Columns: []*schema.Column{SessionsColumns[10], SessionsColumns[8]},
 			},
 		},
 	}
@@ -635,6 +670,8 @@ var (
 		{Name: "onboarded_at", Type: field.TypeTime, Nullable: true},
 		{Name: "last_seen_at", Type: field.TypeTime, Nullable: true},
 		{Name: "deleted_at", Type: field.TypeTime, Nullable: true},
+		{Name: "suspended_at", Type: field.TypeTime, Nullable: true},
+		{Name: "suspension_note", Type: field.TypeString, Nullable: true, Size: 500},
 		{Name: "avatar_key", Type: field.TypeString, Nullable: true, Size: 200},
 		{Name: "data_saver", Type: field.TypeBool, Default: false},
 		{Name: "notification_prefs", Type: field.TypeJSON, Nullable: true},
@@ -833,6 +870,7 @@ var (
 		AgentProfilesTable,
 		AuditEventsTable,
 		ConversationsTable,
+		DuplicateCandidatesTable,
 		LandlordProfilesTable,
 		ListingsTable,
 		ListingMediaTable,

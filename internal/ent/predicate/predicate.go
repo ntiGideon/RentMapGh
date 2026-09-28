@@ -18,6 +18,9 @@ type AuditEvent func(*sql.Selector)
 // Conversation is the predicate function for conversation builders.
 type Conversation func(*sql.Selector)
 
+// DuplicateCandidate is the predicate function for duplicatecandidate builders.
+type DuplicateCandidate func(*sql.Selector)
+
 // LandlordProfile is the predicate function for landlordprofile builders.
 type LandlordProfile func(*sql.Selector)
 

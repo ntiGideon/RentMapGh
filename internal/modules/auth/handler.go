@@ -218,6 +218,10 @@ func (h *Handler) Resend(w http.ResponseWriter, r *http.Request) {
 
 // Logout ends the current session.
 func (h *Handler) Logout(w http.ResponseWriter, r *http.Request) {
+	if reqctx.CurrentViewer(r.Context()).IsViewAs() { // signing out of a support session goes back to the admin
+		h.StopViewAs(w, r)
+		return
+	}
 	if v := reqctx.CurrentViewer(r.Context()); v != nil {
 		if err := h.sessions.Revoke(r.Context(), v.UserID, v.SessionID); err != nil && !errors.Is(err, ErrNoSession) {
 			slog.ErrorContext(r.Context(), "auth: logout", "err", err)

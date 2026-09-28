@@ -176,6 +176,46 @@ func (_u *UserUpdate) ClearDeletedAt() *UserUpdate {
 	return _u
 }
 
+// SetSuspendedAt sets the "suspended_at" field.
+func (_u *UserUpdate) SetSuspendedAt(v time.Time) *UserUpdate {
+	_u.mutation.SetSuspendedAt(v)
+	return _u
+}
+
+// SetNillableSuspendedAt sets the "suspended_at" field if the given value is not nil.
+func (_u *UserUpdate) SetNillableSuspendedAt(v *time.Time) *UserUpdate {
+	if v != nil {
+		_u.SetSuspendedAt(*v)
+	}
+	return _u
+}
+
+// ClearSuspendedAt clears the value of the "suspended_at" field.
+func (_u *UserUpdate) ClearSuspendedAt() *UserUpdate {
+	_u.mutation.ClearSuspendedAt()
+	return _u
+}
+
+// SetSuspensionNote sets the "suspension_note" field.
+func (_u *UserUpdate) SetSuspensionNote(v string) *UserUpdate {
+	_u.mutation.SetSuspensionNote(v)
+	return _u
+}
+
+// SetNillableSuspensionNote sets the "suspension_note" field if the given value is not nil.
+func (_u *UserUpdate) SetNillableSuspensionNote(v *string) *UserUpdate {
+	if v != nil {
+		_u.SetSuspensionNote(*v)
+	}
+	return _u
+}
+
+// ClearSuspensionNote clears the value of the "suspension_note" field.
+func (_u *UserUpdate) ClearSuspensionNote() *UserUpdate {
+	_u.mutation.ClearSuspensionNote()
+	return _u
+}
+
 // SetAvatarKey sets the "avatar_key" field.
 func (_u *UserUpdate) SetAvatarKey(v string) *UserUpdate {
 	_u.mutation.SetAvatarKey(v)
@@ -496,6 +536,11 @@ func (_u *UserUpdate) check() error {
 			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "User.status": %w`, err)}
 		}
 	}
+	if v, ok := _u.mutation.SuspensionNote(); ok {
+		if err := user.SuspensionNoteValidator(v); err != nil {
+			return &ValidationError{Name: "suspension_note", err: fmt.Errorf(`ent: validator failed for field "User.suspension_note": %w`, err)}
+		}
+	}
 	if v, ok := _u.mutation.AvatarKey(); ok {
 		if err := user.AvatarKeyValidator(v); err != nil {
 			return &ValidationError{Name: "avatar_key", err: fmt.Errorf(`ent: validator failed for field "User.avatar_key": %w`, err)}
@@ -557,6 +602,18 @@ func (_u *UserUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	}
 	if _u.mutation.DeletedAtCleared() {
 		_spec.ClearField(user.FieldDeletedAt, field.TypeTime)
+	}
+	if value, ok := _u.mutation.SuspendedAt(); ok {
+		_spec.SetField(user.FieldSuspendedAt, field.TypeTime, value)
+	}
+	if _u.mutation.SuspendedAtCleared() {
+		_spec.ClearField(user.FieldSuspendedAt, field.TypeTime)
+	}
+	if value, ok := _u.mutation.SuspensionNote(); ok {
+		_spec.SetField(user.FieldSuspensionNote, field.TypeString, value)
+	}
+	if _u.mutation.SuspensionNoteCleared() {
+		_spec.ClearField(user.FieldSuspensionNote, field.TypeString)
 	}
 	if value, ok := _u.mutation.AvatarKey(); ok {
 		_spec.SetField(user.FieldAvatarKey, field.TypeString, value)
@@ -949,6 +1006,46 @@ func (_u *UserUpdateOne) ClearDeletedAt() *UserUpdateOne {
 	return _u
 }
 
+// SetSuspendedAt sets the "suspended_at" field.
+func (_u *UserUpdateOne) SetSuspendedAt(v time.Time) *UserUpdateOne {
+	_u.mutation.SetSuspendedAt(v)
+	return _u
+}
+
+// SetNillableSuspendedAt sets the "suspended_at" field if the given value is not nil.
+func (_u *UserUpdateOne) SetNillableSuspendedAt(v *time.Time) *UserUpdateOne {
+	if v != nil {
+		_u.SetSuspendedAt(*v)
+	}
+	return _u
+}
+
+// ClearSuspendedAt clears the value of the "suspended_at" field.
+func (_u *UserUpdateOne) ClearSuspendedAt() *UserUpdateOne {
+	_u.mutation.ClearSuspendedAt()
+	return _u
+}
+
+// SetSuspensionNote sets the "suspension_note" field.
+func (_u *UserUpdateOne) SetSuspensionNote(v string) *UserUpdateOne {
+	_u.mutation.SetSuspensionNote(v)
+	return _u
+}
+
+// SetNillableSuspensionNote sets the "suspension_note" field if the given value is not nil.
+func (_u *UserUpdateOne) SetNillableSuspensionNote(v *string) *UserUpdateOne {
+	if v != nil {
+		_u.SetSuspensionNote(*v)
+	}
+	return _u
+}
+
+// ClearSuspensionNote clears the value of the "suspension_note" field.
+func (_u *UserUpdateOne) ClearSuspensionNote() *UserUpdateOne {
+	_u.mutation.ClearSuspensionNote()
+	return _u
+}
+
 // SetAvatarKey sets the "avatar_key" field.
 func (_u *UserUpdateOne) SetAvatarKey(v string) *UserUpdateOne {
 	_u.mutation.SetAvatarKey(v)
@@ -1282,6 +1379,11 @@ func (_u *UserUpdateOne) check() error {
 			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "User.status": %w`, err)}
 		}
 	}
+	if v, ok := _u.mutation.SuspensionNote(); ok {
+		if err := user.SuspensionNoteValidator(v); err != nil {
+			return &ValidationError{Name: "suspension_note", err: fmt.Errorf(`ent: validator failed for field "User.suspension_note": %w`, err)}
+		}
+	}
 	if v, ok := _u.mutation.AvatarKey(); ok {
 		if err := user.AvatarKeyValidator(v); err != nil {
 			return &ValidationError{Name: "avatar_key", err: fmt.Errorf(`ent: validator failed for field "User.avatar_key": %w`, err)}
@@ -1360,6 +1462,18 @@ func (_u *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) {
 	}
 	if _u.mutation.DeletedAtCleared() {
 		_spec.ClearField(user.FieldDeletedAt, field.TypeTime)
+	}
+	if value, ok := _u.mutation.SuspendedAt(); ok {
+		_spec.SetField(user.FieldSuspendedAt, field.TypeTime, value)
+	}
+	if _u.mutation.SuspendedAtCleared() {
+		_spec.ClearField(user.FieldSuspendedAt, field.TypeTime)
+	}
+	if value, ok := _u.mutation.SuspensionNote(); ok {
+		_spec.SetField(user.FieldSuspensionNote, field.TypeString, value)
+	}
+	if _u.mutation.SuspensionNoteCleared() {
+		_spec.ClearField(user.FieldSuspensionNote, field.TypeString)
 	}
 	if value, ok := _u.mutation.AvatarKey(); ok {
 		_spec.SetField(user.FieldAvatarKey, field.TypeString, value)

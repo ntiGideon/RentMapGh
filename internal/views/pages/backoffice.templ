@@ -1,0 +1,585 @@
+package pages
+
+import (
+	"strconv"
+
+	c "rentmapgh/internal/views/components"
+	"rentmapgh/internal/views/layouts"
+)
+
+// ── Shared ───────────────────────────────────────────────────────────────
+
+templ adminNotice(notice, errMsg string) {
+	if notice != "" {
+		<p class="mt-4 rounded-lg border border-line bg-surface-raised px-3 py-2 text-sm text-fg" role="status">{ notice }</p>
+	}
+	if errMsg != "" {
+		<p class="mt-4 rounded-lg border border-red-600/40 bg-red-50 px-3 py-2 text-sm text-red-800 dark:bg-red-400/10 dark:text-red-200" role="alert">{ errMsg }</p>
+	}
+}
+
+func adminTone(s string) c.Tone {
+	switch s {
+	case "active", "open":
+		return c.Success
+	case "suspended", "removed":
+		return c.Danger
+	case "pending_review", "paused":
+		return c.Warning
+	}
+	return c.Neutral
+}
+
+const adminInput = "h-9 rounded-lg border border-line-strong bg-bg px-3 text-sm text-fg placeholder:text-fg-subtle focus:border-focus focus:outline-none"
+
+// ── Users ────────────────────────────────────────────────────────────────
+
+type AdminUserRow struct {
+	URL, Name, Phone, Roles, Status, Joined, Seen string
+}
+
+type AdminUsersView struct {
+	Q, Role, Status string
+	Roles           []string
+	Rows            []AdminUserRow
+	Total           int
+	Prev, Next      string
+}
+
+templ AdminUsers(v AdminUsersView) {
+	@layouts.Admin(layouts.Meta{Title: "Users"}, layouts.AdminNav{Active: "users"}) {
+		<h1 class="text-xl font-semibold text-fg">Users</h1>
+		<form method="get" action="/admin/users" class="mt-4 flex flex-wrap items-end gap-2" role="search">
+			<label class="grid gap-1 text-xs font-medium text-fg-muted">
+				Phone or name
+				<input type="search" name="q" value={ v.Q } placeholder="024 123 4567" class={ adminInput + " w-64" }/>
+			</label>
+			<label class="grid gap-1 text-xs font-medium text-fg-muted">
+				Role
+				<select name="role" class={ adminInput }>
+					<option value="">Any</option>
+					for _, r := range v.Roles {
+						<option value={ r } selected?={ r == v.Role }>{ RoleLabel(r) }</option>
+					}
+				</select>
+			</label>
+			<label class="grid gap-1 text-xs font-medium text-fg-muted">
+				Status
+				<select name="status" class={ adminInput }>
+					<option value="">Active and suspended</option>
+					<option value="active" selected?={ v.Status == "active" }>Active</option>
+					<option value="suspended" selected?={ v.Status == "suspended" }>Suspended</option>
+					<option value="deleted" selected?={ v.Status == "deleted" }>Deleted</option>
+				</select>
+			</label>
+			@c.Button(c.ButtonProps{Type: "submit", Variant: c.Ghost}) {
+				Search
+			}
+		</form>
+		<p class="mt-4 text-sm text-fg-muted">{ strconv.Itoa(v.Total) } { adminPlural(v.Total, "person", "people") }</p>
+		if len(v.Rows) > 0 {
+			<div class="mt-2 overflow-x-auto rounded-card border border-line bg-surface-raised">
+				<table class="w-full min-w-[40rem] text-left text-sm">
+					<thead class="border-b border-line text-xs text-fg-muted">
+						<tr>
+							<th class="px-4 py-2 font-medium">Name</th>
+							<th class="px-4 py-2 font-medium">Phone</th>
+							<th class="px-4 py-2 font-medium">Roles</th>
+							<th class="px-4 py-2 font-medium">Status</th>
+							<th class="px-4 py-2 font-medium">Joined</th>
+							<th class="px-4 py-2 font-medium">Last seen</th>
+						</tr>
+					</thead>
+					<tbody class="divide-y divide-line">
+						for _, r := range v.Rows {
+							<tr class="hover:bg-surface">
+								<td class="px-4 py-2"><a href={ templ.SafeURL(r.URL) } class="font-medium text-fg hover:underline">{ r.Name }</a></td>
+								<td class="whitespace-nowrap px-4 py-2 tabular-nums text-fg-muted">{ r.Phone }</td>
+								<td class="px-4 py-2 text-fg-muted">{ r.Roles }</td>
+								<td class="px-4 py-2">
+									@c.Badge(adminTone(r.Status)) {
+										{ r.Status }
+									}
+								</td>
+								<td class="px-4 py-2 text-fg-muted">{ r.Joined }</td>
+								<td class="px-4 py-2 text-fg-muted">{ r.Seen }</td>
+							</tr>
+						}
+					</tbody>
+				</table>
+			</div>
+		}
+		@adminPager(v.Prev, v.Next)
+	}
+}
+
+templ adminPager(prev, next string) {
+	if prev != "" || next != "" {
+		<nav class="mt-4 flex gap-2" aria-label="Pages">
+			if prev != "" {
+				@c.LinkButton(prev, c.Ghost, c.SM) {
+					Newer
+				}
+			}
+			if next != "" {
+				@c.LinkButton(next, c.Ghost, c.SM) {
+					Older
+				}
+			}
+		</nav>
+	}
+}
+
+func adminPlural(n int, one, many string) string {
+	if n == 1 {
+		return one
+	}
+	return many
+}
+
+// RoleLabel is how a role reads in the back office.
+func RoleLabel(r string) string {
+	return map[string]string{"renter": "Renter", "landlord": "Landlord", "agent": "Agent", "field_verifier": "Field verifier",
+		"moderator": "Moderator", "admin": "Admin"}[r]
+}
+
+// ── One user ─────────────────────────────────────────────────────────────
+
+type RoleToggle struct {
+	Role string
+	Has  bool
+}
+
+type AdminLink struct{ Label, Meta, Status, URL string }
+
+type AuditRow struct {
+	When, Action, Actor, ActorURL, Target, TargetURL, IP, Meta string
+}
+
+type AdminUserView struct {
+	ID, Name, Phone, Status, Joined, Seen string
+	SuspendedAt, SuspensionNote           string
+	Verified                              []string
+	Roles                                 []RoleToggle
+	CanManageRoles, CanViewAs, CanSuspend bool
+	Listings, Reports                     []AdminLink
+	Events                                []AuditRow
+	Sessions, Viewings, NoShows, Filed    int
+	Notice, Error                         string
+}
+
+templ AdminUser(v AdminUserView) {
+	@layouts.Admin(layouts.Meta{Title: v.Name}, layouts.AdminNav{Active: "users"}) {
+		<a href="/admin/users" class="text-sm text-fg-muted hover:text-fg">← Users</a>
+		<div class="mt-2 flex flex-wrap items-center gap-2">
+			<h1 class="text-xl font-semibold text-fg">{ v.Name }</h1>
+			@c.Badge(adminTone(v.Status)) {
+				{ v.Status }
+			}
+			for _, b := range v.Verified {
+				@c.Badge(c.Verified) {
+					{ b }
+				}
+			}
+		</div>
+		<p class="mt-1 text-sm tabular-nums text-fg-muted">{ v.Phone } · joined { v.Joined } · last seen { v.Seen }</p>
+		@adminNotice(v.Notice, v.Error)
+		<div class="mt-6 grid gap-6 xl:grid-cols-[1fr_20rem]">
+			<div class="min-w-0 space-y-6">
+				<dl class="grid grid-cols-2 gap-3 sm:grid-cols-4">
+					@adminStat("Signed-in devices", strconv.Itoa(v.Sessions))
+					@adminStat("Viewings booked", strconv.Itoa(v.Viewings))
+					@adminStat("No-shows", strconv.Itoa(v.NoShows))
+					@adminStat("Reports filed", strconv.Itoa(v.Filed))
+				</dl>
+				@adminLinks("Listings", "No listings.", v.Listings)
+				@adminLinks("Reports about them", "No reports.", v.Reports)
+				<section>
+					<h2 class="text-sm font-semibold text-fg">Recent activity</h2>
+					@adminAuditTable(v.Events, "Nothing recorded yet.")
+				</section>
+			</div>
+			<aside class="space-y-4">
+				if v.Status == "suspended" {
+					@c.Card("p-4 text-sm") {
+						<h2 class="font-semibold text-fg">Suspended { v.SuspendedAt }</h2>
+						<p class="mt-1 whitespace-pre-line text-fg-muted">{ v.SuspensionNote }</p>
+						if v.CanSuspend {
+							<form method="post" action={ templ.SafeURL("/admin/users/" + v.ID + "/reactivate") } class="mt-3">
+								@c.Button(c.ButtonProps{Type: "submit", Variant: c.Ghost, Full: true}) {
+									Reactivate
+								}
+							</form>
+						}
+					}
+				} else if v.Status == "active" && v.CanSuspend {
+					<details class="rounded-card border border-line bg-surface-raised p-4">
+						<summary class="cursor-pointer text-sm font-semibold text-fg">Suspend</summary>
+						<form method="post" action={ templ.SafeURL("/admin/users/" + v.ID + "/suspend") } class="mt-3 space-y-3">
+							@c.Textarea(c.TextareaProps{ID: "note", Name: "note", Label: "Why? (staff only)", Rows: 3, MaxLen: 500, Required: true})
+							<p class="text-xs text-fg-muted">They're signed out everywhere and can't sign in. Their live listings are paused.</p>
+							@c.Button(c.ButtonProps{Type: "submit", Variant: c.DangerSoft, Full: true}) {
+								Suspend account
+							}
+						</form>
+					</details>
+				}
+				if v.CanManageRoles {
+					@c.Card("p-4") {
+						<h2 class="text-sm font-semibold text-fg">Roles</h2>
+						<ul class="mt-2 divide-y divide-line">
+							for _, r := range v.Roles {
+								<li class="flex items-center justify-between gap-2 py-1.5 text-sm">
+									<span class={ templ.KV("text-fg", r.Has), templ.KV("text-fg-subtle", !r.Has) }>{ RoleLabel(r.Role) }</span>
+									<form method="post" action={ templ.SafeURL("/admin/users/" + v.ID + "/roles") }>
+										<input type="hidden" name="role" value={ r.Role }/>
+										if r.Has {
+											<input type="hidden" name="grant" value="0"/>
+											<button type="submit" class="text-xs font-medium text-danger hover:underline">Remove</button>
+										} else {
+											<input type="hidden" name="grant" value="1"/>
+											<button type="submit" class="text-xs font-medium text-link hover:underline">Give</button>
+										}
+									</form>
+								</li>
+							}
+						</ul>
+					}
+				}
+				if v.CanViewAs {
+					@c.Card("p-4 text-sm") {
+						<h2 class="font-semibold text-fg">View as { v.Name }</h2>
+						<p class="mt-1 text-fg-muted">See the site as they do to help with a problem. Read-only, 30 minutes, and recorded in the audit log.</p>
+						<form method="post" action={ templ.SafeURL("/admin/users/" + v.ID + "/view-as") } class="mt-3">
+							@c.Button(c.ButtonProps{Type: "submit", Variant: c.Ghost, Full: true}) {
+								View as this user
+							}
+						</form>
+					}
+				}
+			</aside>
+		</div>
+	}
+}
+
+templ adminStat(label, value string) {
+	<div class="rounded-card border border-line bg-surface-raised px-4 py-3">
+		<dt class="text-xs text-fg-muted">{ label }</dt>
+		<dd class="mt-1 text-lg font-semibold tabular-nums text-fg">{ value }</dd>
+	</div>
+}
+
+templ adminLinks(title, empty string, rows []AdminLink) {
+	<section>
+		<h2 class="text-sm font-semibold text-fg">{ title }</h2>
+		if len(rows) == 0 {
+			<p class="mt-2 text-sm text-fg-muted">{ empty }</p>
+		} else {
+			<ul class="mt-2 divide-y divide-line rounded-card border border-line bg-surface-raised">
+				for _, r := range rows {
+					<li>
+						<a href={ templ.SafeURL(r.URL) } class="flex items-center justify-between gap-3 px-4 py-2.5 text-sm hover:bg-surface">
+							<span class="min-w-0">
+								<span class="block truncate font-medium text-fg">{ r.Label }</span>
+								if r.Meta != "" {
+									<span class="block truncate text-xs text-fg-muted">{ r.Meta }</span>
+								}
+							</span>
+							@c.Badge(adminTone(r.Status)) {
+								{ r.Status }
+							}
+						</a>
+					</li>
+				}
+			</ul>
+		}
+	</section>
+}
+
+templ adminAuditTable(rows []AuditRow, empty string) {
+	if len(rows) == 0 {
+		<p class="mt-2 text-sm text-fg-muted">{ empty }</p>
+	} else {
+		<div class="mt-2 overflow-x-auto rounded-card border border-line bg-surface-raised">
+			<table class="w-full min-w-[44rem] text-left text-sm">
+				<thead class="border-b border-line text-xs text-fg-muted">
+					<tr>
+						<th class="px-4 py-2 font-medium">When</th>
+						<th class="px-4 py-2 font-medium">Action</th>
+						<th class="px-4 py-2 font-medium">Who</th>
+						<th class="px-4 py-2 font-medium">Target</th>
+						<th class="px-4 py-2 font-medium">Details</th>
+					</tr>
+				</thead>
+				<tbody class="divide-y divide-line align-top">
+					for _, r := range rows {
+						<tr>
+							<td class="whitespace-nowrap px-4 py-2 tabular-nums text-fg-muted">{ r.When }</td>
+							<td class="px-4 py-2 font-mono text-xs text-fg">{ r.Action }</td>
+							<td class="px-4 py-2">
+								if r.ActorURL != "" {
+									<a href={ templ.SafeURL(r.ActorURL) } class="text-fg hover:underline">{ r.Actor }</a>
+								} else {
+									<span class="text-fg-muted">{ r.Actor }</span>
+								}
+								if r.IP != "" {
+									<span class="block text-xs tabular-nums text-fg-subtle">{ r.IP }</span>
+								}
+							</td>
+							<td class="px-4 py-2">
+								if r.TargetURL != "" {
+									<a href={ templ.SafeURL(r.TargetURL) } class="text-link hover:underline">{ r.Target }</a>
+								} else {
+									<span class="text-fg-muted">{ r.Target }</span>
+								}
+							</td>
+							<td class="max-w-80 break-all px-4 py-2 font-mono text-xs text-fg-muted">{ r.Meta }</td>
+						</tr>
+					}
+				</tbody>
+			</table>
+		</div>
+	}
+}
+
+// ── Audit log ────────────────────────────────────────────────────────────
+
+type AdminAuditView struct {
+	Action, Actor, Target string
+	Rows                  []AuditRow
+	Next                  string
+}
+
+templ AdminAudit(v AdminAuditView) {
+	@layouts.Admin(layouts.Meta{Title: "Audit log"}, layouts.AdminNav{Active: "audit"}) {
+		<h1 class="text-xl font-semibold text-fg">Audit log</h1>
+		<p class="mt-1 text-sm text-fg-muted">Sign-ins, staff decisions and changes to accounts and listings. Entries can't be edited.</p>
+		<form method="get" action="/admin/audit" class="mt-4 flex flex-wrap items-end gap-2">
+			<label class="grid gap-1 text-xs font-medium text-fg-muted">
+				Action starts with
+				<input type="text" name="action" value={ v.Action } placeholder="admin." class={ adminInput + " w-44" }/>
+			</label>
+			<label class="grid gap-1 text-xs font-medium text-fg-muted">
+				Who (phone or ID)
+				<input type="text" name="actor" value={ v.Actor } class={ adminInput + " w-52" }/>
+			</label>
+			<label class="grid gap-1 text-xs font-medium text-fg-muted">
+				Target ID
+				<input type="text" name="target" value={ v.Target } class={ adminInput + " w-72" }/>
+			</label>
+			@c.Button(c.ButtonProps{Type: "submit", Variant: c.Ghost}) {
+				Filter
+			}
+		</form>
+		<div class="mt-4">
+			@adminAuditTable(v.Rows, "No entries match.")
+		</div>
+		@adminPager("", v.Next)
+	}
+}
+
+// ── Metrics ──────────────────────────────────────────────────────────────
+
+type MetricTile struct{ Label, Value, Note string }
+
+type WeekRow struct {
+	Label                                string
+	Users, Listings, Viewings, RentedVia int
+}
+
+type AdminMetricsView struct {
+	North  []MetricTile
+	Groups []MetricGroup
+	Weeks  []WeekRow
+}
+
+type MetricGroup struct {
+	Title string
+	Tiles []MetricTile
+}
+
+templ AdminMetrics(v AdminMetricsView) {
+	@layouts.Admin(layouts.Meta{Title: "Metrics"}, layouts.AdminNav{Active: "metrics"}) {
+		<h1 class="text-xl font-semibold text-fg">Metrics</h1>
+		<section class="mt-4 rounded-card border border-line bg-surface-raised p-4 sm:p-5" aria-labelledby="north-h">
+			<h2 id="north-h" class="text-sm font-semibold text-fg">North star: places rented through RentMap</h2>
+			<dl class="mt-3 grid gap-4 sm:grid-cols-3">
+				for _, t := range v.North {
+					@adminMetric(t)
+				}
+			</dl>
+		</section>
+		for _, g := range v.Groups {
+			<section class="mt-6" aria-label={ g.Title }>
+				<h2 class="text-sm font-semibold text-fg">{ g.Title }</h2>
+				<dl class="mt-2 grid grid-cols-2 gap-3 md:grid-cols-4">
+					for _, t := range g.Tiles {
+						<div class="rounded-card border border-line bg-surface-raised px-4 py-3">
+							@adminMetric(t)
+						</div>
+					}
+				</dl>
+			</section>
+		}
+		<section class="mt-6" aria-labelledby="weeks-h">
+			<h2 id="weeks-h" class="text-sm font-semibold text-fg">Week by week</h2>
+			<div class="mt-2 overflow-x-auto rounded-card border border-line bg-surface-raised">
+				<table class="w-full min-w-[32rem] text-left text-sm tabular-nums">
+					<thead class="border-b border-line text-xs text-fg-muted">
+						<tr>
+							<th class="px-4 py-2 font-medium">Week of</th>
+							<th class="px-4 py-2 text-right font-medium">New people</th>
+							<th class="px-4 py-2 text-right font-medium">Listings published</th>
+							<th class="px-4 py-2 text-right font-medium">Viewing requests</th>
+							<th class="px-4 py-2 text-right font-medium">Rented via RentMap</th>
+						</tr>
+					</thead>
+					<tbody class="divide-y divide-line">
+						for _, w := range v.Weeks {
+							<tr>
+								<td class="px-4 py-2 text-fg">{ w.Label }</td>
+								<td class="px-4 py-2 text-right text-fg">{ strconv.Itoa(w.Users) }</td>
+								<td class="px-4 py-2 text-right text-fg">{ strconv.Itoa(w.Listings) }</td>
+								<td class="px-4 py-2 text-right text-fg">{ strconv.Itoa(w.Viewings) }</td>
+								<td class="px-4 py-2 text-right font-semibold text-fg">{ strconv.Itoa(w.RentedVia) }</td>
+							</tr>
+						}
+					</tbody>
+				</table>
+			</div>
+		</section>
+	}
+}
+
+templ adminMetric(t MetricTile) {
+	<div>
+		<dt class="text-xs text-fg-muted">{ t.Label }</dt>
+		<dd class="mt-1 text-2xl font-semibold tabular-nums text-fg">{ t.Value }</dd>
+		if t.Note != "" {
+			<dd class="text-xs text-fg-subtle">{ t.Note }</dd>
+		}
+	</div>
+}
+
+// ── Flagged messages ─────────────────────────────────────────────────────
+
+type FlaggedRow struct {
+	ID, Body, Flags, Sender, SenderURL, Listing, ListingURL, When string
+}
+
+type AdminFlaggedView struct {
+	Rows   []FlaggedRow
+	Notice string
+}
+
+templ AdminFlagged(v AdminFlaggedView) {
+	@layouts.Admin(layouts.Meta{Title: "Flagged messages"}, layouts.AdminNav{Active: "flagged"}) {
+		<h1 class="text-xl font-semibold text-fg">Flagged messages</h1>
+		<p class="mt-1 text-sm text-fg-muted">Messages the scam shield warned about (mobile money, paying before a viewing, booking fees, moving off RentMap, pressure). Only the flagged message is shown; open a report to read a thread.</p>
+		@adminNotice(v.Notice, "")
+		if len(v.Rows) == 0 {
+			<p class="mt-6 text-sm text-fg-muted">Nothing waiting.</p>
+		} else {
+			<ul class="mt-4 space-y-3">
+				for _, r := range v.Rows {
+					<li class="rounded-card border border-line bg-surface-raised p-4">
+						<p class="text-xs text-fg-muted">
+							<a href={ templ.SafeURL(r.SenderURL) } class="font-medium text-fg hover:underline">{ r.Sender }</a>
+							· about <a href={ templ.SafeURL(r.ListingURL) } class="hover:underline">{ r.Listing }</a> · { r.When }
+						</p>
+						<p class="mt-2 whitespace-pre-line text-sm text-fg">{ r.Body }</p>
+						<div class="mt-3 flex flex-wrap items-center justify-between gap-2">
+							@c.Badge(c.Warning) {
+								{ r.Flags }
+							}
+							<div class="flex gap-2">
+								@c.LinkButton(r.SenderURL, c.Ghost, c.SM) {
+									Sender's account
+								}
+								<form method="post" action={ templ.SafeURL("/admin/flagged/" + r.ID + "/reviewed") }>
+									@c.Button(c.ButtonProps{Type: "submit", Size: c.SM, Variant: c.Ghost}) {
+										@c.Icon("check", "size-4")
+										Looks fine
+									}
+								</form>
+							</div>
+						</div>
+					</li>
+				}
+			</ul>
+		}
+	}
+}
+
+// ── Duplicates ───────────────────────────────────────────────────────────
+
+type DupSide struct {
+	Key, Title, URL, Lister, ListerURL, Status, Rent, Photo, Listed string
+}
+
+type DupRow struct {
+	ID, Score, Distance, Photo, Text string
+	A, B                             DupSide
+}
+
+type AdminDuplicatesView struct {
+	Rows          []DupRow
+	Notice, Error string
+}
+
+templ AdminDuplicates(v AdminDuplicatesView) {
+	@layouts.Admin(layouts.Meta{Title: "Duplicates"}, layouts.AdminNav{Active: "duplicates"}) {
+		<h1 class="text-xl font-semibold text-fg">Possible duplicates</h1>
+		<p class="mt-1 text-sm text-fg-muted">Listings within 150 m with a near-identical photo, or the same room type and rent at the same spot. Checked every hour.</p>
+		@adminNotice(v.Notice, v.Error)
+		if len(v.Rows) == 0 {
+			<p class="mt-6 text-sm text-fg-muted">Nothing waiting.</p>
+		} else {
+			<ul class="mt-4 space-y-4">
+				for _, r := range v.Rows {
+					<li class="rounded-card border border-line bg-surface-raised p-4">
+						<p class="flex flex-wrap gap-x-3 gap-y-1 text-xs text-fg-muted">
+							<span class="font-semibold text-fg">Score { r.Score }</span>
+							<span>{ r.Distance } apart</span>
+							<span>{ r.Photo }</span>
+							<span>{ r.Text }</span>
+						</p>
+						<div class="mt-3 grid gap-3 md:grid-cols-2">
+							@adminDupSide(r.ID, r.A)
+							@adminDupSide(r.ID, r.B)
+						</div>
+						<form method="post" action={ templ.SafeURL("/admin/duplicates/" + r.ID) } class="mt-3 flex justify-end">
+							<input type="hidden" name="decision" value="dismiss"/>
+							@c.Button(c.ButtonProps{Type: "submit", Size: c.SM, Variant: c.Ghost}) {
+								Not the same place
+							}
+						</form>
+					</li>
+				}
+			</ul>
+		}
+	}
+}
+
+templ adminDupSide(id string, s DupSide) {
+	<div class="flex gap-3 rounded-lg border border-line p-3">
+		if s.Photo != "" {
+			<img src={ s.Photo } alt="" width="96" height="72" loading="lazy" class="h-18 w-24 shrink-0 rounded-md object-cover"/>
+		}
+		<div class="min-w-0 flex-1 text-sm">
+			<a href={ templ.SafeURL(s.URL) } class="line-clamp-2 font-medium text-fg hover:underline">{ s.Title }</a>
+			<p class="mt-0.5 text-xs text-fg-muted">
+				<a href={ templ.SafeURL(s.ListerURL) } class="hover:underline">{ s.Lister }</a> · { s.Rent } · listed { s.Listed }
+			</p>
+			<div class="mt-2 flex items-center justify-between gap-2">
+				@c.Badge(adminTone(s.Status)) {
+					{ s.Status }
+				}
+				<form method="post" action={ templ.SafeURL("/admin/duplicates/" + id) }>
+					<input type="hidden" name="decision" value={ "remove_" + s.Key }/>
+					<button type="submit" class="text-xs font-medium text-danger hover:underline">Take down as the copy</button>
+				</form>
+			</div>
+		</div>
+	</div>
+}

@@ -56,6 +56,18 @@ func (f ConversationFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.ConversationMutation", m)
 }
 
+// The DuplicateCandidateFunc type is an adapter to allow the use of ordinary
+// function as DuplicateCandidate mutator.
+type DuplicateCandidateFunc func(context.Context, *ent.DuplicateCandidateMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f DuplicateCandidateFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.DuplicateCandidateMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.DuplicateCandidateMutation", m)
+}
+
 // The LandlordProfileFunc type is an adapter to allow the use of ordinary
 // function as LandlordProfile mutator.
 type LandlordProfileFunc func(context.Context, *ent.LandlordProfileMutation) (ent.Value, error)

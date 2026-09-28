@@ -40,6 +40,10 @@ type User struct {
 	LastSeenAt *time.Time `json:"last_seen_at,omitempty"`
 	// DeletedAt holds the value of the "deleted_at" field.
 	DeletedAt *time.Time `json:"deleted_at,omitempty"`
+	// SuspendedAt holds the value of the "suspended_at" field.
+	SuspendedAt *time.Time `json:"suspended_at,omitempty"`
+	// why (staff only)
+	SuspensionNote string `json:"suspension_note,omitempty"`
 	// storage key of the profile photo
 	AvatarKey string `json:"avatar_key,omitempty"`
 	// DataSaver holds the value of the "data_saver" field.
@@ -133,9 +137,9 @@ func (*User) scanValues(columns []string) ([]any, error) {
 			values[i] = new([]byte)
 		case user.FieldDataSaver:
 			values[i] = new(sql.NullBool)
-		case user.FieldPhone, user.FieldName, user.FieldStatus, user.FieldAvatarKey:
+		case user.FieldPhone, user.FieldName, user.FieldStatus, user.FieldSuspensionNote, user.FieldAvatarKey:
 			values[i] = new(sql.NullString)
-		case user.FieldCreatedAt, user.FieldUpdatedAt, user.FieldPhoneVerifiedAt, user.FieldOnboardedAt, user.FieldLastSeenAt, user.FieldDeletedAt, user.FieldIdentityVerifiedAt, user.FieldLicenseVerifiedAt:
+		case user.FieldCreatedAt, user.FieldUpdatedAt, user.FieldPhoneVerifiedAt, user.FieldOnboardedAt, user.FieldLastSeenAt, user.FieldDeletedAt, user.FieldSuspendedAt, user.FieldIdentityVerifiedAt, user.FieldLicenseVerifiedAt:
 			values[i] = new(sql.NullTime)
 		case user.FieldID:
 			values[i] = new(uuid.UUID)
@@ -218,6 +222,19 @@ func (_m *User) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				_m.DeletedAt = new(time.Time)
 				*_m.DeletedAt = value.Time
+			}
+		case user.FieldSuspendedAt:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field suspended_at", values[i])
+			} else if value.Valid {
+				_m.SuspendedAt = new(time.Time)
+				*_m.SuspendedAt = value.Time
+			}
+		case user.FieldSuspensionNote:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field suspension_note", values[i])
+			} else if value.Valid {
+				_m.SuspensionNote = value.String
 			}
 		case user.FieldAvatarKey:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -358,6 +375,14 @@ func (_m *User) String() string {
 		builder.WriteString("deleted_at=")
 		builder.WriteString(v.Format(time.ANSIC))
 	}
+	builder.WriteString(", ")
+	if v := _m.SuspendedAt; v != nil {
+		builder.WriteString("suspended_at=")
+		builder.WriteString(v.Format(time.ANSIC))
+	}
+	builder.WriteString(", ")
+	builder.WriteString("suspension_note=")
+	builder.WriteString(_m.SuspensionNote)
 	builder.WriteString(", ")
 	builder.WriteString("avatar_key=")
 	builder.WriteString(_m.AvatarKey)

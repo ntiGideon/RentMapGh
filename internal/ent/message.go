@@ -30,8 +30,10 @@ type Message struct {
 	// Body holds the value of the "body" field.
 	Body string `json:"body,omitempty"`
 	// Flags holds the value of the "flags" field.
-	Flags        []string `json:"flags,omitempty"`
-	selectValues sql.SelectValues
+	Flags []string `json:"flags,omitempty"`
+	// a moderator looked at the scam-shield flags
+	FlagsReviewedAt *time.Time `json:"flags_reviewed_at,omitempty"`
+	selectValues    sql.SelectValues
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -43,7 +45,7 @@ func (*Message) scanValues(columns []string) ([]any, error) {
 			values[i] = new([]byte)
 		case message.FieldBody:
 			values[i] = new(sql.NullString)
-		case message.FieldCreatedAt, message.FieldUpdatedAt:
+		case message.FieldCreatedAt, message.FieldUpdatedAt, message.FieldFlagsReviewedAt:
 			values[i] = new(sql.NullTime)
 		case message.FieldID, message.FieldConversationID, message.FieldSenderID:
 			values[i] = new(uuid.UUID)
@@ -106,6 +108,13 @@ func (_m *Message) assignValues(columns []string, values []any) error {
 					return fmt.Errorf("unmarshal field flags: %w", err)
 				}
 			}
+		case message.FieldFlagsReviewedAt:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field flags_reviewed_at", values[i])
+			} else if value.Valid {
+				_m.FlagsReviewedAt = new(time.Time)
+				*_m.FlagsReviewedAt = value.Time
+			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
 		}
@@ -159,6 +168,11 @@ func (_m *Message) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("flags=")
 	builder.WriteString(fmt.Sprintf("%v", _m.Flags))
+	builder.WriteString(", ")
+	if v := _m.FlagsReviewedAt; v != nil {
+		builder.WriteString("flags_reviewed_at=")
+		builder.WriteString(v.Format(time.ANSIC))
+	}
 	builder.WriteByte(')')
 	return builder.String()
 }

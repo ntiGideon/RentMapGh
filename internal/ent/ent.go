@@ -11,6 +11,7 @@ import (
 	"rentmapgh/internal/ent/agentprofile"
 	"rentmapgh/internal/ent/auditevent"
 	"rentmapgh/internal/ent/conversation"
+	"rentmapgh/internal/ent/duplicatecandidate"
 	"rentmapgh/internal/ent/landlordprofile"
 	"rentmapgh/internal/ent/listing"
 	"rentmapgh/internal/ent/listingmedia"
@@ -95,29 +96,30 @@ var (
 func checkColumn(t, c string) error {
 	initCheck.Do(func() {
 		columnCheck = sql.NewColumnCheck(map[string]func(string) bool{
-			agentmandate.Table:     agentmandate.ValidColumn,
-			agentprofile.Table:     agentprofile.ValidColumn,
-			auditevent.Table:       auditevent.ValidColumn,
-			conversation.Table:     conversation.ValidColumn,
-			landlordprofile.Table:  landlordprofile.ValidColumn,
-			listing.Table:          listing.ValidColumn,
-			listingmedia.Table:     listingmedia.ValidColumn,
-			listingstat.Table:      listingstat.ValidColumn,
-			listingterms.Table:     listingterms.ValidColumn,
-			message.Table:          message.ValidColumn,
-			notification.Table:     notification.ValidColumn,
-			otpcode.Table:          otpcode.ValidColumn,
-			property.Table:         property.ValidColumn,
-			report.Table:           report.ValidColumn,
-			roleassignment.Table:   roleassignment.ValidColumn,
-			savedlisting.Table:     savedlisting.ValidColumn,
-			session.Table:          session.ValidColumn,
-			unit.Table:             unit.ValidColumn,
-			user.Table:             user.ValidColumn,
-			verification.Table:     verification.ValidColumn,
-			verificationfile.Table: verificationfile.ValidColumn,
-			viewing.Table:          viewing.ValidColumn,
-			waitlistentry.Table:    waitlistentry.ValidColumn,
+			agentmandate.Table:       agentmandate.ValidColumn,
+			agentprofile.Table:       agentprofile.ValidColumn,
+			auditevent.Table:         auditevent.ValidColumn,
+			conversation.Table:       conversation.ValidColumn,
+			duplicatecandidate.Table: duplicatecandidate.ValidColumn,
+			landlordprofile.Table:    landlordprofile.ValidColumn,
+			listing.Table:            listing.ValidColumn,
+			listingmedia.Table:       listingmedia.ValidColumn,
+			listingstat.Table:        listingstat.ValidColumn,
+			listingterms.Table:       listingterms.ValidColumn,
+			message.Table:            message.ValidColumn,
+			notification.Table:       notification.ValidColumn,
+			otpcode.Table:            otpcode.ValidColumn,
+			property.Table:           property.ValidColumn,
+			report.Table:             report.ValidColumn,
+			roleassignment.Table:     roleassignment.ValidColumn,
+			savedlisting.Table:       savedlisting.ValidColumn,
+			session.Table:            session.ValidColumn,
+			unit.Table:               unit.ValidColumn,
+			user.Table:               user.ValidColumn,
+			verification.Table:       verification.ValidColumn,
+			verificationfile.Table:   verificationfile.ValidColumn,
+			viewing.Table:            viewing.ValidColumn,
+			waitlistentry.Table:      waitlistentry.ValidColumn,
 		})
 	})
 	return columnCheck(t, c)

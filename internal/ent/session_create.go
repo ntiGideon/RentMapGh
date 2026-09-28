@@ -119,6 +119,20 @@ func (_c *SessionCreate) SetNillableRevokedAt(v *time.Time) *SessionCreate {
 	return _c
 }
 
+// SetImpersonatorID sets the "impersonator_id" field.
+func (_c *SessionCreate) SetImpersonatorID(v uuid.UUID) *SessionCreate {
+	_c.mutation.SetImpersonatorID(v)
+	return _c
+}
+
+// SetNillableImpersonatorID sets the "impersonator_id" field if the given value is not nil.
+func (_c *SessionCreate) SetNillableImpersonatorID(v *uuid.UUID) *SessionCreate {
+	if v != nil {
+		_c.SetImpersonatorID(*v)
+	}
+	return _c
+}
+
 // SetID sets the "id" field.
 func (_c *SessionCreate) SetID(v uuid.UUID) *SessionCreate {
 	_c.mutation.SetID(v)
@@ -292,6 +306,10 @@ func (_c *SessionCreate) createSpec() (*Session, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.RevokedAt(); ok {
 		_spec.SetField(session.FieldRevokedAt, field.TypeTime, value)
 		_node.RevokedAt = &value
+	}
+	if value, ok := _c.mutation.ImpersonatorID(); ok {
+		_spec.SetField(session.FieldImpersonatorID, field.TypeUUID, value)
+		_node.ImpersonatorID = &value
 	}
 	if nodes := _c.mutation.UserIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -486,6 +504,9 @@ func (u *SessionUpsertOne) UpdateNewValues() *SessionUpsertOne {
 		}
 		if _, exists := u.create.mutation.UserID(); exists {
 			s.SetIgnore(session.FieldUserID)
+		}
+		if _, exists := u.create.mutation.ImpersonatorID(); exists {
+			s.SetIgnore(session.FieldImpersonatorID)
 		}
 	}))
 	return u
@@ -825,6 +846,9 @@ func (u *SessionUpsertBulk) UpdateNewValues() *SessionUpsertBulk {
 			}
 			if _, exists := b.mutation.UserID(); exists {
 				s.SetIgnore(session.FieldUserID)
+			}
+			if _, exists := b.mutation.ImpersonatorID(); exists {
+				s.SetIgnore(session.FieldImpersonatorID)
 			}
 		}
 	}))

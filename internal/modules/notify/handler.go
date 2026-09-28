@@ -34,8 +34,10 @@ func (h *Handler) Page(w http.ResponseWriter, r *http.Request) {
 		}
 		view.Rows = append(view.Rows, pages.NotificationRow{Title: n.Title, Body: n.Body, URL: url, When: ago(n.CreatedAt, now), Unread: n.ReadAt == nil})
 	}
-	if err := h.svc.MarkAllRead(r.Context(), v.UserID); err != nil {
-		slog.WarnContext(r.Context(), "notifications: read", "err", err)
+	if !v.IsViewAs() { // support looking doesn't clear the bell
+		if err := h.svc.MarkAllRead(r.Context(), v.UserID); err != nil {
+			slog.WarnContext(r.Context(), "notifications: read", "err", err)
+		}
 	}
 	w.Header().Set("Cache-Control", "private, no-store")
 	c := reqctx.CurrentNavCounts(r.Context())

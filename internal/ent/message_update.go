@@ -53,6 +53,26 @@ func (_u *MessageUpdate) ClearFlags() *MessageUpdate {
 	return _u
 }
 
+// SetFlagsReviewedAt sets the "flags_reviewed_at" field.
+func (_u *MessageUpdate) SetFlagsReviewedAt(v time.Time) *MessageUpdate {
+	_u.mutation.SetFlagsReviewedAt(v)
+	return _u
+}
+
+// SetNillableFlagsReviewedAt sets the "flags_reviewed_at" field if the given value is not nil.
+func (_u *MessageUpdate) SetNillableFlagsReviewedAt(v *time.Time) *MessageUpdate {
+	if v != nil {
+		_u.SetFlagsReviewedAt(*v)
+	}
+	return _u
+}
+
+// ClearFlagsReviewedAt clears the value of the "flags_reviewed_at" field.
+func (_u *MessageUpdate) ClearFlagsReviewedAt() *MessageUpdate {
+	_u.mutation.ClearFlagsReviewedAt()
+	return _u
+}
+
 // Mutation returns the MessageMutation object of the builder.
 func (_u *MessageUpdate) Mutation() *MessageMutation {
 	return _u.mutation
@@ -117,6 +137,12 @@ func (_u *MessageUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	if _u.mutation.FlagsCleared() {
 		_spec.ClearField(message.FieldFlags, field.TypeJSON)
 	}
+	if value, ok := _u.mutation.FlagsReviewedAt(); ok {
+		_spec.SetField(message.FieldFlagsReviewedAt, field.TypeTime, value)
+	}
+	if _u.mutation.FlagsReviewedAtCleared() {
+		_spec.ClearField(message.FieldFlagsReviewedAt, field.TypeTime)
+	}
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{message.Label}
@@ -158,6 +184,26 @@ func (_u *MessageUpdateOne) AppendFlags(v []string) *MessageUpdateOne {
 // ClearFlags clears the value of the "flags" field.
 func (_u *MessageUpdateOne) ClearFlags() *MessageUpdateOne {
 	_u.mutation.ClearFlags()
+	return _u
+}
+
+// SetFlagsReviewedAt sets the "flags_reviewed_at" field.
+func (_u *MessageUpdateOne) SetFlagsReviewedAt(v time.Time) *MessageUpdateOne {
+	_u.mutation.SetFlagsReviewedAt(v)
+	return _u
+}
+
+// SetNillableFlagsReviewedAt sets the "flags_reviewed_at" field if the given value is not nil.
+func (_u *MessageUpdateOne) SetNillableFlagsReviewedAt(v *time.Time) *MessageUpdateOne {
+	if v != nil {
+		_u.SetFlagsReviewedAt(*v)
+	}
+	return _u
+}
+
+// ClearFlagsReviewedAt clears the value of the "flags_reviewed_at" field.
+func (_u *MessageUpdateOne) ClearFlagsReviewedAt() *MessageUpdateOne {
+	_u.mutation.ClearFlagsReviewedAt()
 	return _u
 }
 
@@ -254,6 +300,12 @@ func (_u *MessageUpdateOne) sqlSave(ctx context.Context) (_node *Message, err er
 	}
 	if _u.mutation.FlagsCleared() {
 		_spec.ClearField(message.FieldFlags, field.TypeJSON)
+	}
+	if value, ok := _u.mutation.FlagsReviewedAt(); ok {
+		_spec.SetField(message.FieldFlagsReviewedAt, field.TypeTime, value)
+	}
+	if _u.mutation.FlagsReviewedAtCleared() {
+		_spec.ClearField(message.FieldFlagsReviewedAt, field.TypeTime)
 	}
 	_node = &Message{config: _u.config}
 	_spec.Assign = _node.assignValues

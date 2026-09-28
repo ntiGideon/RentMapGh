@@ -151,7 +151,9 @@ func (h *Handler) renderThread(w http.ResponseWriter, r *http.Request, status in
 	if h.fail(w, r, err) {
 		return
 	}
-	h.svc.Read(r.Context(), t)
+	if !reqctx.CurrentViewer(r.Context()).IsViewAs() { // support looking doesn't mark anything read
+		h.svc.Read(r.Context(), t)
+	}
 	v := pages.ThreadView{
 		ID: t.C.ID.String(), Them: orText(t.Them.Name, "RentMap user"), ThemRole: themRole(t), Role: t.Role,
 		Headline: orText(t.Listing.Headline, "A place on RentMap"), ListingURL: "/l/" + t.Listing.ID.String(),
@@ -215,7 +217,9 @@ func (h *Handler) Since(w http.ResponseWriter, r *http.Request) {
 	if h.fail(w, r, err) {
 		return
 	}
-	h.svc.Read(r.Context(), t)
+	if !reqctx.CurrentViewer(r.Context()).IsViewAs() { // support looking doesn't mark anything read
+		h.svc.Read(r.Context(), t)
+	}
 	h.writeSince(w, r, t)
 }
 
@@ -396,6 +400,9 @@ func (h *Handler) AdminReport(w http.ResponseWriter, r *http.Request) {
 		Reporter: userName(rc.Reporter), Subject: userName(rc.Subject)}
 	if rc.Listing != nil {
 		v.Listing, v.ListingURL = orText(rc.Listing.Headline, "Listing"), "/admin/listings/"+rc.Listing.ID.String()
+	}
+	if rc.Subject != nil {
+		v.SubjectURL = "/admin/users/" + rc.Subject.ID.String()
 	}
 	for _, m := range rc.Thread {
 		if rc.Conv == nil {

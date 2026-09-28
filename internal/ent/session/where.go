@@ -101,6 +101,11 @@ func RevokedAt(v time.Time) predicate.Session {
 	return predicate.Session(sql.FieldEQ(FieldRevokedAt, v))
 }
 
+// ImpersonatorID applies equality check predicate on the "impersonator_id" field. It's identical to ImpersonatorIDEQ.
+func ImpersonatorID(v uuid.UUID) predicate.Session {
+	return predicate.Session(sql.FieldEQ(FieldImpersonatorID, v))
+}
+
 // CreatedAtEQ applies the EQ predicate on the "created_at" field.
 func CreatedAtEQ(v time.Time) predicate.Session {
 	return predicate.Session(sql.FieldEQ(FieldCreatedAt, v))
@@ -519,6 +524,56 @@ func RevokedAtIsNil() predicate.Session {
 // RevokedAtNotNil applies the NotNil predicate on the "revoked_at" field.
 func RevokedAtNotNil() predicate.Session {
 	return predicate.Session(sql.FieldNotNull(FieldRevokedAt))
+}
+
+// ImpersonatorIDEQ applies the EQ predicate on the "impersonator_id" field.
+func ImpersonatorIDEQ(v uuid.UUID) predicate.Session {
+	return predicate.Session(sql.FieldEQ(FieldImpersonatorID, v))
+}
+
+// ImpersonatorIDNEQ applies the NEQ predicate on the "impersonator_id" field.
+func ImpersonatorIDNEQ(v uuid.UUID) predicate.Session {
+	return predicate.Session(sql.FieldNEQ(FieldImpersonatorID, v))
+}
+
+// ImpersonatorIDIn applies the In predicate on the "impersonator_id" field.
+func ImpersonatorIDIn(vs ...uuid.UUID) predicate.Session {
+	return predicate.Session(sql.FieldIn(FieldImpersonatorID, vs...))
+}
+
+// ImpersonatorIDNotIn applies the NotIn predicate on the "impersonator_id" field.
+func ImpersonatorIDNotIn(vs ...uuid.UUID) predicate.Session {
+	return predicate.Session(sql.FieldNotIn(FieldImpersonatorID, vs...))
+}
+
+// ImpersonatorIDGT applies the GT predicate on the "impersonator_id" field.
+func ImpersonatorIDGT(v uuid.UUID) predicate.Session {
+	return predicate.Session(sql.FieldGT(FieldImpersonatorID, v))
+}
+
+// ImpersonatorIDGTE applies the GTE predicate on the "impersonator_id" field.
+func ImpersonatorIDGTE(v uuid.UUID) predicate.Session {
+	return predicate.Session(sql.FieldGTE(FieldImpersonatorID, v))
+}
+
+// ImpersonatorIDLT applies the LT predicate on the "impersonator_id" field.
+func ImpersonatorIDLT(v uuid.UUID) predicate.Session {
+	return predicate.Session(sql.FieldLT(FieldImpersonatorID, v))
+}
+
+// ImpersonatorIDLTE applies the LTE predicate on the "impersonator_id" field.
+func ImpersonatorIDLTE(v uuid.UUID) predicate.Session {
+	return predicate.Session(sql.FieldLTE(FieldImpersonatorID, v))
+}
+
+// ImpersonatorIDIsNil applies the IsNil predicate on the "impersonator_id" field.
+func ImpersonatorIDIsNil() predicate.Session {
+	return predicate.Session(sql.FieldIsNull(FieldImpersonatorID))
+}
+
+// ImpersonatorIDNotNil applies the NotNil predicate on the "impersonator_id" field.
+func ImpersonatorIDNotNil() predicate.Session {
+	return predicate.Session(sql.FieldNotNull(FieldImpersonatorID))
 }
 
 // HasUser applies the HasEdge predicate on the "user" edge.

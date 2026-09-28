@@ -25,6 +25,8 @@ func (Session) Fields() []ent.Field {
 		field.Time("last_seen_at"),
 		field.Time("expires_at"),
 		field.Time("revoked_at").Optional().Nillable(),
+		field.UUID("impersonator_id", uuid.UUID{}).Optional().Nillable().Immutable().
+			Comment("the admin viewing as this user (support); such sessions are read-only and short"),
 	}
 }
 

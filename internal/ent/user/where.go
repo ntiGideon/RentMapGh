@@ -96,6 +96,16 @@ func DeletedAt(v time.Time) predicate.User {
 	return predicate.User(sql.FieldEQ(FieldDeletedAt, v))
 }
 
+// SuspendedAt applies equality check predicate on the "suspended_at" field. It's identical to SuspendedAtEQ.
+func SuspendedAt(v time.Time) predicate.User {
+	return predicate.User(sql.FieldEQ(FieldSuspendedAt, v))
+}
+
+// SuspensionNote applies equality check predicate on the "suspension_note" field. It's identical to SuspensionNoteEQ.
+func SuspensionNote(v string) predicate.User {
+	return predicate.User(sql.FieldEQ(FieldSuspensionNote, v))
+}
+
 // AvatarKey applies equality check predicate on the "avatar_key" field. It's identical to AvatarKeyEQ.
 func AvatarKey(v string) predicate.User {
 	return predicate.User(sql.FieldEQ(FieldAvatarKey, v))
@@ -564,6 +574,131 @@ func DeletedAtIsNil() predicate.User {
 // DeletedAtNotNil applies the NotNil predicate on the "deleted_at" field.
 func DeletedAtNotNil() predicate.User {
 	return predicate.User(sql.FieldNotNull(FieldDeletedAt))
+}
+
+// SuspendedAtEQ applies the EQ predicate on the "suspended_at" field.
+func SuspendedAtEQ(v time.Time) predicate.User {
+	return predicate.User(sql.FieldEQ(FieldSuspendedAt, v))
+}
+
+// SuspendedAtNEQ applies the NEQ predicate on the "suspended_at" field.
+func SuspendedAtNEQ(v time.Time) predicate.User {
+	return predicate.User(sql.FieldNEQ(FieldSuspendedAt, v))
+}
+
+// SuspendedAtIn applies the In predicate on the "suspended_at" field.
+func SuspendedAtIn(vs ...time.Time) predicate.User {
+	return predicate.User(sql.FieldIn(FieldSuspendedAt, vs...))
+}
+
+// SuspendedAtNotIn applies the NotIn predicate on the "suspended_at" field.
+func SuspendedAtNotIn(vs ...time.Time) predicate.User {
+	return predicate.User(sql.FieldNotIn(FieldSuspendedAt, vs...))
+}
+
+// SuspendedAtGT applies the GT predicate on the "suspended_at" field.
+func SuspendedAtGT(v time.Time) predicate.User {
+	return predicate.User(sql.FieldGT(FieldSuspendedAt, v))
+}
+
+// SuspendedAtGTE applies the GTE predicate on the "suspended_at" field.
+func SuspendedAtGTE(v time.Time) predicate.User {
+	return predicate.User(sql.FieldGTE(FieldSuspendedAt, v))
+}
+
+// SuspendedAtLT applies the LT predicate on the "suspended_at" field.
+func SuspendedAtLT(v time.Time) predicate.User {
+	return predicate.User(sql.FieldLT(FieldSuspendedAt, v))
+}
+
+// SuspendedAtLTE applies the LTE predicate on the "suspended_at" field.
+func SuspendedAtLTE(v time.Time) predicate.User {
+	return predicate.User(sql.FieldLTE(FieldSuspendedAt, v))
+}
+
+// SuspendedAtIsNil applies the IsNil predicate on the "suspended_at" field.
+func SuspendedAtIsNil() predicate.User {
+	return predicate.User(sql.FieldIsNull(FieldSuspendedAt))
+}
+
+// SuspendedAtNotNil applies the NotNil predicate on the "suspended_at" field.
+func SuspendedAtNotNil() predicate.User {
+	return predicate.User(sql.FieldNotNull(FieldSuspendedAt))
+}
+
+// SuspensionNoteEQ applies the EQ predicate on the "suspension_note" field.
+func SuspensionNoteEQ(v string) predicate.User {
+	return predicate.User(sql.FieldEQ(FieldSuspensionNote, v))
+}
+
+// SuspensionNoteNEQ applies the NEQ predicate on the "suspension_note" field.
+func SuspensionNoteNEQ(v string) predicate.User {
+	return predicate.User(sql.FieldNEQ(FieldSuspensionNote, v))
+}
+
+// SuspensionNoteIn applies the In predicate on the "suspension_note" field.
+func SuspensionNoteIn(vs ...string) predicate.User {
+	return predicate.User(sql.FieldIn(FieldSuspensionNote, vs...))
+}
+
+// SuspensionNoteNotIn applies the NotIn predicate on the "suspension_note" field.
+func SuspensionNoteNotIn(vs ...string) predicate.User {
+	return predicate.User(sql.FieldNotIn(FieldSuspensionNote, vs...))
+}
+
+// SuspensionNoteGT applies the GT predicate on the "suspension_note" field.
+func SuspensionNoteGT(v string) predicate.User {
+	return predicate.User(sql.FieldGT(FieldSuspensionNote, v))
+}
+
+// SuspensionNoteGTE applies the GTE predicate on the "suspension_note" field.
+func SuspensionNoteGTE(v string) predicate.User {
+	return predicate.User(sql.FieldGTE(FieldSuspensionNote, v))
+}
+
+// SuspensionNoteLT applies the LT predicate on the "suspension_note" field.
+func SuspensionNoteLT(v string) predicate.User {
+	return predicate.User(sql.FieldLT(FieldSuspensionNote, v))
+}
+
+// SuspensionNoteLTE applies the LTE predicate on the "suspension_note" field.
+func SuspensionNoteLTE(v string) predicate.User {
+	return predicate.User(sql.FieldLTE(FieldSuspensionNote, v))
+}
+
+// SuspensionNoteContains applies the Contains predicate on the "suspension_note" field.
+func SuspensionNoteContains(v string) predicate.User {
+	return predicate.User(sql.FieldContains(FieldSuspensionNote, v))
+}
+
+// SuspensionNoteHasPrefix applies the HasPrefix predicate on the "suspension_note" field.
+func SuspensionNoteHasPrefix(v string) predicate.User {
+	return predicate.User(sql.FieldHasPrefix(FieldSuspensionNote, v))
+}
+
+// SuspensionNoteHasSuffix applies the HasSuffix predicate on the "suspension_note" field.
+func SuspensionNoteHasSuffix(v string) predicate.User {
+	return predicate.User(sql.FieldHasSuffix(FieldSuspensionNote, v))
+}
+
+// SuspensionNoteIsNil applies the IsNil predicate on the "suspension_note" field.
+func SuspensionNoteIsNil() predicate.User {
+	return predicate.User(sql.FieldIsNull(FieldSuspensionNote))
+}
+
+// SuspensionNoteNotNil applies the NotNil predicate on the "suspension_note" field.
+func SuspensionNoteNotNil() predicate.User {
+	return predicate.User(sql.FieldNotNull(FieldSuspensionNote))
+}
+
+// SuspensionNoteEqualFold applies the EqualFold predicate on the "suspension_note" field.
+func SuspensionNoteEqualFold(v string) predicate.User {
+	return predicate.User(sql.FieldEqualFold(FieldSuspensionNote, v))
+}
+
+// SuspensionNoteContainsFold applies the ContainsFold predicate on the "suspension_note" field.
+func SuspensionNoteContainsFold(v string) predicate.User {
+	return predicate.User(sql.FieldContainsFold(FieldSuspensionNote, v))
 }
 
 // AvatarKeyEQ applies the EQ predicate on the "avatar_key" field.

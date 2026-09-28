@@ -10,6 +10,7 @@ import (
 	"rentmapgh/internal/ent/agentprofile"
 	"rentmapgh/internal/ent/auditevent"
 	"rentmapgh/internal/ent/conversation"
+	"rentmapgh/internal/ent/duplicatecandidate"
 	"rentmapgh/internal/ent/landlordprofile"
 	"rentmapgh/internal/ent/listing"
 	"rentmapgh/internal/ent/listingmedia"
@@ -49,29 +50,30 @@ const (
 	OpUpdateOne = ent.OpUpdateOne
 
 	// Node types.
-	TypeAgentMandate     = "AgentMandate"
-	TypeAgentProfile     = "AgentProfile"
-	TypeAuditEvent       = "AuditEvent"
-	TypeConversation     = "Conversation"
-	TypeLandlordProfile  = "LandlordProfile"
-	TypeListing          = "Listing"
-	TypeListingMedia     = "ListingMedia"
-	TypeListingStat      = "ListingStat"
-	TypeListingTerms     = "ListingTerms"
-	TypeMessage          = "Message"
-	TypeNotification     = "Notification"
-	TypeOTPCode          = "OTPCode"
-	TypeProperty         = "Property"
-	TypeReport           = "Report"
-	TypeRoleAssignment   = "RoleAssignment"
-	TypeSavedListing     = "SavedListing"
-	TypeSession          = "Session"
-	TypeUnit             = "Unit"
-	TypeUser             = "User"
-	TypeVerification     = "Verification"
-	TypeVerificationFile = "VerificationFile"
-	TypeViewing          = "Viewing"
-	TypeWaitlistEntry    = "WaitlistEntry"
+	TypeAgentMandate       = "AgentMandate"
+	TypeAgentProfile       = "AgentProfile"
+	TypeAuditEvent         = "AuditEvent"
+	TypeConversation       = "Conversation"
+	TypeDuplicateCandidate = "DuplicateCandidate"
+	TypeLandlordProfile    = "LandlordProfile"
+	TypeListing            = "Listing"
+	TypeListingMedia       = "ListingMedia"
+	TypeListingStat        = "ListingStat"
+	TypeListingTerms       = "ListingTerms"
+	TypeMessage            = "Message"
+	TypeNotification       = "Notification"
+	TypeOTPCode            = "OTPCode"
+	TypeProperty           = "Property"
+	TypeReport             = "Report"
+	TypeRoleAssignment     = "RoleAssignment"
+	TypeSavedListing       = "SavedListing"
+	TypeSession            = "Session"
+	TypeUnit               = "Unit"
+	TypeUser               = "User"
+	TypeVerification       = "Verification"
+	TypeVerificationFile   = "VerificationFile"
+	TypeViewing            = "Viewing"
+	TypeWaitlistEntry      = "WaitlistEntry"
 )
 
 // AgentMandateMutation represents an operation that mutates the AgentMandate nodes in the graph.
@@ -3857,6 +3859,1074 @@ func (m *ConversationMutation) ClearEdge(name string) error {
 // It returns an error if the edge is not defined in the schema.
 func (m *ConversationMutation) ResetEdge(name string) error {
 	return fmt.Errorf("unknown Conversation edge %s", name)
+}
+
+// DuplicateCandidateMutation represents an operation that mutates the DuplicateCandidate nodes in the graph.
+type DuplicateCandidateMutation struct {
+	config
+	op                 Op
+	typ                string
+	id                 *uuid.UUID
+	created_at         *time.Time
+	updated_at         *time.Time
+	listing_a          *uuid.UUID
+	listing_b          *uuid.UUID
+	distance_m         *int
+	adddistance_m      *int
+	photo_bits         *int
+	addphoto_bits      *int
+	text_similarity    *float64
+	addtext_similarity *float64
+	score              *int
+	addscore           *int
+	status             *duplicatecandidate.Status
+	handled_by         *uuid.UUID
+	handled_at         *time.Time
+	clearedFields      map[string]struct{}
+	done               bool
+	oldValue           func(context.Context) (*DuplicateCandidate, error)
+	predicates         []predicate.DuplicateCandidate
+}
+
+var _ ent.Mutation = (*DuplicateCandidateMutation)(nil)
+
+// duplicatecandidateOption allows management of the mutation configuration using functional options.
+type duplicatecandidateOption func(*DuplicateCandidateMutation)
+
+// newDuplicateCandidateMutation creates new mutation for the DuplicateCandidate entity.
+func newDuplicateCandidateMutation(c config, op Op, opts ...duplicatecandidateOption) *DuplicateCandidateMutation {
+	m := &DuplicateCandidateMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeDuplicateCandidate,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withDuplicateCandidateID sets the ID field of the mutation.
+func withDuplicateCandidateID(id uuid.UUID) duplicatecandidateOption {
+	return func(m *DuplicateCandidateMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *DuplicateCandidate
+		)
+		m.oldValue = func(ctx context.Context) (*DuplicateCandidate, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().DuplicateCandidate.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withDuplicateCandidate sets the old DuplicateCandidate of the mutation.
+func withDuplicateCandidate(node *DuplicateCandidate) duplicatecandidateOption {
+	return func(m *DuplicateCandidateMutation) {
+		m.oldValue = func(context.Context) (*DuplicateCandidate, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m DuplicateCandidateMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m DuplicateCandidateMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of DuplicateCandidate entities.
+func (m *DuplicateCandidateMutation) SetID(id uuid.UUID) {
+	m.id = &id
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *DuplicateCandidateMutation) ID() (id uuid.UUID, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *DuplicateCandidateMutation) IDs(ctx context.Context) ([]uuid.UUID, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []uuid.UUID{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().DuplicateCandidate.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *DuplicateCandidateMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *DuplicateCandidateMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the DuplicateCandidate entity.
+// If the DuplicateCandidate object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DuplicateCandidateMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *DuplicateCandidateMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (m *DuplicateCandidateMutation) SetUpdatedAt(t time.Time) {
+	m.updated_at = &t
+}
+
+// UpdatedAt returns the value of the "updated_at" field in the mutation.
+func (m *DuplicateCandidateMutation) UpdatedAt() (r time.Time, exists bool) {
+	v := m.updated_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUpdatedAt returns the old "updated_at" field's value of the DuplicateCandidate entity.
+// If the DuplicateCandidate object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DuplicateCandidateMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpdatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpdatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpdatedAt: %w", err)
+	}
+	return oldValue.UpdatedAt, nil
+}
+
+// ResetUpdatedAt resets all changes to the "updated_at" field.
+func (m *DuplicateCandidateMutation) ResetUpdatedAt() {
+	m.updated_at = nil
+}
+
+// SetListingA sets the "listing_a" field.
+func (m *DuplicateCandidateMutation) SetListingA(u uuid.UUID) {
+	m.listing_a = &u
+}
+
+// ListingA returns the value of the "listing_a" field in the mutation.
+func (m *DuplicateCandidateMutation) ListingA() (r uuid.UUID, exists bool) {
+	v := m.listing_a
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldListingA returns the old "listing_a" field's value of the DuplicateCandidate entity.
+// If the DuplicateCandidate object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DuplicateCandidateMutation) OldListingA(ctx context.Context) (v uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldListingA is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldListingA requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldListingA: %w", err)
+	}
+	return oldValue.ListingA, nil
+}
+
+// ResetListingA resets all changes to the "listing_a" field.
+func (m *DuplicateCandidateMutation) ResetListingA() {
+	m.listing_a = nil
+}
+
+// SetListingB sets the "listing_b" field.
+func (m *DuplicateCandidateMutation) SetListingB(u uuid.UUID) {
+	m.listing_b = &u
+}
+
+// ListingB returns the value of the "listing_b" field in the mutation.
+func (m *DuplicateCandidateMutation) ListingB() (r uuid.UUID, exists bool) {
+	v := m.listing_b
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldListingB returns the old "listing_b" field's value of the DuplicateCandidate entity.
+// If the DuplicateCandidate object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DuplicateCandidateMutation) OldListingB(ctx context.Context) (v uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldListingB is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldListingB requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldListingB: %w", err)
+	}
+	return oldValue.ListingB, nil
+}
+
+// ResetListingB resets all changes to the "listing_b" field.
+func (m *DuplicateCandidateMutation) ResetListingB() {
+	m.listing_b = nil
+}
+
+// SetDistanceM sets the "distance_m" field.
+func (m *DuplicateCandidateMutation) SetDistanceM(i int) {
+	m.distance_m = &i
+	m.adddistance_m = nil
+}
+
+// DistanceM returns the value of the "distance_m" field in the mutation.
+func (m *DuplicateCandidateMutation) DistanceM() (r int, exists bool) {
+	v := m.distance_m
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDistanceM returns the old "distance_m" field's value of the DuplicateCandidate entity.
+// If the DuplicateCandidate object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DuplicateCandidateMutation) OldDistanceM(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldDistanceM is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldDistanceM requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDistanceM: %w", err)
+	}
+	return oldValue.DistanceM, nil
+}
+
+// AddDistanceM adds i to the "distance_m" field.
+func (m *DuplicateCandidateMutation) AddDistanceM(i int) {
+	if m.adddistance_m != nil {
+		*m.adddistance_m += i
+	} else {
+		m.adddistance_m = &i
+	}
+}
+
+// AddedDistanceM returns the value that was added to the "distance_m" field in this mutation.
+func (m *DuplicateCandidateMutation) AddedDistanceM() (r int, exists bool) {
+	v := m.adddistance_m
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetDistanceM resets all changes to the "distance_m" field.
+func (m *DuplicateCandidateMutation) ResetDistanceM() {
+	m.distance_m = nil
+	m.adddistance_m = nil
+}
+
+// SetPhotoBits sets the "photo_bits" field.
+func (m *DuplicateCandidateMutation) SetPhotoBits(i int) {
+	m.photo_bits = &i
+	m.addphoto_bits = nil
+}
+
+// PhotoBits returns the value of the "photo_bits" field in the mutation.
+func (m *DuplicateCandidateMutation) PhotoBits() (r int, exists bool) {
+	v := m.photo_bits
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldPhotoBits returns the old "photo_bits" field's value of the DuplicateCandidate entity.
+// If the DuplicateCandidate object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DuplicateCandidateMutation) OldPhotoBits(ctx context.Context) (v *int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldPhotoBits is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldPhotoBits requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldPhotoBits: %w", err)
+	}
+	return oldValue.PhotoBits, nil
+}
+
+// AddPhotoBits adds i to the "photo_bits" field.
+func (m *DuplicateCandidateMutation) AddPhotoBits(i int) {
+	if m.addphoto_bits != nil {
+		*m.addphoto_bits += i
+	} else {
+		m.addphoto_bits = &i
+	}
+}
+
+// AddedPhotoBits returns the value that was added to the "photo_bits" field in this mutation.
+func (m *DuplicateCandidateMutation) AddedPhotoBits() (r int, exists bool) {
+	v := m.addphoto_bits
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearPhotoBits clears the value of the "photo_bits" field.
+func (m *DuplicateCandidateMutation) ClearPhotoBits() {
+	m.photo_bits = nil
+	m.addphoto_bits = nil
+	m.clearedFields[duplicatecandidate.FieldPhotoBits] = struct{}{}
+}
+
+// PhotoBitsCleared returns if the "photo_bits" field was cleared in this mutation.
+func (m *DuplicateCandidateMutation) PhotoBitsCleared() bool {
+	_, ok := m.clearedFields[duplicatecandidate.FieldPhotoBits]
+	return ok
+}
+
+// ResetPhotoBits resets all changes to the "photo_bits" field.
+func (m *DuplicateCandidateMutation) ResetPhotoBits() {
+	m.photo_bits = nil
+	m.addphoto_bits = nil
+	delete(m.clearedFields, duplicatecandidate.FieldPhotoBits)
+}
+
+// SetTextSimilarity sets the "text_similarity" field.
+func (m *DuplicateCandidateMutation) SetTextSimilarity(f float64) {
+	m.text_similarity = &f
+	m.addtext_similarity = nil
+}
+
+// TextSimilarity returns the value of the "text_similarity" field in the mutation.
+func (m *DuplicateCandidateMutation) TextSimilarity() (r float64, exists bool) {
+	v := m.text_similarity
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldTextSimilarity returns the old "text_similarity" field's value of the DuplicateCandidate entity.
+// If the DuplicateCandidate object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DuplicateCandidateMutation) OldTextSimilarity(ctx context.Context) (v float64, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldTextSimilarity is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldTextSimilarity requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldTextSimilarity: %w", err)
+	}
+	return oldValue.TextSimilarity, nil
+}
+
+// AddTextSimilarity adds f to the "text_similarity" field.
+func (m *DuplicateCandidateMutation) AddTextSimilarity(f float64) {
+	if m.addtext_similarity != nil {
+		*m.addtext_similarity += f
+	} else {
+		m.addtext_similarity = &f
+	}
+}
+
+// AddedTextSimilarity returns the value that was added to the "text_similarity" field in this mutation.
+func (m *DuplicateCandidateMutation) AddedTextSimilarity() (r float64, exists bool) {
+	v := m.addtext_similarity
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetTextSimilarity resets all changes to the "text_similarity" field.
+func (m *DuplicateCandidateMutation) ResetTextSimilarity() {
+	m.text_similarity = nil
+	m.addtext_similarity = nil
+}
+
+// SetScore sets the "score" field.
+func (m *DuplicateCandidateMutation) SetScore(i int) {
+	m.score = &i
+	m.addscore = nil
+}
+
+// Score returns the value of the "score" field in the mutation.
+func (m *DuplicateCandidateMutation) Score() (r int, exists bool) {
+	v := m.score
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldScore returns the old "score" field's value of the DuplicateCandidate entity.
+// If the DuplicateCandidate object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DuplicateCandidateMutation) OldScore(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldScore is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldScore requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldScore: %w", err)
+	}
+	return oldValue.Score, nil
+}
+
+// AddScore adds i to the "score" field.
+func (m *DuplicateCandidateMutation) AddScore(i int) {
+	if m.addscore != nil {
+		*m.addscore += i
+	} else {
+		m.addscore = &i
+	}
+}
+
+// AddedScore returns the value that was added to the "score" field in this mutation.
+func (m *DuplicateCandidateMutation) AddedScore() (r int, exists bool) {
+	v := m.addscore
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetScore resets all changes to the "score" field.
+func (m *DuplicateCandidateMutation) ResetScore() {
+	m.score = nil
+	m.addscore = nil
+}
+
+// SetStatus sets the "status" field.
+func (m *DuplicateCandidateMutation) SetStatus(d duplicatecandidate.Status) {
+	m.status = &d
+}
+
+// Status returns the value of the "status" field in the mutation.
+func (m *DuplicateCandidateMutation) Status() (r duplicatecandidate.Status, exists bool) {
+	v := m.status
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldStatus returns the old "status" field's value of the DuplicateCandidate entity.
+// If the DuplicateCandidate object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DuplicateCandidateMutation) OldStatus(ctx context.Context) (v duplicatecandidate.Status, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldStatus is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldStatus requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldStatus: %w", err)
+	}
+	return oldValue.Status, nil
+}
+
+// ResetStatus resets all changes to the "status" field.
+func (m *DuplicateCandidateMutation) ResetStatus() {
+	m.status = nil
+}
+
+// SetHandledBy sets the "handled_by" field.
+func (m *DuplicateCandidateMutation) SetHandledBy(u uuid.UUID) {
+	m.handled_by = &u
+}
+
+// HandledBy returns the value of the "handled_by" field in the mutation.
+func (m *DuplicateCandidateMutation) HandledBy() (r uuid.UUID, exists bool) {
+	v := m.handled_by
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldHandledBy returns the old "handled_by" field's value of the DuplicateCandidate entity.
+// If the DuplicateCandidate object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DuplicateCandidateMutation) OldHandledBy(ctx context.Context) (v *uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldHandledBy is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldHandledBy requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldHandledBy: %w", err)
+	}
+	return oldValue.HandledBy, nil
+}
+
+// ClearHandledBy clears the value of the "handled_by" field.
+func (m *DuplicateCandidateMutation) ClearHandledBy() {
+	m.handled_by = nil
+	m.clearedFields[duplicatecandidate.FieldHandledBy] = struct{}{}
+}
+
+// HandledByCleared returns if the "handled_by" field was cleared in this mutation.
+func (m *DuplicateCandidateMutation) HandledByCleared() bool {
+	_, ok := m.clearedFields[duplicatecandidate.FieldHandledBy]
+	return ok
+}
+
+// ResetHandledBy resets all changes to the "handled_by" field.
+func (m *DuplicateCandidateMutation) ResetHandledBy() {
+	m.handled_by = nil
+	delete(m.clearedFields, duplicatecandidate.FieldHandledBy)
+}
+
+// SetHandledAt sets the "handled_at" field.
+func (m *DuplicateCandidateMutation) SetHandledAt(t time.Time) {
+	m.handled_at = &t
+}
+
+// HandledAt returns the value of the "handled_at" field in the mutation.
+func (m *DuplicateCandidateMutation) HandledAt() (r time.Time, exists bool) {
+	v := m.handled_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldHandledAt returns the old "handled_at" field's value of the DuplicateCandidate entity.
+// If the DuplicateCandidate object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *DuplicateCandidateMutation) OldHandledAt(ctx context.Context) (v *time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldHandledAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldHandledAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldHandledAt: %w", err)
+	}
+	return oldValue.HandledAt, nil
+}
+
+// ClearHandledAt clears the value of the "handled_at" field.
+func (m *DuplicateCandidateMutation) ClearHandledAt() {
+	m.handled_at = nil
+	m.clearedFields[duplicatecandidate.FieldHandledAt] = struct{}{}
+}
+
+// HandledAtCleared returns if the "handled_at" field was cleared in this mutation.
+func (m *DuplicateCandidateMutation) HandledAtCleared() bool {
+	_, ok := m.clearedFields[duplicatecandidate.FieldHandledAt]
+	return ok
+}
+
+// ResetHandledAt resets all changes to the "handled_at" field.
+func (m *DuplicateCandidateMutation) ResetHandledAt() {
+	m.handled_at = nil
+	delete(m.clearedFields, duplicatecandidate.FieldHandledAt)
+}
+
+// Where appends a list predicates to the DuplicateCandidateMutation builder.
+func (m *DuplicateCandidateMutation) Where(ps ...predicate.DuplicateCandidate) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the DuplicateCandidateMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *DuplicateCandidateMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.DuplicateCandidate, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *DuplicateCandidateMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *DuplicateCandidateMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (DuplicateCandidate).
+func (m *DuplicateCandidateMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *DuplicateCandidateMutation) Fields() []string {
+	fields := make([]string, 0, 11)
+	if m.created_at != nil {
+		fields = append(fields, duplicatecandidate.FieldCreatedAt)
+	}
+	if m.updated_at != nil {
+		fields = append(fields, duplicatecandidate.FieldUpdatedAt)
+	}
+	if m.listing_a != nil {
+		fields = append(fields, duplicatecandidate.FieldListingA)
+	}
+	if m.listing_b != nil {
+		fields = append(fields, duplicatecandidate.FieldListingB)
+	}
+	if m.distance_m != nil {
+		fields = append(fields, duplicatecandidate.FieldDistanceM)
+	}
+	if m.photo_bits != nil {
+		fields = append(fields, duplicatecandidate.FieldPhotoBits)
+	}
+	if m.text_similarity != nil {
+		fields = append(fields, duplicatecandidate.FieldTextSimilarity)
+	}
+	if m.score != nil {
+		fields = append(fields, duplicatecandidate.FieldScore)
+	}
+	if m.status != nil {
+		fields = append(fields, duplicatecandidate.FieldStatus)
+	}
+	if m.handled_by != nil {
+		fields = append(fields, duplicatecandidate.FieldHandledBy)
+	}
+	if m.handled_at != nil {
+		fields = append(fields, duplicatecandidate.FieldHandledAt)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *DuplicateCandidateMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case duplicatecandidate.FieldCreatedAt:
+		return m.CreatedAt()
+	case duplicatecandidate.FieldUpdatedAt:
+		return m.UpdatedAt()
+	case duplicatecandidate.FieldListingA:
+		return m.ListingA()
+	case duplicatecandidate.FieldListingB:
+		return m.ListingB()
+	case duplicatecandidate.FieldDistanceM:
+		return m.DistanceM()
+	case duplicatecandidate.FieldPhotoBits:
+		return m.PhotoBits()
+	case duplicatecandidate.FieldTextSimilarity:
+		return m.TextSimilarity()
+	case duplicatecandidate.FieldScore:
+		return m.Score()
+	case duplicatecandidate.FieldStatus:
+		return m.Status()
+	case duplicatecandidate.FieldHandledBy:
+		return m.HandledBy()
+	case duplicatecandidate.FieldHandledAt:
+		return m.HandledAt()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *DuplicateCandidateMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case duplicatecandidate.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	case duplicatecandidate.FieldUpdatedAt:
+		return m.OldUpdatedAt(ctx)
+	case duplicatecandidate.FieldListingA:
+		return m.OldListingA(ctx)
+	case duplicatecandidate.FieldListingB:
+		return m.OldListingB(ctx)
+	case duplicatecandidate.FieldDistanceM:
+		return m.OldDistanceM(ctx)
+	case duplicatecandidate.FieldPhotoBits:
+		return m.OldPhotoBits(ctx)
+	case duplicatecandidate.FieldTextSimilarity:
+		return m.OldTextSimilarity(ctx)
+	case duplicatecandidate.FieldScore:
+		return m.OldScore(ctx)
+	case duplicatecandidate.FieldStatus:
+		return m.OldStatus(ctx)
+	case duplicatecandidate.FieldHandledBy:
+		return m.OldHandledBy(ctx)
+	case duplicatecandidate.FieldHandledAt:
+		return m.OldHandledAt(ctx)
+	}
+	return nil, fmt.Errorf("unknown DuplicateCandidate field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *DuplicateCandidateMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case duplicatecandidate.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	case duplicatecandidate.FieldUpdatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpdatedAt(v)
+		return nil
+	case duplicatecandidate.FieldListingA:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetListingA(v)
+		return nil
+	case duplicatecandidate.FieldListingB:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetListingB(v)
+		return nil
+	case duplicatecandidate.FieldDistanceM:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDistanceM(v)
+		return nil
+	case duplicatecandidate.FieldPhotoBits:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetPhotoBits(v)
+		return nil
+	case duplicatecandidate.FieldTextSimilarity:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetTextSimilarity(v)
+		return nil
+	case duplicatecandidate.FieldScore:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetScore(v)
+		return nil
+	case duplicatecandidate.FieldStatus:
+		v, ok := value.(duplicatecandidate.Status)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetStatus(v)
+		return nil
+	case duplicatecandidate.FieldHandledBy:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetHandledBy(v)
+		return nil
+	case duplicatecandidate.FieldHandledAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetHandledAt(v)
+		return nil
+	}
+	return fmt.Errorf("unknown DuplicateCandidate field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *DuplicateCandidateMutation) AddedFields() []string {
+	var fields []string
+	if m.adddistance_m != nil {
+		fields = append(fields, duplicatecandidate.FieldDistanceM)
+	}
+	if m.addphoto_bits != nil {
+		fields = append(fields, duplicatecandidate.FieldPhotoBits)
+	}
+	if m.addtext_similarity != nil {
+		fields = append(fields, duplicatecandidate.FieldTextSimilarity)
+	}
+	if m.addscore != nil {
+		fields = append(fields, duplicatecandidate.FieldScore)
+	}
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *DuplicateCandidateMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case duplicatecandidate.FieldDistanceM:
+		return m.AddedDistanceM()
+	case duplicatecandidate.FieldPhotoBits:
+		return m.AddedPhotoBits()
+	case duplicatecandidate.FieldTextSimilarity:
+		return m.AddedTextSimilarity()
+	case duplicatecandidate.FieldScore:
+		return m.AddedScore()
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *DuplicateCandidateMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	case duplicatecandidate.FieldDistanceM:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddDistanceM(v)
+		return nil
+	case duplicatecandidate.FieldPhotoBits:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddPhotoBits(v)
+		return nil
+	case duplicatecandidate.FieldTextSimilarity:
+		v, ok := value.(float64)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddTextSimilarity(v)
+		return nil
+	case duplicatecandidate.FieldScore:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddScore(v)
+		return nil
+	}
+	return fmt.Errorf("unknown DuplicateCandidate numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *DuplicateCandidateMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(duplicatecandidate.FieldPhotoBits) {
+		fields = append(fields, duplicatecandidate.FieldPhotoBits)
+	}
+	if m.FieldCleared(duplicatecandidate.FieldHandledBy) {
+		fields = append(fields, duplicatecandidate.FieldHandledBy)
+	}
+	if m.FieldCleared(duplicatecandidate.FieldHandledAt) {
+		fields = append(fields, duplicatecandidate.FieldHandledAt)
+	}
+	return fields
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *DuplicateCandidateMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *DuplicateCandidateMutation) ClearField(name string) error {
+	switch name {
+	case duplicatecandidate.FieldPhotoBits:
+		m.ClearPhotoBits()
+		return nil
+	case duplicatecandidate.FieldHandledBy:
+		m.ClearHandledBy()
+		return nil
+	case duplicatecandidate.FieldHandledAt:
+		m.ClearHandledAt()
+		return nil
+	}
+	return fmt.Errorf("unknown DuplicateCandidate nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *DuplicateCandidateMutation) ResetField(name string) error {
+	switch name {
+	case duplicatecandidate.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	case duplicatecandidate.FieldUpdatedAt:
+		m.ResetUpdatedAt()
+		return nil
+	case duplicatecandidate.FieldListingA:
+		m.ResetListingA()
+		return nil
+	case duplicatecandidate.FieldListingB:
+		m.ResetListingB()
+		return nil
+	case duplicatecandidate.FieldDistanceM:
+		m.ResetDistanceM()
+		return nil
+	case duplicatecandidate.FieldPhotoBits:
+		m.ResetPhotoBits()
+		return nil
+	case duplicatecandidate.FieldTextSimilarity:
+		m.ResetTextSimilarity()
+		return nil
+	case duplicatecandidate.FieldScore:
+		m.ResetScore()
+		return nil
+	case duplicatecandidate.FieldStatus:
+		m.ResetStatus()
+		return nil
+	case duplicatecandidate.FieldHandledBy:
+		m.ResetHandledBy()
+		return nil
+	case duplicatecandidate.FieldHandledAt:
+		m.ResetHandledAt()
+		return nil
+	}
+	return fmt.Errorf("unknown DuplicateCandidate field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *DuplicateCandidateMutation) AddedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *DuplicateCandidateMutation) AddedIDs(name string) []ent.Value {
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *DuplicateCandidateMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *DuplicateCandidateMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *DuplicateCandidateMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *DuplicateCandidateMutation) EdgeCleared(name string) bool {
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *DuplicateCandidateMutation) ClearEdge(name string) error {
+	return fmt.Errorf("unknown DuplicateCandidate unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *DuplicateCandidateMutation) ResetEdge(name string) error {
+	return fmt.Errorf("unknown DuplicateCandidate edge %s", name)
 }
 
 // LandlordProfileMutation represents an operation that mutates the LandlordProfile nodes in the graph.
@@ -10163,20 +11233,21 @@ func (m *ListingTermsMutation) ResetEdge(name string) error {
 // MessageMutation represents an operation that mutates the Message nodes in the graph.
 type MessageMutation struct {
 	config
-	op              Op
-	typ             string
-	id              *uuid.UUID
-	created_at      *time.Time
-	updated_at      *time.Time
-	conversation_id *uuid.UUID
-	sender_id       *uuid.UUID
-	body            *string
-	flags           *[]string
-	appendflags     []string
-	clearedFields   map[string]struct{}
-	done            bool
-	oldValue        func(context.Context) (*Message, error)
-	predicates      []predicate.Message
+	op                Op
+	typ               string
+	id                *uuid.UUID
+	created_at        *time.Time
+	updated_at        *time.Time
+	conversation_id   *uuid.UUID
+	sender_id         *uuid.UUID
+	body              *string
+	flags             *[]string
+	appendflags       []string
+	flags_reviewed_at *time.Time
+	clearedFields     map[string]struct{}
+	done              bool
+	oldValue          func(context.Context) (*Message, error)
+	predicates        []predicate.Message
 }
 
 var _ ent.Mutation = (*MessageMutation)(nil)
@@ -10528,6 +11599,55 @@ func (m *MessageMutation) ResetFlags() {
 	delete(m.clearedFields, message.FieldFlags)
 }
 
+// SetFlagsReviewedAt sets the "flags_reviewed_at" field.
+func (m *MessageMutation) SetFlagsReviewedAt(t time.Time) {
+	m.flags_reviewed_at = &t
+}
+
+// FlagsReviewedAt returns the value of the "flags_reviewed_at" field in the mutation.
+func (m *MessageMutation) FlagsReviewedAt() (r time.Time, exists bool) {
+	v := m.flags_reviewed_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldFlagsReviewedAt returns the old "flags_reviewed_at" field's value of the Message entity.
+// If the Message object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *MessageMutation) OldFlagsReviewedAt(ctx context.Context) (v *time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldFlagsReviewedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldFlagsReviewedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldFlagsReviewedAt: %w", err)
+	}
+	return oldValue.FlagsReviewedAt, nil
+}
+
+// ClearFlagsReviewedAt clears the value of the "flags_reviewed_at" field.
+func (m *MessageMutation) ClearFlagsReviewedAt() {
+	m.flags_reviewed_at = nil
+	m.clearedFields[message.FieldFlagsReviewedAt] = struct{}{}
+}
+
+// FlagsReviewedAtCleared returns if the "flags_reviewed_at" field was cleared in this mutation.
+func (m *MessageMutation) FlagsReviewedAtCleared() bool {
+	_, ok := m.clearedFields[message.FieldFlagsReviewedAt]
+	return ok
+}
+
+// ResetFlagsReviewedAt resets all changes to the "flags_reviewed_at" field.
+func (m *MessageMutation) ResetFlagsReviewedAt() {
+	m.flags_reviewed_at = nil
+	delete(m.clearedFields, message.FieldFlagsReviewedAt)
+}
+
 // Where appends a list predicates to the MessageMutation builder.
 func (m *MessageMutation) Where(ps ...predicate.Message) {
 	m.predicates = append(m.predicates, ps...)
@@ -10562,7 +11682,7 @@ func (m *MessageMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *MessageMutation) Fields() []string {
-	fields := make([]string, 0, 6)
+	fields := make([]string, 0, 7)
 	if m.created_at != nil {
 		fields = append(fields, message.FieldCreatedAt)
 	}
@@ -10580,6 +11700,9 @@ func (m *MessageMutation) Fields() []string {
 	}
 	if m.flags != nil {
 		fields = append(fields, message.FieldFlags)
+	}
+	if m.flags_reviewed_at != nil {
+		fields = append(fields, message.FieldFlagsReviewedAt)
 	}
 	return fields
 }
@@ -10601,6 +11724,8 @@ func (m *MessageMutation) Field(name string) (ent.Value, bool) {
 		return m.Body()
 	case message.FieldFlags:
 		return m.Flags()
+	case message.FieldFlagsReviewedAt:
+		return m.FlagsReviewedAt()
 	}
 	return nil, false
 }
@@ -10622,6 +11747,8 @@ func (m *MessageMutation) OldField(ctx context.Context, name string) (ent.Value,
 		return m.OldBody(ctx)
 	case message.FieldFlags:
 		return m.OldFlags(ctx)
+	case message.FieldFlagsReviewedAt:
+		return m.OldFlagsReviewedAt(ctx)
 	}
 	return nil, fmt.Errorf("unknown Message field %s", name)
 }
@@ -10673,6 +11800,13 @@ func (m *MessageMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetFlags(v)
 		return nil
+	case message.FieldFlagsReviewedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetFlagsReviewedAt(v)
+		return nil
 	}
 	return fmt.Errorf("unknown Message field %s", name)
 }
@@ -10706,6 +11840,9 @@ func (m *MessageMutation) ClearedFields() []string {
 	if m.FieldCleared(message.FieldFlags) {
 		fields = append(fields, message.FieldFlags)
 	}
+	if m.FieldCleared(message.FieldFlagsReviewedAt) {
+		fields = append(fields, message.FieldFlagsReviewedAt)
+	}
 	return fields
 }
 
@@ -10722,6 +11859,9 @@ func (m *MessageMutation) ClearField(name string) error {
 	switch name {
 	case message.FieldFlags:
 		m.ClearFlags()
+		return nil
+	case message.FieldFlagsReviewedAt:
+		m.ClearFlagsReviewedAt()
 		return nil
 	}
 	return fmt.Errorf("unknown Message nullable field %s", name)
@@ -10748,6 +11888,9 @@ func (m *MessageMutation) ResetField(name string) error {
 		return nil
 	case message.FieldFlags:
 		m.ResetFlags()
+		return nil
+	case message.FieldFlagsReviewedAt:
+		m.ResetFlagsReviewedAt()
 		return nil
 	}
 	return fmt.Errorf("unknown Message field %s", name)
@@ -16105,23 +17248,24 @@ func (m *SavedListingMutation) ResetEdge(name string) error {
 // SessionMutation represents an operation that mutates the Session nodes in the graph.
 type SessionMutation struct {
 	config
-	op            Op
-	typ           string
-	id            *uuid.UUID
-	created_at    *time.Time
-	updated_at    *time.Time
-	token_hash    *[]byte
-	user_agent    *string
-	ip            *string
-	last_seen_at  *time.Time
-	expires_at    *time.Time
-	revoked_at    *time.Time
-	clearedFields map[string]struct{}
-	user          *uuid.UUID
-	cleareduser   bool
-	done          bool
-	oldValue      func(context.Context) (*Session, error)
-	predicates    []predicate.Session
+	op              Op
+	typ             string
+	id              *uuid.UUID
+	created_at      *time.Time
+	updated_at      *time.Time
+	token_hash      *[]byte
+	user_agent      *string
+	ip              *string
+	last_seen_at    *time.Time
+	expires_at      *time.Time
+	revoked_at      *time.Time
+	impersonator_id *uuid.UUID
+	clearedFields   map[string]struct{}
+	user            *uuid.UUID
+	cleareduser     bool
+	done            bool
+	oldValue        func(context.Context) (*Session, error)
+	predicates      []predicate.Session
 }
 
 var _ ent.Mutation = (*SessionMutation)(nil)
@@ -16591,6 +17735,55 @@ func (m *SessionMutation) ResetRevokedAt() {
 	delete(m.clearedFields, session.FieldRevokedAt)
 }
 
+// SetImpersonatorID sets the "impersonator_id" field.
+func (m *SessionMutation) SetImpersonatorID(u uuid.UUID) {
+	m.impersonator_id = &u
+}
+
+// ImpersonatorID returns the value of the "impersonator_id" field in the mutation.
+func (m *SessionMutation) ImpersonatorID() (r uuid.UUID, exists bool) {
+	v := m.impersonator_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldImpersonatorID returns the old "impersonator_id" field's value of the Session entity.
+// If the Session object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *SessionMutation) OldImpersonatorID(ctx context.Context) (v *uuid.UUID, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldImpersonatorID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldImpersonatorID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldImpersonatorID: %w", err)
+	}
+	return oldValue.ImpersonatorID, nil
+}
+
+// ClearImpersonatorID clears the value of the "impersonator_id" field.
+func (m *SessionMutation) ClearImpersonatorID() {
+	m.impersonator_id = nil
+	m.clearedFields[session.FieldImpersonatorID] = struct{}{}
+}
+
+// ImpersonatorIDCleared returns if the "impersonator_id" field was cleared in this mutation.
+func (m *SessionMutation) ImpersonatorIDCleared() bool {
+	_, ok := m.clearedFields[session.FieldImpersonatorID]
+	return ok
+}
+
+// ResetImpersonatorID resets all changes to the "impersonator_id" field.
+func (m *SessionMutation) ResetImpersonatorID() {
+	m.impersonator_id = nil
+	delete(m.clearedFields, session.FieldImpersonatorID)
+}
+
 // ClearUser clears the "user" edge to the User entity.
 func (m *SessionMutation) ClearUser() {
 	m.cleareduser = true
@@ -16652,7 +17845,7 @@ func (m *SessionMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *SessionMutation) Fields() []string {
-	fields := make([]string, 0, 9)
+	fields := make([]string, 0, 10)
 	if m.created_at != nil {
 		fields = append(fields, session.FieldCreatedAt)
 	}
@@ -16680,6 +17873,9 @@ func (m *SessionMutation) Fields() []string {
 	if m.revoked_at != nil {
 		fields = append(fields, session.FieldRevokedAt)
 	}
+	if m.impersonator_id != nil {
+		fields = append(fields, session.FieldImpersonatorID)
+	}
 	return fields
 }
 
@@ -16706,6 +17902,8 @@ func (m *SessionMutation) Field(name string) (ent.Value, bool) {
 		return m.ExpiresAt()
 	case session.FieldRevokedAt:
 		return m.RevokedAt()
+	case session.FieldImpersonatorID:
+		return m.ImpersonatorID()
 	}
 	return nil, false
 }
@@ -16733,6 +17931,8 @@ func (m *SessionMutation) OldField(ctx context.Context, name string) (ent.Value,
 		return m.OldExpiresAt(ctx)
 	case session.FieldRevokedAt:
 		return m.OldRevokedAt(ctx)
+	case session.FieldImpersonatorID:
+		return m.OldImpersonatorID(ctx)
 	}
 	return nil, fmt.Errorf("unknown Session field %s", name)
 }
@@ -16805,6 +18005,13 @@ func (m *SessionMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetRevokedAt(v)
 		return nil
+	case session.FieldImpersonatorID:
+		v, ok := value.(uuid.UUID)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetImpersonatorID(v)
+		return nil
 	}
 	return fmt.Errorf("unknown Session field %s", name)
 }
@@ -16844,6 +18051,9 @@ func (m *SessionMutation) ClearedFields() []string {
 	if m.FieldCleared(session.FieldRevokedAt) {
 		fields = append(fields, session.FieldRevokedAt)
 	}
+	if m.FieldCleared(session.FieldImpersonatorID) {
+		fields = append(fields, session.FieldImpersonatorID)
+	}
 	return fields
 }
 
@@ -16866,6 +18076,9 @@ func (m *SessionMutation) ClearField(name string) error {
 		return nil
 	case session.FieldRevokedAt:
 		m.ClearRevokedAt()
+		return nil
+	case session.FieldImpersonatorID:
+		m.ClearImpersonatorID()
 		return nil
 	}
 	return fmt.Errorf("unknown Session nullable field %s", name)
@@ -16901,6 +18114,9 @@ func (m *SessionMutation) ResetField(name string) error {
 		return nil
 	case session.FieldRevokedAt:
 		m.ResetRevokedAt()
+		return nil
+	case session.FieldImpersonatorID:
+		m.ResetImpersonatorID()
 		return nil
 	}
 	return fmt.Errorf("unknown Session field %s", name)
@@ -18609,6 +19825,8 @@ type UserMutation struct {
 	onboarded_at            *time.Time
 	last_seen_at            *time.Time
 	deleted_at              *time.Time
+	suspended_at            *time.Time
+	suspension_note         *string
 	avatar_key              *string
 	data_saver              *bool
 	notification_prefs      *map[string]bool
@@ -19139,6 +20357,104 @@ func (m *UserMutation) DeletedAtCleared() bool {
 func (m *UserMutation) ResetDeletedAt() {
 	m.deleted_at = nil
 	delete(m.clearedFields, user.FieldDeletedAt)
+}
+
+// SetSuspendedAt sets the "suspended_at" field.
+func (m *UserMutation) SetSuspendedAt(t time.Time) {
+	m.suspended_at = &t
+}
+
+// SuspendedAt returns the value of the "suspended_at" field in the mutation.
+func (m *UserMutation) SuspendedAt() (r time.Time, exists bool) {
+	v := m.suspended_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSuspendedAt returns the old "suspended_at" field's value of the User entity.
+// If the User object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserMutation) OldSuspendedAt(ctx context.Context) (v *time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSuspendedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSuspendedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSuspendedAt: %w", err)
+	}
+	return oldValue.SuspendedAt, nil
+}
+
+// ClearSuspendedAt clears the value of the "suspended_at" field.
+func (m *UserMutation) ClearSuspendedAt() {
+	m.suspended_at = nil
+	m.clearedFields[user.FieldSuspendedAt] = struct{}{}
+}
+
+// SuspendedAtCleared returns if the "suspended_at" field was cleared in this mutation.
+func (m *UserMutation) SuspendedAtCleared() bool {
+	_, ok := m.clearedFields[user.FieldSuspendedAt]
+	return ok
+}
+
+// ResetSuspendedAt resets all changes to the "suspended_at" field.
+func (m *UserMutation) ResetSuspendedAt() {
+	m.suspended_at = nil
+	delete(m.clearedFields, user.FieldSuspendedAt)
+}
+
+// SetSuspensionNote sets the "suspension_note" field.
+func (m *UserMutation) SetSuspensionNote(s string) {
+	m.suspension_note = &s
+}
+
+// SuspensionNote returns the value of the "suspension_note" field in the mutation.
+func (m *UserMutation) SuspensionNote() (r string, exists bool) {
+	v := m.suspension_note
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSuspensionNote returns the old "suspension_note" field's value of the User entity.
+// If the User object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *UserMutation) OldSuspensionNote(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSuspensionNote is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSuspensionNote requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSuspensionNote: %w", err)
+	}
+	return oldValue.SuspensionNote, nil
+}
+
+// ClearSuspensionNote clears the value of the "suspension_note" field.
+func (m *UserMutation) ClearSuspensionNote() {
+	m.suspension_note = nil
+	m.clearedFields[user.FieldSuspensionNote] = struct{}{}
+}
+
+// SuspensionNoteCleared returns if the "suspension_note" field was cleared in this mutation.
+func (m *UserMutation) SuspensionNoteCleared() bool {
+	_, ok := m.clearedFields[user.FieldSuspensionNote]
+	return ok
+}
+
+// ResetSuspensionNote resets all changes to the "suspension_note" field.
+func (m *UserMutation) ResetSuspensionNote() {
+	m.suspension_note = nil
+	delete(m.clearedFields, user.FieldSuspensionNote)
 }
 
 // SetAvatarKey sets the "avatar_key" field.
@@ -19712,7 +21028,7 @@ func (m *UserMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *UserMutation) Fields() []string {
-	fields := make([]string, 0, 15)
+	fields := make([]string, 0, 17)
 	if m.created_at != nil {
 		fields = append(fields, user.FieldCreatedAt)
 	}
@@ -19739,6 +21055,12 @@ func (m *UserMutation) Fields() []string {
 	}
 	if m.deleted_at != nil {
 		fields = append(fields, user.FieldDeletedAt)
+	}
+	if m.suspended_at != nil {
+		fields = append(fields, user.FieldSuspendedAt)
+	}
+	if m.suspension_note != nil {
+		fields = append(fields, user.FieldSuspensionNote)
 	}
 	if m.avatar_key != nil {
 		fields = append(fields, user.FieldAvatarKey)
@@ -19784,6 +21106,10 @@ func (m *UserMutation) Field(name string) (ent.Value, bool) {
 		return m.LastSeenAt()
 	case user.FieldDeletedAt:
 		return m.DeletedAt()
+	case user.FieldSuspendedAt:
+		return m.SuspendedAt()
+	case user.FieldSuspensionNote:
+		return m.SuspensionNote()
 	case user.FieldAvatarKey:
 		return m.AvatarKey()
 	case user.FieldDataSaver:
@@ -19823,6 +21149,10 @@ func (m *UserMutation) OldField(ctx context.Context, name string) (ent.Value, er
 		return m.OldLastSeenAt(ctx)
 	case user.FieldDeletedAt:
 		return m.OldDeletedAt(ctx)
+	case user.FieldSuspendedAt:
+		return m.OldSuspendedAt(ctx)
+	case user.FieldSuspensionNote:
+		return m.OldSuspensionNote(ctx)
 	case user.FieldAvatarKey:
 		return m.OldAvatarKey(ctx)
 	case user.FieldDataSaver:
@@ -19906,6 +21236,20 @@ func (m *UserMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetDeletedAt(v)
+		return nil
+	case user.FieldSuspendedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSuspendedAt(v)
+		return nil
+	case user.FieldSuspensionNote:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSuspensionNote(v)
 		return nil
 	case user.FieldAvatarKey:
 		v, ok := value.(string)
@@ -19997,6 +21341,12 @@ func (m *UserMutation) ClearedFields() []string {
 	if m.FieldCleared(user.FieldDeletedAt) {
 		fields = append(fields, user.FieldDeletedAt)
 	}
+	if m.FieldCleared(user.FieldSuspendedAt) {
+		fields = append(fields, user.FieldSuspendedAt)
+	}
+	if m.FieldCleared(user.FieldSuspensionNote) {
+		fields = append(fields, user.FieldSuspensionNote)
+	}
 	if m.FieldCleared(user.FieldAvatarKey) {
 		fields = append(fields, user.FieldAvatarKey)
 	}
@@ -20043,6 +21393,12 @@ func (m *UserMutation) ClearField(name string) error {
 		return nil
 	case user.FieldDeletedAt:
 		m.ClearDeletedAt()
+		return nil
+	case user.FieldSuspendedAt:
+		m.ClearSuspendedAt()
+		return nil
+	case user.FieldSuspensionNote:
+		m.ClearSuspensionNote()
 		return nil
 	case user.FieldAvatarKey:
 		m.ClearAvatarKey()
@@ -20093,6 +21449,12 @@ func (m *UserMutation) ResetField(name string) error {
 		return nil
 	case user.FieldDeletedAt:
 		m.ResetDeletedAt()
+		return nil
+	case user.FieldSuspendedAt:
+		m.ResetSuspendedAt()
+		return nil
+	case user.FieldSuspensionNote:
+		m.ResetSuspensionNote()
 		return nil
 	case user.FieldAvatarKey:
 		m.ResetAvatarKey()

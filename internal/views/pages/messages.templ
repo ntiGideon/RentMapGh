@@ -54,7 +54,7 @@ type Bubble struct {
 }
 
 type ThreadView struct {
-	ID, Them, ThemRole, Role     string
+	ID, Them, ThemRole, Role    string
 	Headline, ListingURL, Cover string
 	ViewingURL                  string
 	Bubbles                     []Bubble
@@ -128,9 +128,11 @@ func initial(name string) string {
 templ Bubbles(bs []Bubble, reasons []Opt, convID string) {
 	for _, b := range bs {
 		<li data-id={ b.ID } class={ "flex flex-col", templ.KV("items-end", b.Mine), templ.KV("items-start", !b.Mine) }>
-			<div class={ "max-w-[85%] whitespace-pre-line break-words rounded-2xl px-3.5 py-2 text-[0.9375rem] leading-relaxed",
+			<div
+				class={ "max-w-[85%] whitespace-pre-line break-words rounded-2xl px-3.5 py-2 text-[0.9375rem] leading-relaxed",
 				templ.KV("rounded-br-md bg-graphite-900 text-white dark:bg-mint-200 dark:text-graphite-900", b.Mine),
-				templ.KV("rounded-bl-md bg-surface text-fg ring-1 ring-line", !b.Mine) }>{ b.Body }</div>
+				templ.KV("rounded-bl-md bg-surface text-fg ring-1 ring-line", !b.Mine) }
+			>{ b.Body }</div>
 			<p class="mt-1 px-1 text-2xs tabular-nums text-fg-subtle">
 				{ b.Time }
 				if b.Seen {
@@ -257,10 +259,11 @@ type AdminMessage struct {
 }
 
 type AdminReportView struct {
-	ID, Reason, Note, Status   string
-	Reporter, Subject          string
-	Listing, ListingURL        string
-	Thread                     []AdminMessage
+	ID, Reason, Note, Status string
+	Reporter, Subject        string
+	Listing, ListingURL      string
+	SubjectURL               string // their back-office page: history, suspend
+	Thread                   []AdminMessage
 }
 
 templ AdminReport(v AdminReportView) {
@@ -276,7 +279,8 @@ templ AdminReport(v AdminReportView) {
 				<ol class="mt-6 space-y-3">
 					for _, m := range v.Thread {
 						<li class={ "rounded-lg border px-3 py-2 text-sm", templ.KV("border-red-600/40 bg-red-50 dark:bg-red-400/10", m.Reported), templ.KV("border-line", !m.Reported) }>
-							<p class="text-xs text-fg-muted">{ m.Who } · { m.Time }
+							<p class="text-xs text-fg-muted">
+								{ m.Who } · { m.Time }
 								if m.Flags != "" {
 									<span class="text-warning">· flags: { m.Flags }</span>
 								}
@@ -287,6 +291,12 @@ templ AdminReport(v AdminReportView) {
 				</ol>
 			</div>
 			<aside class="space-y-3">
+				if v.SubjectURL != "" {
+					<a href={ templ.SafeURL(v.SubjectURL) } class="block rounded-card border border-line bg-surface-raised p-4 text-sm hover:bg-surface">
+						<span class="text-fg-muted">Reported person</span>
+						<span class="mt-0.5 block font-medium text-fg">{ v.Subject } · account and history</span>
+					</a>
+				}
 				if v.ListingURL != "" {
 					<a href={ templ.SafeURL(v.ListingURL) } class="block rounded-card border border-line bg-surface-raised p-4 text-sm hover:bg-surface">
 						<span class="text-fg-muted">Listing</span>

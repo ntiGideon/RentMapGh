@@ -815,6 +815,38 @@ func (s *Service) Decide(ctx context.Context, moderator Actor, id uuid.UUID, app
 	return nil
 }
 
+// Remove takes a listing down (moderator): it leaves search and its page
+// for good. The reason is kept as the review note.
+func (s *Service) Remove(ctx context.Context, moderator Actor, id uuid.UUID, reason string) (*ent.Listing, error) {
+	reason = strings.TrimSpace(reason)
+	if reason == "" {
+		return nil, ValidationError{"reason": "Say why it's coming down."}
+	}
+	if runeLen(reason) > 500 {
+		return nil, ValidationError{"reason": "Keep the reason under 500 characters."}
+	}
+	l, err := s.db.Listing.Get(ctx, id)
+	if ent.IsNotFound(err) {
+		return nil, ErrNotFound
+	}
+	if err != nil {
+		return nil, err
+	}
+	if l.ListerID == moderator.UserID {
+		return nil, ValidationError{"reason": "You can't moderate your own listing."}
+	}
+	if _, err := Next(Status(l.Status), EvRemove); err != nil {
+		return nil, ValidationError{"reason": "This listing is already down."}
+	}
+	l, err = s.db.Listing.UpdateOne(l).SetStatus(listing.StatusRemoved).SetReviewedBy(moderator.UserID).SetReviewNote(reason).Save(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("remove: %w", err)
+	}
+	s.audit.Record(ctx, audit.Event{Actor: &moderator.UserID, Action: "listing.removed", TargetType: "listing", TargetID: id.String(),
+		IP: moderator.IP, UserAgent: moderator.UserAgent, Meta: map[string]any{"reason": reason}})
+	return l, nil
+}
+
 // ── helpers ───────────────────────────────────────────────────────────────
 
 func clean(s string) string { return strings.Join(strings.Fields(s), " ") }

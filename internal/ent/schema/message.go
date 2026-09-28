@@ -49,6 +49,7 @@ func (Message) Fields() []ent.Field {
 		field.UUID("sender_id", uuid.UUID{}).Immutable(),
 		field.String("body").MaxLen(2000).NotEmpty().Immutable(),
 		field.JSON("flags", []string{}).Optional(),
+		field.Time("flags_reviewed_at").Optional().Nillable().Comment("a moderator looked at the scam-shield flags"),
 	}
 }
 

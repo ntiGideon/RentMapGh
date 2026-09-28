@@ -234,6 +234,9 @@ func (_u *SessionUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	if _u.mutation.RevokedAtCleared() {
 		_spec.ClearField(session.FieldRevokedAt, field.TypeTime)
 	}
+	if _u.mutation.ImpersonatorIDCleared() {
+		_spec.ClearField(session.FieldImpersonatorID, field.TypeUUID)
+	}
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{session.Label}
@@ -489,6 +492,9 @@ func (_u *SessionUpdateOne) sqlSave(ctx context.Context) (_node *Session, err er
 	}
 	if _u.mutation.RevokedAtCleared() {
 		_spec.ClearField(session.FieldRevokedAt, field.TypeTime)
+	}
+	if _u.mutation.ImpersonatorIDCleared() {
+		_spec.ClearField(session.FieldImpersonatorID, field.TypeUUID)
 	}
 	_node = &Session{config: _u.config}
 	_spec.Assign = _node.assignValues

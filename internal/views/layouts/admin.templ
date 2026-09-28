@@ -1,6 +1,7 @@
 package layouts
 
 import (
+	"context"
 	"strconv"
 
 	"rentmapgh/internal/server/reqctx"
@@ -8,7 +9,44 @@ import (
 )
 
 type AdminNav struct {
-	Active string // "verifications" | "listings"
+	Active string // the adminItems key of the current page
+}
+
+type adminItem struct {
+	Key, Href, Label, Icon string
+	AdminOnly              bool
+}
+
+type adminGroup struct {
+	Label string
+	Items []adminItem
+}
+
+var adminGroups = []adminGroup{
+	{"Trust & safety", []adminItem{
+		{"verifications", "/admin/verifications", "Verifications", "badge-check", false},
+		{"listings", "/admin/listings", "Listings", "home", false},
+		{"reports", "/admin/reports", "Reports", "alert", false},
+		{"flagged", "/admin/flagged", "Flagged messages", "message", false},
+		{"duplicates", "/admin/duplicates", "Duplicates", "columns", false},
+	}},
+	{"People", []adminItem{
+		{"users", "/admin/users", "Users", "user", false},
+		{"audit", "/admin/audit", "Audit log", "list", true},
+	}},
+	{"Platform", []adminItem{
+		{"metrics", "/admin/metrics", "Metrics", "signal", false},
+	}},
+}
+
+func adminCount(ctx context.Context, key string) int {
+	c := reqctx.CurrentAdminCounts(ctx)
+	return map[string]int{"verifications": c.Verifications, "listings": c.Listings, "reports": c.Reports,
+		"flagged": c.Flagged, "duplicates": c.Duplicates}[key]
+}
+
+func showItem(ctx context.Context, it adminItem) bool {
+	return !it.AdminOnly || reqctx.CurrentViewer(ctx).Has("admin")
 }
 
 // Admin is the back-office shell: compact top bar, side nav on desktop.
@@ -24,11 +62,6 @@ templ Admin(m Meta, nav AdminNav) {
 							Admin
 						}
 					</a>
-					<nav class="ml-4 flex items-center gap-1 lg:hidden" aria-label="Admin">
-						@adminLink("/admin/verifications", "Verifications", nav.Active == "verifications", reqctx.CurrentAdminCounts(ctx).Verifications)
-						@adminLink("/admin/listings", "Listings", nav.Active == "listings", reqctx.CurrentAdminCounts(ctx).Listings)
-						@adminLink("/admin/reports", "Reports", nav.Active == "reports", reqctx.CurrentAdminCounts(ctx).Reports)
-					</nav>
 					<div class="ml-auto flex items-center gap-1.5">
 						@ThemeToggle()
 						<a href="/" class="hidden h-8 items-center rounded-lg px-2.5 text-sm font-medium text-fg-muted transition-colors hover:bg-surface hover:text-fg sm:inline-flex">View site</a>
@@ -37,24 +70,33 @@ templ Admin(m Meta, nav AdminNav) {
 						}
 					</div>
 				</div>
+				<nav class="flex gap-1 overflow-x-auto border-t border-line px-4 py-1.5 lg:hidden" aria-label="Admin">
+					for _, g := range adminGroups {
+						for _, it := range g.Items {
+							if showItem(ctx, it) {
+								@adminLink(it, nav.Active == it.Key, adminCount(ctx, it.Key))
+							}
+						}
+					}
+				</nav>
 			</header>
 			<div class="lg:grid lg:min-h-[calc(100dvh-3.5rem)] lg:grid-cols-[14rem_1fr]">
 				<aside class="hidden border-r border-line bg-bg lg:block">
 					<nav class="sticky top-14 space-y-6 p-4" aria-label="Admin">
-						<div>
-							<p class="px-2.5 text-xs font-medium text-fg-subtle">Trust &amp; safety</p>
-							<ul class="mt-2 space-y-0.5">
-								<li>
-									@adminLink("/admin/verifications", "Verifications", nav.Active == "verifications", reqctx.CurrentAdminCounts(ctx).Verifications)
-								</li>
-								<li>
-									@adminLink("/admin/listings", "Listings", nav.Active == "listings", reqctx.CurrentAdminCounts(ctx).Listings)
-								</li>
-								<li>
-									@adminLink("/admin/reports", "Reports", nav.Active == "reports", reqctx.CurrentAdminCounts(ctx).Reports)
-								</li>
-							</ul>
-						</div>
+						for _, g := range adminGroups {
+							<div>
+								<p class="px-2.5 text-xs font-medium text-fg-subtle">{ g.Label }</p>
+								<ul class="mt-2 space-y-0.5">
+									for _, it := range g.Items {
+										if showItem(ctx, it) {
+											<li>
+												@adminLink(it, nav.Active == it.Key, adminCount(ctx, it.Key))
+											</li>
+										}
+									}
+								</ul>
+							</div>
+						}
 					</nav>
 				</aside>
 				<main id="main" class="min-w-0 px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
@@ -65,18 +107,18 @@ templ Admin(m Meta, nav AdminNav) {
 	}
 }
 
-templ adminLink(href, label string, active bool, count int) {
+templ adminLink(it adminItem, active bool, count int) {
 	<a
-		href={ templ.SafeURL(href) }
-		class={ "flex h-8 items-center justify-between gap-2 rounded-md px-2.5 text-sm font-medium transition-colors",
+		href={ templ.SafeURL(it.Href) }
+		class={ "flex h-8 shrink-0 items-center justify-between gap-2 whitespace-nowrap rounded-md px-2.5 text-sm font-medium transition-colors",
 			templ.KV("bg-surface text-fg", active), templ.KV("text-fg-muted hover:bg-surface hover:text-fg", !active) }
 		if active {
 			aria-current="page"
 		}
 	>
 		<span class="flex items-center gap-2">
-			@c.Icon("shield-check", "size-4")
-			{ label }
+			@c.Icon(it.Icon, "size-4")
+			{ it.Label }
 		</span>
 		if count > 0 {
 			<span class="rounded-full bg-graphite-900 px-1.5 py-px text-2xs font-semibold tabular-nums text-white dark:bg-mint-200 dark:text-graphite-900">{ strconv.Itoa(count) }</span>

@@ -57,6 +57,24 @@ func (s *Sessions) Create(ctx context.Context, userID uuid.UUID, userAgent, ip s
 	return token, row, nil
 }
 
+// ViewAsTTL is how long an admin's "view as" session lasts. It never slides.
+const ViewAsTTL = 30 * time.Minute
+
+// CreateViewAs starts a short, read-only session on userID for an admin.
+func (s *Sessions) CreateViewAs(ctx context.Context, userID, admin uuid.UUID, userAgent, ip string) (string, error) {
+	token, hash, err := newToken()
+	if err != nil {
+		return "", err
+	}
+	now := s.now()
+	err = s.db.Session.Create().SetUserID(userID).SetImpersonatorID(admin).SetTokenHash(hash).
+		SetUserAgent(clip(userAgent, 300)).SetIP(clip(ip, 64)).SetLastSeenAt(now).SetExpiresAt(now.Add(ViewAsTTL)).Exec(ctx)
+	if err != nil {
+		return "", fmt.Errorf("session: view as: %w", err)
+	}
+	return token, nil
+}
+
 // Resolve maps a cookie token to a Viewer. Revoked, expired and suspended
 // sessions resolve to ErrNoSession. It also slides the expiry forward.
 func (s *Sessions) Resolve(ctx context.Context, token string) (*reqctx.Viewer, error) {
@@ -79,6 +97,11 @@ func (s *Sessions) Resolve(ctx context.Context, token string) (*reqctx.Viewer, e
 		return nil, ErrNoSession
 	}
 
+	if row.ImpersonatorID != nil { // view-as: no sliding, no "last seen" for the real user
+		v := ViewerFor(u, row.ID)
+		v.ViewingAs = *row.ImpersonatorID
+		return v, nil
+	}
 	if now.Sub(row.LastSeenAt) > touchEvery {
 		// Best effort: a failed touch must not sign the user out.
 		_ = s.db.Session.UpdateOneID(row.ID).SetLastSeenAt(now).SetExpiresAt(now.Add(s.ttl)).Exec(ctx)
@@ -157,7 +180,7 @@ func (s *Sessions) RevokeOthers(ctx context.Context, userID, keep uuid.UUID) (in
 // Active lists userID's live sessions, most recently used first.
 func (s *Sessions) Active(ctx context.Context, userID uuid.UUID) ([]*ent.Session, error) {
 	return s.db.Session.Query().
-		Where(session.UserID(userID), session.RevokedAtIsNil(), session.ExpiresAtGT(s.now())).
+		Where(session.UserID(userID), session.RevokedAtIsNil(), session.ExpiresAtGT(s.now()), session.ImpersonatorIDIsNil()).
 		Order(ent.Desc(session.FieldLastSeenAt)).
 		Limit(50).
 		All(ctx)

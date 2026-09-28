@@ -37,6 +37,8 @@ type Session struct {
 	ExpiresAt time.Time `json:"expires_at,omitempty"`
 	// RevokedAt holds the value of the "revoked_at" field.
 	RevokedAt *time.Time `json:"revoked_at,omitempty"`
+	// the admin viewing as this user (support); such sessions are read-only and short
+	ImpersonatorID *uuid.UUID `json:"impersonator_id,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the SessionQuery when eager-loading is set.
 	Edges        SessionEdges `json:"edges"`
@@ -68,6 +70,8 @@ func (*Session) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
+		case session.FieldImpersonatorID:
+			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
 		case session.FieldTokenHash:
 			values[i] = new([]byte)
 		case session.FieldUserAgent, session.FieldIP:
@@ -152,6 +156,13 @@ func (_m *Session) assignValues(columns []string, values []any) error {
 				_m.RevokedAt = new(time.Time)
 				*_m.RevokedAt = value.Time
 			}
+		case session.FieldImpersonatorID:
+			if value, ok := values[i].(*sql.NullScanner); !ok {
+				return fmt.Errorf("unexpected type %T for field impersonator_id", values[i])
+			} else if value.Valid {
+				_m.ImpersonatorID = new(uuid.UUID)
+				*_m.ImpersonatorID = *value.S.(*uuid.UUID)
+			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
 		}
@@ -219,6 +230,11 @@ func (_m *Session) String() string {
 	if v := _m.RevokedAt; v != nil {
 		builder.WriteString("revoked_at=")
 		builder.WriteString(v.Format(time.ANSIC))
+	}
+	builder.WriteString(", ")
+	if v := _m.ImpersonatorID; v != nil {
+		builder.WriteString("impersonator_id=")
+		builder.WriteString(fmt.Sprintf("%v", *v))
 	}
 	builder.WriteByte(')')
 	return builder.String()

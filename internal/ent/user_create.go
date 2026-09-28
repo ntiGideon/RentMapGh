@@ -156,6 +156,34 @@ func (_c *UserCreate) SetNillableDeletedAt(v *time.Time) *UserCreate {
 	return _c
 }
 
+// SetSuspendedAt sets the "suspended_at" field.
+func (_c *UserCreate) SetSuspendedAt(v time.Time) *UserCreate {
+	_c.mutation.SetSuspendedAt(v)
+	return _c
+}
+
+// SetNillableSuspendedAt sets the "suspended_at" field if the given value is not nil.
+func (_c *UserCreate) SetNillableSuspendedAt(v *time.Time) *UserCreate {
+	if v != nil {
+		_c.SetSuspendedAt(*v)
+	}
+	return _c
+}
+
+// SetSuspensionNote sets the "suspension_note" field.
+func (_c *UserCreate) SetSuspensionNote(v string) *UserCreate {
+	_c.mutation.SetSuspensionNote(v)
+	return _c
+}
+
+// SetNillableSuspensionNote sets the "suspension_note" field if the given value is not nil.
+func (_c *UserCreate) SetNillableSuspensionNote(v *string) *UserCreate {
+	if v != nil {
+		_c.SetSuspensionNote(*v)
+	}
+	return _c
+}
+
 // SetAvatarKey sets the "avatar_key" field.
 func (_c *UserCreate) SetAvatarKey(v string) *UserCreate {
 	_c.mutation.SetAvatarKey(v)
@@ -404,6 +432,11 @@ func (_c *UserCreate) check() error {
 			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "User.status": %w`, err)}
 		}
 	}
+	if v, ok := _c.mutation.SuspensionNote(); ok {
+		if err := user.SuspensionNoteValidator(v); err != nil {
+			return &ValidationError{Name: "suspension_note", err: fmt.Errorf(`ent: validator failed for field "User.suspension_note": %w`, err)}
+		}
+	}
 	if v, ok := _c.mutation.AvatarKey(); ok {
 		if err := user.AvatarKeyValidator(v); err != nil {
 			return &ValidationError{Name: "avatar_key", err: fmt.Errorf(`ent: validator failed for field "User.avatar_key": %w`, err)}
@@ -483,6 +516,14 @@ func (_c *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.DeletedAt(); ok {
 		_spec.SetField(user.FieldDeletedAt, field.TypeTime, value)
 		_node.DeletedAt = &value
+	}
+	if value, ok := _c.mutation.SuspendedAt(); ok {
+		_spec.SetField(user.FieldSuspendedAt, field.TypeTime, value)
+		_node.SuspendedAt = &value
+	}
+	if value, ok := _c.mutation.SuspensionNote(); ok {
+		_spec.SetField(user.FieldSuspensionNote, field.TypeString, value)
+		_node.SuspensionNote = value
 	}
 	if value, ok := _c.mutation.AvatarKey(); ok {
 		_spec.SetField(user.FieldAvatarKey, field.TypeString, value)
@@ -769,6 +810,42 @@ func (u *UserUpsert) UpdateDeletedAt() *UserUpsert {
 // ClearDeletedAt clears the value of the "deleted_at" field.
 func (u *UserUpsert) ClearDeletedAt() *UserUpsert {
 	u.SetNull(user.FieldDeletedAt)
+	return u
+}
+
+// SetSuspendedAt sets the "suspended_at" field.
+func (u *UserUpsert) SetSuspendedAt(v time.Time) *UserUpsert {
+	u.Set(user.FieldSuspendedAt, v)
+	return u
+}
+
+// UpdateSuspendedAt sets the "suspended_at" field to the value that was provided on create.
+func (u *UserUpsert) UpdateSuspendedAt() *UserUpsert {
+	u.SetExcluded(user.FieldSuspendedAt)
+	return u
+}
+
+// ClearSuspendedAt clears the value of the "suspended_at" field.
+func (u *UserUpsert) ClearSuspendedAt() *UserUpsert {
+	u.SetNull(user.FieldSuspendedAt)
+	return u
+}
+
+// SetSuspensionNote sets the "suspension_note" field.
+func (u *UserUpsert) SetSuspensionNote(v string) *UserUpsert {
+	u.Set(user.FieldSuspensionNote, v)
+	return u
+}
+
+// UpdateSuspensionNote sets the "suspension_note" field to the value that was provided on create.
+func (u *UserUpsert) UpdateSuspensionNote() *UserUpsert {
+	u.SetExcluded(user.FieldSuspensionNote)
+	return u
+}
+
+// ClearSuspensionNote clears the value of the "suspension_note" field.
+func (u *UserUpsert) ClearSuspensionNote() *UserUpsert {
+	u.SetNull(user.FieldSuspensionNote)
 	return u
 }
 
@@ -1076,6 +1153,48 @@ func (u *UserUpsertOne) UpdateDeletedAt() *UserUpsertOne {
 func (u *UserUpsertOne) ClearDeletedAt() *UserUpsertOne {
 	return u.Update(func(s *UserUpsert) {
 		s.ClearDeletedAt()
+	})
+}
+
+// SetSuspendedAt sets the "suspended_at" field.
+func (u *UserUpsertOne) SetSuspendedAt(v time.Time) *UserUpsertOne {
+	return u.Update(func(s *UserUpsert) {
+		s.SetSuspendedAt(v)
+	})
+}
+
+// UpdateSuspendedAt sets the "suspended_at" field to the value that was provided on create.
+func (u *UserUpsertOne) UpdateSuspendedAt() *UserUpsertOne {
+	return u.Update(func(s *UserUpsert) {
+		s.UpdateSuspendedAt()
+	})
+}
+
+// ClearSuspendedAt clears the value of the "suspended_at" field.
+func (u *UserUpsertOne) ClearSuspendedAt() *UserUpsertOne {
+	return u.Update(func(s *UserUpsert) {
+		s.ClearSuspendedAt()
+	})
+}
+
+// SetSuspensionNote sets the "suspension_note" field.
+func (u *UserUpsertOne) SetSuspensionNote(v string) *UserUpsertOne {
+	return u.Update(func(s *UserUpsert) {
+		s.SetSuspensionNote(v)
+	})
+}
+
+// UpdateSuspensionNote sets the "suspension_note" field to the value that was provided on create.
+func (u *UserUpsertOne) UpdateSuspensionNote() *UserUpsertOne {
+	return u.Update(func(s *UserUpsert) {
+		s.UpdateSuspensionNote()
+	})
+}
+
+// ClearSuspensionNote clears the value of the "suspension_note" field.
+func (u *UserUpsertOne) ClearSuspensionNote() *UserUpsertOne {
+	return u.Update(func(s *UserUpsert) {
+		s.ClearSuspensionNote()
 	})
 }
 
@@ -1567,6 +1686,48 @@ func (u *UserUpsertBulk) UpdateDeletedAt() *UserUpsertBulk {
 func (u *UserUpsertBulk) ClearDeletedAt() *UserUpsertBulk {
 	return u.Update(func(s *UserUpsert) {
 		s.ClearDeletedAt()
+	})
+}
+
+// SetSuspendedAt sets the "suspended_at" field.
+func (u *UserUpsertBulk) SetSuspendedAt(v time.Time) *UserUpsertBulk {
+	return u.Update(func(s *UserUpsert) {
+		s.SetSuspendedAt(v)
+	})
+}
+
+// UpdateSuspendedAt sets the "suspended_at" field to the value that was provided on create.
+func (u *UserUpsertBulk) UpdateSuspendedAt() *UserUpsertBulk {
+	return u.Update(func(s *UserUpsert) {
+		s.UpdateSuspendedAt()
+	})
+}
+
+// ClearSuspendedAt clears the value of the "suspended_at" field.
+func (u *UserUpsertBulk) ClearSuspendedAt() *UserUpsertBulk {
+	return u.Update(func(s *UserUpsert) {
+		s.ClearSuspendedAt()
+	})
+}
+
+// SetSuspensionNote sets the "suspension_note" field.
+func (u *UserUpsertBulk) SetSuspensionNote(v string) *UserUpsertBulk {
+	return u.Update(func(s *UserUpsert) {
+		s.SetSuspensionNote(v)
+	})
+}
+
+// UpdateSuspensionNote sets the "suspension_note" field to the value that was provided on create.
+func (u *UserUpsertBulk) UpdateSuspensionNote() *UserUpsertBulk {
+	return u.Update(func(s *UserUpsert) {
+		s.UpdateSuspensionNote()
+	})
+}
+
+// ClearSuspensionNote clears the value of the "suspension_note" field.
+func (u *UserUpsertBulk) ClearSuspensionNote() *UserUpsertBulk {
+	return u.Update(func(s *UserUpsert) {
+		s.ClearSuspensionNote()
 	})
 }
 

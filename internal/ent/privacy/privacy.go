@@ -207,6 +207,30 @@ func (f ConversationMutationRuleFunc) EvalMutation(ctx context.Context, m ent.Mu
 	return Denyf("ent/privacy: unexpected mutation type %T, expect *ent.ConversationMutation", m)
 }
 
+// The DuplicateCandidateQueryRuleFunc type is an adapter to allow the use of ordinary
+// functions as a query rule.
+type DuplicateCandidateQueryRuleFunc func(context.Context, *ent.DuplicateCandidateQuery) error
+
+// EvalQuery return f(ctx, q).
+func (f DuplicateCandidateQueryRuleFunc) EvalQuery(ctx context.Context, q ent.Query) error {
+	if q, ok := q.(*ent.DuplicateCandidateQuery); ok {
+		return f(ctx, q)
+	}
+	return Denyf("ent/privacy: unexpected query type %T, expect *ent.DuplicateCandidateQuery", q)
+}
+
+// The DuplicateCandidateMutationRuleFunc type is an adapter to allow the use of ordinary
+// functions as a mutation rule.
+type DuplicateCandidateMutationRuleFunc func(context.Context, *ent.DuplicateCandidateMutation) error
+
+// EvalMutation calls f(ctx, m).
+func (f DuplicateCandidateMutationRuleFunc) EvalMutation(ctx context.Context, m ent.Mutation) error {
+	if m, ok := m.(*ent.DuplicateCandidateMutation); ok {
+		return f(ctx, m)
+	}
+	return Denyf("ent/privacy: unexpected mutation type %T, expect *ent.DuplicateCandidateMutation", m)
+}
+
 // The LandlordProfileQueryRuleFunc type is an adapter to allow the use of ordinary
 // functions as a query rule.
 type LandlordProfileQueryRuleFunc func(context.Context, *ent.LandlordProfileQuery) error
@@ -706,6 +730,8 @@ func queryFilter(q ent.Query) (Filter, error) {
 		return q.Filter(), nil
 	case *ent.ConversationQuery:
 		return q.Filter(), nil
+	case *ent.DuplicateCandidateQuery:
+		return q.Filter(), nil
 	case *ent.LandlordProfileQuery:
 		return q.Filter(), nil
 	case *ent.ListingQuery:
@@ -758,6 +784,8 @@ func mutationFilter(m ent.Mutation) (Filter, error) {
 	case *ent.AuditEventMutation:
 		return m.Filter(), nil
 	case *ent.ConversationMutation:
+		return m.Filter(), nil
+	case *ent.DuplicateCandidateMutation:
 		return m.Filter(), nil
 	case *ent.LandlordProfileMutation:
 		return m.Filter(), nil

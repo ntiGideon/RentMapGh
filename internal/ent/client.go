@@ -15,6 +15,7 @@ import (
 	"rentmapgh/internal/ent/agentprofile"
 	"rentmapgh/internal/ent/auditevent"
 	"rentmapgh/internal/ent/conversation"
+	"rentmapgh/internal/ent/duplicatecandidate"
 	"rentmapgh/internal/ent/landlordprofile"
 	"rentmapgh/internal/ent/listing"
 	"rentmapgh/internal/ent/listingmedia"
@@ -57,6 +58,8 @@ type Client struct {
 	AuditEvent *AuditEventClient
 	// Conversation is the client for interacting with the Conversation builders.
 	Conversation *ConversationClient
+	// DuplicateCandidate is the client for interacting with the DuplicateCandidate builders.
+	DuplicateCandidate *DuplicateCandidateClient
 	// LandlordProfile is the client for interacting with the LandlordProfile builders.
 	LandlordProfile *LandlordProfileClient
 	// Listing is the client for interacting with the Listing builders.
@@ -110,6 +113,7 @@ func (c *Client) init() {
 	c.AgentProfile = NewAgentProfileClient(c.config)
 	c.AuditEvent = NewAuditEventClient(c.config)
 	c.Conversation = NewConversationClient(c.config)
+	c.DuplicateCandidate = NewDuplicateCandidateClient(c.config)
 	c.LandlordProfile = NewLandlordProfileClient(c.config)
 	c.Listing = NewListingClient(c.config)
 	c.ListingMedia = NewListingMediaClient(c.config)
@@ -219,31 +223,32 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 	cfg := c.config
 	cfg.driver = tx
 	return &Tx{
-		ctx:              ctx,
-		config:           cfg,
-		AgentMandate:     NewAgentMandateClient(cfg),
-		AgentProfile:     NewAgentProfileClient(cfg),
-		AuditEvent:       NewAuditEventClient(cfg),
-		Conversation:     NewConversationClient(cfg),
-		LandlordProfile:  NewLandlordProfileClient(cfg),
-		Listing:          NewListingClient(cfg),
-		ListingMedia:     NewListingMediaClient(cfg),
-		ListingStat:      NewListingStatClient(cfg),
-		ListingTerms:     NewListingTermsClient(cfg),
-		Message:          NewMessageClient(cfg),
-		Notification:     NewNotificationClient(cfg),
-		OTPCode:          NewOTPCodeClient(cfg),
-		Property:         NewPropertyClient(cfg),
-		Report:           NewReportClient(cfg),
-		RoleAssignment:   NewRoleAssignmentClient(cfg),
-		SavedListing:     NewSavedListingClient(cfg),
-		Session:          NewSessionClient(cfg),
-		Unit:             NewUnitClient(cfg),
-		User:             NewUserClient(cfg),
-		Verification:     NewVerificationClient(cfg),
-		VerificationFile: NewVerificationFileClient(cfg),
-		Viewing:          NewViewingClient(cfg),
-		WaitlistEntry:    NewWaitlistEntryClient(cfg),
+		ctx:                ctx,
+		config:             cfg,
+		AgentMandate:       NewAgentMandateClient(cfg),
+		AgentProfile:       NewAgentProfileClient(cfg),
+		AuditEvent:         NewAuditEventClient(cfg),
+		Conversation:       NewConversationClient(cfg),
+		DuplicateCandidate: NewDuplicateCandidateClient(cfg),
+		LandlordProfile:    NewLandlordProfileClient(cfg),
+		Listing:            NewListingClient(cfg),
+		ListingMedia:       NewListingMediaClient(cfg),
+		ListingStat:        NewListingStatClient(cfg),
+		ListingTerms:       NewListingTermsClient(cfg),
+		Message:            NewMessageClient(cfg),
+		Notification:       NewNotificationClient(cfg),
+		OTPCode:            NewOTPCodeClient(cfg),
+		Property:           NewPropertyClient(cfg),
+		Report:             NewReportClient(cfg),
+		RoleAssignment:     NewRoleAssignmentClient(cfg),
+		SavedListing:       NewSavedListingClient(cfg),
+		Session:            NewSessionClient(cfg),
+		Unit:               NewUnitClient(cfg),
+		User:               NewUserClient(cfg),
+		Verification:       NewVerificationClient(cfg),
+		VerificationFile:   NewVerificationFileClient(cfg),
+		Viewing:            NewViewingClient(cfg),
+		WaitlistEntry:      NewWaitlistEntryClient(cfg),
 	}, nil
 }
 
@@ -261,31 +266,32 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 	cfg := c.config
 	cfg.driver = &txDriver{tx: tx, drv: c.driver}
 	return &Tx{
-		ctx:              ctx,
-		config:           cfg,
-		AgentMandate:     NewAgentMandateClient(cfg),
-		AgentProfile:     NewAgentProfileClient(cfg),
-		AuditEvent:       NewAuditEventClient(cfg),
-		Conversation:     NewConversationClient(cfg),
-		LandlordProfile:  NewLandlordProfileClient(cfg),
-		Listing:          NewListingClient(cfg),
-		ListingMedia:     NewListingMediaClient(cfg),
-		ListingStat:      NewListingStatClient(cfg),
-		ListingTerms:     NewListingTermsClient(cfg),
-		Message:          NewMessageClient(cfg),
-		Notification:     NewNotificationClient(cfg),
-		OTPCode:          NewOTPCodeClient(cfg),
-		Property:         NewPropertyClient(cfg),
-		Report:           NewReportClient(cfg),
-		RoleAssignment:   NewRoleAssignmentClient(cfg),
-		SavedListing:     NewSavedListingClient(cfg),
-		Session:          NewSessionClient(cfg),
-		Unit:             NewUnitClient(cfg),
-		User:             NewUserClient(cfg),
-		Verification:     NewVerificationClient(cfg),
-		VerificationFile: NewVerificationFileClient(cfg),
-		Viewing:          NewViewingClient(cfg),
-		WaitlistEntry:    NewWaitlistEntryClient(cfg),
+		ctx:                ctx,
+		config:             cfg,
+		AgentMandate:       NewAgentMandateClient(cfg),
+		AgentProfile:       NewAgentProfileClient(cfg),
+		AuditEvent:         NewAuditEventClient(cfg),
+		Conversation:       NewConversationClient(cfg),
+		DuplicateCandidate: NewDuplicateCandidateClient(cfg),
+		LandlordProfile:    NewLandlordProfileClient(cfg),
+		Listing:            NewListingClient(cfg),
+		ListingMedia:       NewListingMediaClient(cfg),
+		ListingStat:        NewListingStatClient(cfg),
+		ListingTerms:       NewListingTermsClient(cfg),
+		Message:            NewMessageClient(cfg),
+		Notification:       NewNotificationClient(cfg),
+		OTPCode:            NewOTPCodeClient(cfg),
+		Property:           NewPropertyClient(cfg),
+		Report:             NewReportClient(cfg),
+		RoleAssignment:     NewRoleAssignmentClient(cfg),
+		SavedListing:       NewSavedListingClient(cfg),
+		Session:            NewSessionClient(cfg),
+		Unit:               NewUnitClient(cfg),
+		User:               NewUserClient(cfg),
+		Verification:       NewVerificationClient(cfg),
+		VerificationFile:   NewVerificationFileClient(cfg),
+		Viewing:            NewViewingClient(cfg),
+		WaitlistEntry:      NewWaitlistEntryClient(cfg),
 	}, nil
 }
 
@@ -315,11 +321,11 @@ func (c *Client) Close() error {
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
 	for _, n := range []interface{ Use(...Hook) }{
-		c.AgentMandate, c.AgentProfile, c.AuditEvent, c.Conversation, c.LandlordProfile,
-		c.Listing, c.ListingMedia, c.ListingStat, c.ListingTerms, c.Message,
-		c.Notification, c.OTPCode, c.Property, c.Report, c.RoleAssignment,
-		c.SavedListing, c.Session, c.Unit, c.User, c.Verification, c.VerificationFile,
-		c.Viewing, c.WaitlistEntry,
+		c.AgentMandate, c.AgentProfile, c.AuditEvent, c.Conversation,
+		c.DuplicateCandidate, c.LandlordProfile, c.Listing, c.ListingMedia,
+		c.ListingStat, c.ListingTerms, c.Message, c.Notification, c.OTPCode,
+		c.Property, c.Report, c.RoleAssignment, c.SavedListing, c.Session, c.Unit,
+		c.User, c.Verification, c.VerificationFile, c.Viewing, c.WaitlistEntry,
 	} {
 		n.Use(hooks...)
 	}
@@ -329,11 +335,11 @@ func (c *Client) Use(hooks ...Hook) {
 // In order to add interceptors to a specific client, call: `client.Node.Intercept(...)`.
 func (c *Client) Intercept(interceptors ...Interceptor) {
 	for _, n := range []interface{ Intercept(...Interceptor) }{
-		c.AgentMandate, c.AgentProfile, c.AuditEvent, c.Conversation, c.LandlordProfile,
-		c.Listing, c.ListingMedia, c.ListingStat, c.ListingTerms, c.Message,
-		c.Notification, c.OTPCode, c.Property, c.Report, c.RoleAssignment,
-		c.SavedListing, c.Session, c.Unit, c.User, c.Verification, c.VerificationFile,
-		c.Viewing, c.WaitlistEntry,
+		c.AgentMandate, c.AgentProfile, c.AuditEvent, c.Conversation,
+		c.DuplicateCandidate, c.LandlordProfile, c.Listing, c.ListingMedia,
+		c.ListingStat, c.ListingTerms, c.Message, c.Notification, c.OTPCode,
+		c.Property, c.Report, c.RoleAssignment, c.SavedListing, c.Session, c.Unit,
+		c.User, c.Verification, c.VerificationFile, c.Viewing, c.WaitlistEntry,
 	} {
 		n.Intercept(interceptors...)
 	}
@@ -350,6 +356,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.AuditEvent.mutate(ctx, m)
 	case *ConversationMutation:
 		return c.Conversation.mutate(ctx, m)
+	case *DuplicateCandidateMutation:
+		return c.DuplicateCandidate.mutate(ctx, m)
 	case *LandlordProfileMutation:
 		return c.LandlordProfile.mutate(ctx, m)
 	case *ListingMutation:
@@ -938,6 +946,139 @@ func (c *ConversationClient) mutate(ctx context.Context, m *ConversationMutation
 		return (&ConversationDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("ent: unknown Conversation mutation op: %q", m.Op())
+	}
+}
+
+// DuplicateCandidateClient is a client for the DuplicateCandidate schema.
+type DuplicateCandidateClient struct {
+	config
+}
+
+// NewDuplicateCandidateClient returns a client for the DuplicateCandidate from the given config.
+func NewDuplicateCandidateClient(c config) *DuplicateCandidateClient {
+	return &DuplicateCandidateClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `duplicatecandidate.Hooks(f(g(h())))`.
+func (c *DuplicateCandidateClient) Use(hooks ...Hook) {
+	c.hooks.DuplicateCandidate = append(c.hooks.DuplicateCandidate, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `duplicatecandidate.Intercept(f(g(h())))`.
+func (c *DuplicateCandidateClient) Intercept(interceptors ...Interceptor) {
+	c.inters.DuplicateCandidate = append(c.inters.DuplicateCandidate, interceptors...)
+}
+
+// Create returns a builder for creating a DuplicateCandidate entity.
+func (c *DuplicateCandidateClient) Create() *DuplicateCandidateCreate {
+	mutation := newDuplicateCandidateMutation(c.config, OpCreate)
+	return &DuplicateCandidateCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of DuplicateCandidate entities.
+func (c *DuplicateCandidateClient) CreateBulk(builders ...*DuplicateCandidateCreate) *DuplicateCandidateCreateBulk {
+	return &DuplicateCandidateCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *DuplicateCandidateClient) MapCreateBulk(slice any, setFunc func(*DuplicateCandidateCreate, int)) *DuplicateCandidateCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &DuplicateCandidateCreateBulk{err: fmt.Errorf("calling to DuplicateCandidateClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*DuplicateCandidateCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &DuplicateCandidateCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for DuplicateCandidate.
+func (c *DuplicateCandidateClient) Update() *DuplicateCandidateUpdate {
+	mutation := newDuplicateCandidateMutation(c.config, OpUpdate)
+	return &DuplicateCandidateUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *DuplicateCandidateClient) UpdateOne(_m *DuplicateCandidate) *DuplicateCandidateUpdateOne {
+	mutation := newDuplicateCandidateMutation(c.config, OpUpdateOne, withDuplicateCandidate(_m))
+	return &DuplicateCandidateUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *DuplicateCandidateClient) UpdateOneID(id uuid.UUID) *DuplicateCandidateUpdateOne {
+	mutation := newDuplicateCandidateMutation(c.config, OpUpdateOne, withDuplicateCandidateID(id))
+	return &DuplicateCandidateUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for DuplicateCandidate.
+func (c *DuplicateCandidateClient) Delete() *DuplicateCandidateDelete {
+	mutation := newDuplicateCandidateMutation(c.config, OpDelete)
+	return &DuplicateCandidateDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *DuplicateCandidateClient) DeleteOne(_m *DuplicateCandidate) *DuplicateCandidateDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *DuplicateCandidateClient) DeleteOneID(id uuid.UUID) *DuplicateCandidateDeleteOne {
+	builder := c.Delete().Where(duplicatecandidate.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &DuplicateCandidateDeleteOne{builder}
+}
+
+// Query returns a query builder for DuplicateCandidate.
+func (c *DuplicateCandidateClient) Query() *DuplicateCandidateQuery {
+	return &DuplicateCandidateQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeDuplicateCandidate},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a DuplicateCandidate entity by its id.
+func (c *DuplicateCandidateClient) Get(ctx context.Context, id uuid.UUID) (*DuplicateCandidate, error) {
+	return c.Query().Where(duplicatecandidate.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *DuplicateCandidateClient) GetX(ctx context.Context, id uuid.UUID) *DuplicateCandidate {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *DuplicateCandidateClient) Hooks() []Hook {
+	return c.hooks.DuplicateCandidate
+}
+
+// Interceptors returns the client interceptors.
+func (c *DuplicateCandidateClient) Interceptors() []Interceptor {
+	return c.inters.DuplicateCandidate
+}
+
+func (c *DuplicateCandidateClient) mutate(ctx context.Context, m *DuplicateCandidateMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&DuplicateCandidateCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&DuplicateCandidateUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&DuplicateCandidateUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&DuplicateCandidateDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown DuplicateCandidate mutation op: %q", m.Op())
 	}
 }
 
@@ -3777,16 +3918,17 @@ func (c *WaitlistEntryClient) mutate(ctx context.Context, m *WaitlistEntryMutati
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		AgentMandate, AgentProfile, AuditEvent, Conversation, LandlordProfile, Listing,
-		ListingMedia, ListingStat, ListingTerms, Message, Notification, OTPCode,
-		Property, Report, RoleAssignment, SavedListing, Session, Unit, User,
-		Verification, VerificationFile, Viewing, WaitlistEntry []ent.Hook
+		AgentMandate, AgentProfile, AuditEvent, Conversation, DuplicateCandidate,
+		LandlordProfile, Listing, ListingMedia, ListingStat, ListingTerms, Message,
+		Notification, OTPCode, Property, Report, RoleAssignment, SavedListing, Session,
+		Unit, User, Verification, VerificationFile, Viewing, WaitlistEntry []ent.Hook
 	}
 	inters struct {
-		AgentMandate, AgentProfile, AuditEvent, Conversation, LandlordProfile, Listing,
-		ListingMedia, ListingStat, ListingTerms, Message, Notification, OTPCode,
-		Property, Report, RoleAssignment, SavedListing, Session, Unit, User,
-		Verification, VerificationFile, Viewing, WaitlistEntry []ent.Interceptor
+		AgentMandate, AgentProfile, AuditEvent, Conversation, DuplicateCandidate,
+		LandlordProfile, Listing, ListingMedia, ListingStat, ListingTerms, Message,
+		Notification, OTPCode, Property, Report, RoleAssignment, SavedListing, Session,
+		Unit, User, Verification, VerificationFile, Viewing,
+		WaitlistEntry []ent.Interceptor
 	}
 )
 
