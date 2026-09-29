@@ -1,2 +1,5 @@
 # Shell scripts run on the Linux server: keep LF endings on every checkout.
 *.sh text eol=lf
+# Everything under deploy/ runs or is read on the Linux server (cron files,
+# the dc wrapper, pgBackRest config): LF there too.
+deploy/** text eol=lf

@@ -43,9 +43,34 @@ services:
       POSTGRES_USER: rentmap
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
       POSTGRES_DB: rentmap
-    volumes: [pgdata:/var/lib/postgresql/data]
+    # tini as PID 1: pgBackRest's async archiver leaves orphans behind, and if
+    # the postmaster were PID 1 it would reap them, take a non-zero exit for a
+    # crashed backend and restart the whole database.
+    init: true
+    # Off-site pgBackRest repo (R2); optional, see deploy/pgbackrest.env.example.
+    env_file:
+      - path: ./.env.pgbackrest
+        required: false
+    # WAL archiving for point-in-time recovery. Until `deploy/backup/pitr.sh
+    # setup` has run once, archiving fails and Postgres keeps retrying (logs
+    # only; the site is unaffected).
+    command:
+      - postgres
+      - -c
+      - wal_level=replica
+      - -c
+      - archive_mode=on
+      - -c
+      - archive_command=pgbackrest --stanza=rentmap archive-push %p
+      - -c
+      - archive_timeout=300 # a quiet database still ships WAL every 5 min
+      - -c
+      - max_wal_size=2GB
+    volumes: [pgdata:/var/lib/postgresql/data, pgbackrest:/var/lib/pgbackrest]
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U rentmap -d rentmap"]
+      # Over TCP: on a fresh volume the init scripts run on a socket-only
+      # temporary server first, which must not count as ready.
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U rentmap -d rentmap"]
       interval: 5s
       retries: 20
 
@@ -79,6 +104,7 @@ services:
 
 volumes:
   pgdata: {}
+  pgbackrest: {} # WAL archive + base backups (repo1); off-site copy is repo2
   uploads: {} # back this up with the database; evidence is useless without DOCUMENT_KEY
   media: {} # listing photos when MEDIA_STORE=disk; back it up with the database
   inbox: {} # video uploads in progress; safe to lose (listers re-upload)

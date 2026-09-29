@@ -1,0 +1,13 @@
+# Installed as /etc/cron.d/rentmap by provision.sh. Times are UTC (= Ghana
+# time). Every job reports to its heartbeat (job.sh, /etc/rentmap/ops.env);
+# logs are in /var/log/rentmap/<job>.log.
+SHELL=/bin/bash
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+
+# m  h  dom mon dow user   command
+0    2  *   *   *   deploy /opt/rentmap/deploy/server/job.sh pitr-backup  /opt/rentmap/deploy/backup/pitr.sh backup auto
+15   3  *   *   *   deploy /opt/rentmap/deploy/server/job.sh dump-backup  /opt/rentmap/deploy/backup/backup.sh
+0    6  *   *   *   deploy /opt/rentmap/deploy/server/job.sh pitr-check   /opt/rentmap/deploy/backup/pitr.sh check
+30   4  *   *   1   deploy /opt/rentmap/deploy/server/job.sh restore-test /opt/rentmap/deploy/backup/restore-test.sh
+30   5  *   *   1   deploy /opt/rentmap/deploy/server/job.sh pitr-test    /opt/rentmap/deploy/backup/pitr.sh test
+*/15 *  *   *   *   deploy /opt/rentmap/deploy/server/job.sh host-check   /opt/rentmap/deploy/server/check-host.sh

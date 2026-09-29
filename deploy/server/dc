@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+# docker compose for the production stack, with the right env files:
+# deploy/.env.prod (secrets) and deploy/.env.release (the image deploy.sh
+# rolled out). Use it for everything: `dc ps`, `dc logs -f web`, …
+#   alias dc=/opt/rentmap/deploy/server/dc
+ROOT=$(cd "$(dirname "$0")/../.." && pwd)
+args=(-f "$ROOT/deploy/compose.prod.yml" --env-file "$ROOT/deploy/.env.prod")
+[ -f "$ROOT/deploy/.env.release" ] && args+=(--env-file "$ROOT/deploy/.env.release")
+exec docker compose "${args[@]}" "$@"

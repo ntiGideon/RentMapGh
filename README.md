@@ -124,14 +124,11 @@ deploy/          Dockerfiles, compose (dev/prod), Caddyfile
 
 ## Deploy (single VPS)
 
-```sh
-docker build -f deploy/docker/db.Dockerfile  -t rentmap/postgres:17-postgis-pgvector .
-docker build -f deploy/docker/web.Dockerfile -t rentmap/web:latest .
-docker compose -f deploy/compose.prod.yml --env-file deploy/.env.prod run --rm migrate
-docker compose -f deploy/compose.prod.yml --env-file deploy/.env.prod up -d
-```
+A fresh Ubuntu VPS is set up with `deploy/server/provision.sh`; after that each release is one
+command, `deploy/server/deploy.sh` (build, migrate, roll out, health check; `rollback` to go back).
+The steps are in [deploy/RUNBOOK.md → First deploy](deploy/RUNBOOK.md#first-deploy-new-server).
 
-`deploy/.env.prod` must set `BASE_URL` (https), `SITE_ADDRESS` (the domain for Caddy), `POSTGRES_PASSWORD`,
+`deploy/.env.prod` (template: `deploy/env.prod.example`) must set `BASE_URL` (https), `SITE_ADDRESS` (the domain for Caddy), `POSTGRES_PASSWORD`,
 `AUTH_SECRET` (`openssl rand -base64 48`), `LOCATION_SECRET` (`openssl rand -base64 48`, never rotate), `DOCUMENT_KEY` (`openssl rand -base64 32`; back it up —
 evidence can't be decrypted without it) and the Africa's Talking settings (`SMS_PROVIDER=africastalking`,
 `AT_USERNAME`, `AT_API_KEY`, `AT_SANDBOX=false`, `SMS_SENDER_ID`). The server refuses to start in
@@ -140,5 +137,6 @@ the `uploads` volume and listing photos on the `media` volume: back both up toge
 To keep photos in R2 instead, set `MEDIA_STORE=s3`, `S3_ENDPOINT=https://<account>.r2.cloudflarestorage.com`,
 `S3_BUCKET` and an R2 API token's `S3_ACCESS_KEY_ID` / `S3_SECRET_ACCESS_KEY`.
 
-Operations — backups and restore tests, uptime checks, Sentry, load testing, the go-live checklist
-and common support tasks — are in [deploy/RUNBOOK.md](deploy/RUNBOOK.md).
+Operations — point-in-time recovery (pgBackRest) and nightly dumps, restore tests, cron
+heartbeats and uptime checks, Sentry, load testing, the go-live checklist and common support
+tasks — are in [deploy/RUNBOOK.md](deploy/RUNBOOK.md).
